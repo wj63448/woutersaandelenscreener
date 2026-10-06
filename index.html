@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="nl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0b5ed7">
+<link rel="manifest" href="manifest.json">
+<title>Aandelen Tracker</title>
+<style>
+:root{color-scheme:light dark;--b:#8885;--p:#0b5ed7;--up:#16a34a;--dn:#dc2626}
+*{box-sizing:border-box}body{margin:0;font:16px system-ui,sans-serif}
+header{background:var(--p);color:#fff;padding:10px 14px;display:flex;align-items:center;gap:8px}
+header h1{font-size:18px;margin:0;flex:1}
+button{font:inherit;padding:9px 14px;border:0;border-radius:8px;background:var(--p);color:#fff}
+header button{background:#ffffff33}
+main{padding:12px;max-width:560px;margin:auto}
+.card{border:1px solid var(--b);border-radius:12px;padding:14px;margin-bottom:12px}
+.sum{text-align:center}.sum .big{font-size:30px;font-weight:700}
+.row{display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--b);padding:10px 0}
+.row>div:first-child{flex:1}.r{text-align:right}
+input{font:inherit;padding:9px;border:1px solid var(--b);border-radius:8px;background:transparent;color:inherit;min-width:0}
+.qty{width:78px;padding:4px 6px;margin-top:4px}
+.add{display:flex;flex-wrap:wrap;gap:6px}.add input{flex:1 1 100px}.add #sym{flex:2 1 160px;text-transform:uppercase}
+.x{background:none;color:inherit;opacity:.5;padding:6px}
+.pos{color:var(--up)}.neg{color:var(--dn)}.m,small{opacity:.65}
+details{margin-top:8px}summary{padding:6px 0}
+</style></head><body>
+<header><h1>Aandelen</h1><button id="rf">↻</button></header>
+<main>
+<div class="card sum"><small>Winst/verlies vandaag (in euro)</small><div class="big" id="tot">–</div><small id="val"></small><br><small id="all"></small></div>
+<div class="card add">
+<input id="sym" placeholder="Symbool (AAPL, ASML.AS, RY.TO)" autocapitalize="characters">
+<input id="qty" type="number" inputmode="decimal" step="any" min="0" placeholder="Aantal">
+<input id="buy" type="number" inputmode="decimal" step="any" min="0" placeholder="Totaal betaald in € (optioneel)">
+<button id="ad">+</button>
+<small style="flex:1 1 100%">Achtervoegsel: .BR Brussel, .AS Amsterdam, .PA Parijs, .TO Toronto. VS-aandelen zonder achtervoegsel. Totaal betaald in € blijft vast: vul het bedrag in dat je werkelijk betaalde.</small></div>
+<div class="card" id="list"></div>
+<p class="m" id="st"></p>
+<details class="card"><summary>Instellingen</summary>
+<p><small>Adres van je eigen koersen-doorgever (Cloudflare Worker), bijvoorbeeld https://aandelen.jouwnaam.workers.dev</small></p>
+<input id="proxy" placeholder="https://…workers.dev" style="width:100%"><br><br><button id="sk">Opslaan</button></details>
+<p class="m"><small>Alle bedragen in euro, omgerekend met de actuele wisselkoers; de dagwinst houdt ook rekening met de verandering van de wisselkoers sinds gisteren. Winst sinds aankoop = waarde nu min het bedrag in euro dat je betaalde (dat bedrag blijft vast en wordt niet omgerekend). Koersen kunnen vertraagd zijn.</small></p>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+let S={proxy:"",pos:[]};try{S=Object.assign(S,JSON.parse(localStorage.getItem("aand")||"{}"))}catch(e){}
+const save=()=>localStorage.setItem("aand",JSON.stringify(S));
+let Q={},FXQ={},busy=false;
+const f=(n,c="EUR")=>n.toLocaleString("nl-BE",{style:"currency",currency:c});
+const sg=n=>(n>0?"+":"")+f(n);
+const pc=n=>(n>0?"+":"")+n.toFixed(2).replace(".",",")+"%";
+
+async function yq(sym){
+  const r=await fetch(S.proxy.replace(/\/+$/,"")+"/?s="+encodeURIComponent(sym));
+  if(!r.ok)throw new Error(r.status===404?"Symbool niet gevonden":"Fout "+r.status);
+  const j=await r.json(),res=j.chart&&j.chart.result&&j.chart.result[0];
+  if(!res)throw new Error("Symbool niet gevonden");
+  const m=res.meta,ts=res.timestamp||[],cl=((res.indicators.quote||[])[0]||{}).close||[];
+  const bars=ts.map((t,i)=>[t,cl[i]]).filter(b=>b[1]!=null);
+  let prev=m.chartPreviousClose;
+  if(bars.length){
+    const last=bars[bars.length-1][0];
+    const same=new Date(last*1000).toDateString()===new Date((m.regularMarketTime||last)*1000).toDateString();
+    const p=same?bars[bars.length-2]:bars[bars.length-1];
+    if(p)prev=p[1];
+  }
+  return{c:m.regularMarketPrice,prev,cur:m.currency};
+}
+
+async function refresh(){
+  if(busy)return;
+  if(!S.proxy){$("st").textContent="Vul eerst het adres van je koersen-doorgever in bij Instellingen.";render();return}
+  if(!S.pos.length){render();return}
+  busy=true;$("st").textContent="Bijwerken…";
+  await Promise.all(S.pos.map(async p=>{try{Q[p.sym]=await yq(p.sym)}catch(e){Q[p.sym]={err:e.message||"Geen verbinding"}}}));
+  const curs=[...new Set(Object.values(Q).filter(q=>q.cur&&q.cur!=="EUR").map(q=>q.cur))];
+  await Promise.all(curs.map(async c=>{try{const x=await yq("EUR"+c+"=X");FXQ[c]={now:x.c,prev:x.prev}}catch(e){}}));
+  busy=false;$("st").textContent="Bijgewerkt om "+new Date().toLocaleTimeString("nl-BE",{hour:"2-digit",minute:"2-digit"});
+  render();
+}
+
+function render(){
+  let tot=0,val=0,gain=0,cost=0,rows="",fxMiss=false;
+  S.pos.forEach((p,i)=>{
+    const q=Q[p.sym];let line;
+    if(!q)line='<span class="m">…</span>';
+    else if(q.err)line=`<span class="neg">${esc(q.err)}</span>`;
+    else{
+      const fx=q.cur==="EUR"?{now:1,prev:1}:FXQ[q.cur];
+      line=`<div>${f(q.c,q.cur)}</div>`;
+      if(!fx){fxMiss=true;line+='<div class="neg"><small>wisselkoers niet beschikbaar</small></div>'}
+      else{
+        const vE=q.c*p.qty/fx.now,pE=q.prev*p.qty/fx.prev,pl=vE-pE;
+        const pct=q.prev?((q.c/fx.now)/(q.prev/fx.prev)-1)*100:0,cl=pl>=0?"pos":"neg";
+        tot+=pl;val+=vE;
+        line+=`<div class="${cl}"><b>${sg(pl)}</b> (${pc(pct)}) vandaag</div>`;
+        if(p.paid>0){
+          const g=vE-p.paid,gp=g/p.paid*100;
+          gain+=g;cost+=p.paid;
+          line+=`<div class="${g>=0?"pos":"neg"}"><small>${sg(g)} (${pc(gp)}) sinds aankoop</small></div>`;
+        }
+      }
+    }
+    rows+=`<div class="row"><div><b>${esc(p.sym)}</b> <small>${esc((q&&q.cur)||"")}</small><br><input class="qty" type="number" inputmode="decimal" step="any" min="0" value="${p.qty}" data-q="${i}"> <small>stuks</small><br><input class="qty" type="number" inputmode="decimal" step="any" min="0" value="${p.paid||""}" placeholder="betaald €" data-b="${i}"></div><div class="r">${line}</div><button class="x" data-d="${i}">✕</button></div>`;
+  });
+  $("list").innerHTML=rows||'<span class="m">Nog geen aandelen. Voeg een symbool en aantal toe.</span>';
+  const t=$("tot");
+  t.textContent=S.pos.length?sg(tot):"–";
+  t.className="big "+(tot>=0?"pos":"neg");
+  $("val").textContent=(val?"Waarde portefeuille: "+f(val):"")+(fxMiss?" (wisselkoers ontbreekt bij sommige aandelen)":"");
+  $("all").textContent=cost?`Sinds aankoop: ${sg(gain)} (${pc(gain/cost*100)})`:"";
+}
+
+$("list").addEventListener("change",e=>{
+  const d=e.target.dataset,v=parseFloat(e.target.value);
+  if(d.q!==undefined)S.pos[d.q].qty=v>=0?v:0;
+  else if(d.b!==undefined)S.pos[d.b].paid=v>0?v:0;
+  else return;
+  save();render();
+});
+$("list").addEventListener("click",e=>{
+  const i=e.target.dataset.d;if(i===undefined)return;
+  if(confirm("Verwijderen: "+S.pos[i].sym+"?")){S.pos.splice(i,1);save();render()}
+});
+$("ad").onclick=()=>{
+  const sym=$("sym").value.trim().toUpperCase(),qty=parseFloat($("qty").value),buy=parseFloat($("buy").value)||0;
+  if(!sym||!(qty>=0))return;
+  const ex=S.pos.find(p=>p.sym===sym);
+  if(ex){ex.qty=qty;if(buy)ex.paid=buy}else S.pos.push({sym,qty,paid:buy});
+  save();$("sym").value="";$("qty").value="";$("buy").value="";refresh();
+};
+$("sk").onclick=()=>{S.proxy=$("proxy").value.trim();save();Q={};FXQ={};refresh()};
+$("rf").onclick=refresh;
+$("proxy").value=S.proxy;
+document.addEventListener("visibilitychange",()=>{if(!document.hidden)refresh()});
+setInterval(()=>{if(!document.hidden)refresh()},60000);
+if("serviceWorker"in navigator)navigator.serviceWorker.register("sw.js");
+render();refresh();
+</script></body></html>
