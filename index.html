@@ -3,59 +3,240 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#0b5ed7">
 <link rel="manifest" href="manifest.json">
-<title>Aandelen Tracker</title>
+<title>Wouter's aandelenscreener</title>
 <style>
-:root{color-scheme:light dark;--b:#8885;--p:#0b5ed7;--up:#16a34a;--dn:#dc2626}
-*{box-sizing:border-box}body{margin:0;font:16px system-ui,sans-serif}
-header{background:var(--p);color:#fff;padding:10px 14px;display:flex;align-items:center;gap:8px}
-header h1{font-size:18px;margin:0;flex:1}
-button{font:inherit;padding:9px 14px;border:0;border-radius:8px;background:var(--p);color:#fff}
-header button{background:#ffffff33}
-main{padding:12px;max-width:560px;margin:auto}
-.card{border:1px solid var(--b);border-radius:12px;padding:14px;margin-bottom:12px}
-.sum{text-align:center}.sum .big{font-size:30px;font-weight:700}
-.row{display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--b);padding:10px 0}
-.row>div:first-child{flex:1}.r{text-align:right}
-input{font:inherit;padding:9px;border:1px solid var(--b);border-radius:8px;background:transparent;color:inherit;min-width:0}
-.qty{width:78px;padding:4px 6px;margin-top:4px}
-.add{display:flex;flex-wrap:wrap;gap:6px}.add input{flex:1 1 100px}.add #sym{flex:2 1 160px;text-transform:uppercase}
-.x{background:none;color:inherit;opacity:.5;padding:6px}
-.pos{color:var(--up)}.neg{color:var(--dn)}.m,small{opacity:.65}
-details{margin-top:8px}summary{padding:6px 0}
+:root{color-scheme:light dark;--bg:#fff;--bg2:#f1f3f5;--tx:#111827;--mut:#6b7280;--b:#e5e7eb;--b2:#cbd5e1;--p:#0b5ed7;--up:#15803d;--dn:#dc2626}
+@media (prefers-color-scheme:dark){:root{--bg:#101318;--bg2:#1c2128;--tx:#e5e7eb;--mut:#9ca3af;--b:#2a2f38;--b2:#3b424d;--p:#2f6fdc;--up:#4ade80;--dn:#f87171}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px system-ui,sans-serif}
+#ph{max-width:560px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column}
+.hd{background:var(--p);color:#fff;padding:13px 16px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:5}
+.hd .t{flex:1;font-size:17px;font-weight:600}
+.ib{font-size:21px;cursor:pointer;line-height:1;user-select:none}
+.body{padding:12px 12px 16px;flex:1}
+button{font:inherit;padding:8px 12px;border:0;border-radius:8px;background:var(--p);color:#fff;cursor:pointer}
+button.sm{font-size:12.5px;padding:5px 10px}
+button.ghost{background:transparent;color:var(--tx);border:1px solid var(--b2)}
+input[type=text],input[type=url],select{font:inherit;padding:9px;border:1px solid var(--b2);border-radius:8px;background:transparent;color:var(--tx);min-width:0}
+.seg{display:flex;gap:4px}
+.seg button{font-size:12px;padding:4px 9px;background:transparent;color:var(--tx);border:1px solid var(--b2)}
+.seg button.on,.top button.on{background:var(--p);color:#fff;border-color:var(--p)}
+.top{display:flex;gap:6px;margin-bottom:8px}
+.top button{flex:1;font-size:13px;padding:7px 4px;background:transparent;color:var(--tx);border:1px solid var(--b2)}
+.r{display:grid;grid-template-columns:minmax(0,1fr) 46px 62px 62px 56px;gap:4px;padding:9px 2px;border-bottom:1px solid var(--b);font-size:11.5px;align-items:center}
+.nv .r{grid-template-columns:minmax(0,1fr) 50px 66px 66px}
+.r>div+div{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.nv .wv{display:none}
+.n{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px}
+.n a{color:var(--tx);text-decoration:none;border-bottom:1px dotted var(--b2)}
+.gh{background:var(--bg2);font-weight:600;cursor:pointer;border-radius:6px;padding-left:6px;padding-right:6px;margin-top:4px}
+.gh small{font-weight:400;color:var(--mut)}
+.up{color:var(--up)}.dn{color:var(--dn)}
+.m,small,.lbl{color:var(--mut)}
+.lbl{font-size:12px}
+.sec{font-size:13px;font-weight:600;margin:18px 0 6px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.sec .sub{font-size:11px;color:var(--mut);font-weight:400}
+.ln{display:flex;justify-content:space-between;gap:10px;padding:8px 2px;border-bottom:1px solid var(--b);font-size:13px}
+.ln.gap{margin-top:14px}
+.ln .v{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.ln small{display:block;font-size:11px;margin-top:2px;white-space:normal}
+.gn{display:grid;gap:4px;padding:8px 2px;border-bottom:1px solid var(--b);font-size:11.5px;align-items:center}
+.gn>div+div{text-align:right;font-variant-numeric:tabular-nums}
+.gn.gap{margin-top:14px}
+.big{text-align:center;padding:4px 0 8px}
+.big .x{font-size:28px;font-weight:600;line-height:1.3}
+.dv{display:grid;grid-template-columns:122px 1fr 62px;gap:8px;align-items:center;padding:3px 0;font-size:11.5px}
+.dv .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dv .ar{position:relative;height:12px}
+.dv .ar:before{content:"";position:absolute;left:50%;top:-2px;bottom:-2px;width:1px;background:var(--b2)}
+.dv .bar{position:absolute;top:1px;height:10px;border-radius:2px}
+.dv .vl{text-align:right;font-variant-numeric:tabular-nums;font-size:11px}
+.bu{background:var(--up)}.bd{background:var(--dn)}
+.pg{margin:8px 0 12px}
+.pg .tp{display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px}
+.pg .tk{position:relative;height:12px;background:var(--bg2);border-radius:6px}
+.pg .fl{position:absolute;left:0;top:0;bottom:0;border-radius:6px;background:var(--p)}
+.pg .mk{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--tx)}
+.cb{background:var(--bg2);border-radius:10px;padding:8px 10px;margin-bottom:10px}
+.ch{font-size:13px;font-weight:600;margin-bottom:4px}
+.lb{font-size:10.5px;color:var(--mut);text-transform:uppercase;letter-spacing:.04em;margin:8px 0 2px}
+.t3{display:grid;grid-template-columns:minmax(0,1fr) 54px 76px;gap:6px;padding:4px 0;font-size:12px;border-bottom:1px solid var(--b)}
+.t3 .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.t3>div+div{text-align:right;font-variant-numeric:tabular-nums}
+.t3.tt{font-weight:600;border-bottom:none;border-top:1px solid var(--b2);margin-top:6px;padding-top:7px}
+.sp{display:grid;grid-template-columns:112px 1fr 54px;gap:8px;align-items:center;padding:4px 0;border-bottom:1px solid var(--b);font-size:11.5px}
+.sp .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sp .pc{text-align:right;font-variant-numeric:tabular-nums;font-size:11px}
+.lg{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:11.5px;margin-top:6px}
+.lg .sw{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px}
+.lg b{font-weight:400;color:var(--mut);margin-left:4px}
+.tabs{display:flex;border-top:1px solid var(--b2);position:sticky;bottom:0;background:var(--bg)}
+.tabs div{flex:1;text-align:center;padding:8px 0 10px;font-size:12px;color:var(--mut);cursor:pointer}
+.tabs div b{display:block;font-size:20px;font-weight:400;margin-bottom:1px}
+.tabs div.on{color:var(--p)}
+.dots{display:flex;justify-content:center;gap:9px;margin:14px 0 6px}
+.dot{width:12px;height:12px;border-radius:50%;border:1px solid var(--b2)}
+.dot.on{background:var(--tx);border-color:var(--tx)}
+.pad{display:grid;grid-template-columns:repeat(3,68px);gap:10px;justify-content:center;margin:16px 0 8px}
+.pad button{height:50px;font-size:20px;padding:0;background:var(--bg2);color:var(--tx);border:1px solid var(--b)}
+.stg{padding:10px 0;border-bottom:1px solid var(--b);display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:14px}
+.pl{list-style:none;margin:0;padding:0}
+.pl li{padding:11px 6px;border-bottom:1px solid var(--b);cursor:pointer}
+.foot{font-size:11px;color:var(--mut);margin:12px 2px 2px}
+.warn{font-size:12px;color:var(--dn);margin:6px 2px}
 </style></head><body>
-<header><h1>Aandelen</h1><button id="rf">↻</button></header>
-<main>
-<div class="card sum"><small>Winst/verlies vandaag (in euro)</small><div class="big" id="tot">–</div><small id="val"></small><br><small id="all"></small></div>
-<div class="card add">
-<input id="sym" placeholder="Symbool (AAPL, ASML.AS, RY.TO)" autocapitalize="characters">
-<input id="qty" type="number" inputmode="decimal" step="any" min="0" placeholder="Aantal">
-<input id="buy" type="number" inputmode="decimal" step="any" min="0" placeholder="Totaal betaald in € (optioneel)">
-<button id="ad">+</button>
-<small style="flex:1 1 100%">Achtervoegsel: .BR Brussel, .AS Amsterdam, .PA Parijs, .TO Toronto. VS-aandelen zonder achtervoegsel. Totaal betaald in € blijft vast: vul het bedrag in dat je werkelijk betaalde.</small></div>
-<div class="card" id="list"></div>
-<p class="m" id="st"></p>
-<details class="card"><summary>Instellingen</summary>
-<p><small>Adres van je eigen koersen-doorgever (Cloudflare Worker), bijvoorbeeld https://aandelen.jouwnaam.workers.dev</small></p>
-<input id="proxy" placeholder="https://…workers.dev" style="width:100%"><br><br><button id="sk">Opslaan</button></details>
-<p class="m"><small>Alle bedragen in euro, omgerekend met de actuele wisselkoers; de dagwinst houdt ook rekening met de verandering van de wisselkoers sinds gisteren. Winst sinds aankoop = waarde nu min het bedrag in euro dat je betaalde (dat bedrag blijft vast en wordt niet omgerekend). Koersen kunnen vertraagd zijn.</small></p>
-</main>
+<div id="ph"></div>
+<script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@2.39.0/lib/msal-browser.min.js"></script>
 <script>
-const $=id=>document.getElementById(id);
-const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-let S={proxy:"",pos:[]};try{S=Object.assign(S,JSON.parse(localStorage.getItem("aand")||"{}"))}catch(e){}
-const save=()=>localStorage.setItem("aand",JSON.stringify(S));
-let Q={},FXQ={},busy=false;
-const f=(n,c="EUR")=>n.toLocaleString("nl-BE",{style:"currency",currency:c});
-const sg=n=>(n>0?"+":"")+f(n);
-const pc=n=>(n>0?"+":"")+n.toFixed(2).replace(".",",")+"%";
+/*PURE-START*/
+const parseNum=t=>{
+  if(typeof t==="number")return t;
+  if(t==null)return 0;
+  let s=String(t).replace(/[€%\s\u00a0]/g,"").replace(/[−–]/g,"-");
+  if(!s)return 0;
+  const c=s.includes(","),d=s.includes(".");
+  if(c&&d)s=s.replace(/\./g,"").replace(",",".");
+  else if(c)s=s.replace(",",".");
+  else if(d&&/^-?\d{1,3}(\.\d{3})+$/.test(s))s=s.replace(/\./g,"");
+  const n=parseFloat(s);return isNaN(n)?0:n;
+};
+function parseList(v){
+  if(!v||v.length<2)throw new Error("Geen gegevens gevonden in het tabblad met aandelen");
+  const h=v[0].map(x=>String(x).toLowerCase());
+  const find=(...k)=>h.findIndex(x=>k.some(y=>x.includes(y)));
+  const iS=find("symbool","ticker","symbol"),iQ=find("aantal","stuks","quantity");
+  const iP=find("totaal","betaald","aankoopwaarde");
+  const iB=h.findIndex(x=>(x.includes("koers")||x.includes("prijs"))&&!x.includes("totaal")&&!x.includes("waarde"));
+  if(iS<0||iQ<0)throw new Error("Kolommen 'Symbool' en 'Aantal' niet gevonden in de eerste rij van het tabblad met aandelen");
+  const m={};
+  v.slice(1).forEach(r=>{
+    const sym=String(r[iS]==null?"":r[iS]).trim().toUpperCase();if(!sym)return;
+    const q=parseNum(r[iQ]),o=m[sym]||(m[sym]={sym,qty:0,paid:0,bq:0});
+    o.qty+=q;if(iP>=0)o.paid+=parseNum(r[iP]);if(iB>=0)o.bq+=parseNum(r[iB])*q;
+  });
+  return Object.values(m).filter(o=>o.qty>0).map(o=>({sym:o.sym,qty:o.qty,paid:o.paid,buy:o.qty&&o.bq?o.bq/o.qty:0}));
+}
+function fmtT(raw,kind){
+  const s=String(raw==null?"":raw).trim();
+  if(!s)return "";
+  if(/[€%]/.test(s))return s;
+  if(!/^[-−]?[\d.,]+$/.test(s))return s;
+  const n=parseNum(s);
+  const nf=(x,d)=>Math.abs(x).toLocaleString("nl-BE",{minimumFractionDigits:d,maximumFractionDigits:d});
+  return kind==="p"?(n<0?"−":"")+nf(n*100,2)+"%":(n<0?"−":"")+"€ "+nf(n,2);
+}
+function parseTarget(t){
+  const T=t.map(r=>r.map(c=>String(c==null?"":c).replace(/\s+/g," ").trim()));
+  const hi=T.findIndex(r=>r.filter(c=>c).length>=3);
+  if(hi<0)throw new Error("Geen kopregel met de scenario's gevonden in het tabblad met targets");
+  const H=T[hi];
+  let end=H.findIndex((c,i)=>i>0&&/^behaald/i.test(c));
+  if(end<0)end=H.length;
+  const sc=[];H.forEach((c,i)=>{if(i>0&&i<end&&c)sc.push(i)});
+  if(!sc.length)throw new Error("Geen scenario-kolommen gevonden in het tabblad met targets");
+  const last=sc[sc.length-1];
+  const names=sc.map(i=>H[i]);
+  const extraLabel=H.slice(end).find(x=>x)||"Behaald";
+  const subRow=T[hi+1]||[];
+  let ex=[];subRow.forEach((c,i)=>{if(i>last&&c)ex.push([i,/%/.test(c)?"p":"e"])});
+  if(!ex.length){const w=Math.max(0,...T.slice(hi+1).map(r=>r.length));for(let i=last+1;i<w;i++)ex.push([i,ex.length?"p":"e"])}
+  const isPct=l=>/^noodz|rend\b|budget gehaald|verlopen dagen|%/i.test(l);
+  const rows=[];let gap=false,bad=0;
+  for(let r=hi+1;r<T.length;r++){
+    const row=T[r];
+    row.forEach(c=>{if(/^#(BLOCKED|REF|NAME|VALUE|N\/A|DIV)/i.test(c))bad++});
+    let label=row.slice(0,sc[0]).filter(x=>x).join(" ");
+    const raw=sc.map(i=>row[i]||"");
+    let extra=ex.map(([ci,k])=>fmtT(row[ci],k)).filter(x=>x);
+    if(!label&&raw.every(x=>!x)&&!extra.length){gap=true;continue}
+    if(!label&&rows.length===0){label="Jaartarget";extra=[]}
+    const kind=isPct(label)?"p":"e";
+    rows.push({label,vals:raw.map(v=>fmtT(v,kind)),extra,gap:gap&&rows.length>0});gap=false;
+  }
+  return{names,extraLabel,rows,warn:bad?bad+" cellen konden niet gelezen worden":""};
+}
+function targetCharts(P){
+  const bud=[],ver=[],sch=[];let cur="";
+  P.rows.forEach(r=>{
+    const m=r.label.match(/^(\d+)\s*jaar/i);if(m)cur=m[1]+" jaar";
+    const l=r.label.toLowerCase();
+    if(l.includes("budget gehaald"))bud.push({cur,vals:r.vals.map(parseNum)});
+    else if(l.includes("verlopen dagen"))ver.push({cur,vals:r.vals.map(parseNum)});
+    else if(/voor\s*\/\s*achter/.test(l))sch.push({cur,vals:r.vals.map(parseNum)});
+  });
+  return{
+    prog:bud.map((b,i)=>({title:"Voortgang "+b.cur,vals:b.vals,mark:ver[i]?ver[i].vals[0]:null})),
+    schema:sch.map(s=>({title:"Voor / achter op schema"+(s.cur?", "+s.cur:""),vals:s.vals}))
+  };
+}
+/*PURE-END*/
 
-async function yq(sym){
-  const r=await fetch(S.proxy.replace(/\/+$/,"")+"/?s="+encodeURIComponent(sym));
+const TITLE="Wouter's aandelenscreener";
+const CLIENT_ID="2b2a7bff-3f04-4eee-9e5f-57138ea6d683";
+const SCOPES=["Files.Read","User.Read"];
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+let S={proxy:"",pos:[],file:null,tgt:null,showVal:true,collapsed:{},hist:{},lock:null,fails:0,until:0};
+try{Object.assign(S,JSON.parse(localStorage.getItem("aand")||"{}"))}catch(e){}
+S.collapsed=S.collapsed||{};S.hist=S.hist||{};if(S.showVal===undefined)S.showVal=true;
+const save=()=>{try{localStorage.setItem("aand",JSON.stringify(S))}catch(e){}};
+const U={scr:S.lock?"lock":(S.proxy&&S.file&&S.file.sheet?"app":"settings"),tab:0,view:0,sc:0,dm:"a",gm:"e",per:1,wp:1,code:[],step:0,tmp:"",msg:"",ps:null,syMsg:"",stMsg:"",cfgMsg:""};
+let Q={},FXQ={},HIST={},busy=false,fxMiss=false,account=null,hiddenAt=0;
+const app=new msal.PublicClientApplication({auth:{clientId:CLIENT_ID,authority:"https://login.microsoftonline.com/common",redirectUri:location.origin+location.pathname},cache:{cacheLocation:"localStorage"}});
+
+/* ---------- opmaak ---------- */
+const cl=n=>n>=0?"up":"dn";
+const nm=(n,d)=>Math.abs(n).toLocaleString("nl-BE",{minimumFractionDigits:d,maximumFractionDigits:d});
+const sg=(n,d)=>(n>0?"+":n<0?"−":"")+nm(n,d);
+const pc=n=>sg(n,2)+"%";
+const ec=(n,d)=>(n>0?"+":n<0?"−":"")+"€"+nm(n,d);
+const es=(n,d)=>(n>0?"+":n<0?"−":"")+"€ "+nm(n,d);
+const ev=n=>"€"+nm(n,0);
+const eur=n=>"€ "+nm(n,0);
+const sum=(l,f)=>l.reduce((a,x)=>a+f(x),0);
+const hhmm=()=>new Date().toLocaleTimeString("nl-BE",{hour:"2-digit",minute:"2-digit"});
+
+/* ---------- OneDrive ---------- */
+async function token(interactive){
+  try{return (await app.acquireTokenSilent({scopes:SCOPES,account})).accessToken}
+  catch(e){if(interactive)await app.acquireTokenRedirect({scopes:SCOPES});throw new Error("Opnieuw inloggen nodig (ga naar Instellingen)")}
+}
+async function g(url,interactive){
+  const r=await fetch("https://graph.microsoft.com/v1.0"+url,{headers:{Authorization:"Bearer "+await token(interactive)}});
+  if(!r.ok){
+    const t=await r.text();
+    if(t.includes("PasswordProtected"))throw new Error("Het Excel-bestand is met een wachtwoord beveiligd. Gebruik een bestand zonder wachtwoord.");
+    throw new Error("OneDrive "+r.status+": "+t.slice(0,120));
+  }
+  return r.json();
+}
+async function syncExcel(interactive){
+  if(!S.file||!S.file.sheet){U.syMsg="Kies eerst een bestand en tabbladen bij Instellingen.";draw();return false}
+  if(!account){if(interactive)await app.loginRedirect({scopes:SCOPES});U.syMsg="Log eerst in bij Instellingen.";draw();return false}
+  U.syMsg="Lijst ophalen…";draw();
+  const base=`/me/drive/items/${S.file.id}/workbook/worksheets/`;
+  let msg="";
+  try{
+    const d=await g(base+encodeURIComponent(S.file.sheet)+"/usedRange?$select=values",interactive);
+    S.pos=parseList(d.values);save();msg=S.pos.length+" aandelen";
+  }catch(e){U.syMsg=e.message;draw();return false}
+  if(S.file.tsheet){
+    try{
+      const t=await g(base+encodeURIComponent(S.file.tsheet)+"/usedRange?$select=text",interactive);
+      S.tgt=parseTarget(t.text);save();msg+=" en targets"+(S.tgt.warn?" ("+S.tgt.warn+")":"");
+    }catch(e){msg+=" · targets: "+e.message}
+  }
+  U.syMsg=msg+" uit Excel, "+hhmm();draw();return true;
+}
+
+/* ---------- Koersen ---------- */
+async function yq(sym,range){
+  const r=await fetch(S.proxy.replace(/\/+$/,"")+"/?s="+encodeURIComponent(sym)+(range?"&r="+range:""));
   if(!r.ok)throw new Error(r.status===404?"Symbool niet gevonden":"Fout "+r.status);
   const j=await r.json(),res=j.chart&&j.chart.result&&j.chart.result[0];
   if(!res)throw new Error("Symbool niet gevonden");
-  const m=res.meta,ts=res.timestamp||[],cl=((res.indicators.quote||[])[0]||{}).close||[];
-  const bars=ts.map((t,i)=>[t,cl[i]]).filter(b=>b[1]!=null);
+  const m=res.meta,ts=res.timestamp||[],cl2=((res.indicators.quote||[])[0]||{}).close||[];
+  const bars=ts.map((t,i)=>[t,cl2[i]]).filter(b=>b[1]!=null);
   let prev=m.chartPreviousClose;
   if(bars.length){
     const last=bars[bars.length-1][0];
@@ -63,76 +244,357 @@ async function yq(sym){
     const p=same?bars[bars.length-2]:bars[bars.length-1];
     if(p)prev=p[1];
   }
-  return{c:m.regularMarketPrice,prev,cur:m.currency};
+  return{c:m.regularMarketPrice,prev,cur:m.currency,name:m.shortName||m.longName||sym,closes:bars.map(b=>b[1])};
 }
-
+function recordHist(){
+  const its=items();
+  if(!its.length||its.some(i=>i.v==null))return;
+  const day=new Date().toLocaleDateString("sv-SE");
+  S.hist[day]=Math.round(sum(its,i=>i.v));save();
+}
 async function refresh(){
-  if(busy)return;
-  if(!S.proxy){$("st").textContent="Vul eerst het adres van je koersen-doorgever in bij Instellingen.";render();return}
-  if(!S.pos.length){render();return}
-  busy=true;$("st").textContent="Bijwerken…";
-  await Promise.all(S.pos.map(async p=>{try{Q[p.sym]=await yq(p.sym)}catch(e){Q[p.sym]={err:e.message||"Geen verbinding"}}}));
-  const curs=[...new Set(Object.values(Q).filter(q=>q.cur&&q.cur!=="EUR").map(q=>q.cur))];
+  if(busy||U.scr==="lock"||U.scr==="setup")return;
+  if(!S.proxy){U.stMsg="Vul eerst het adres van je koersen-doorgever in bij Instellingen.";draw();return}
+  if(!S.pos.length){draw();return}
+  busy=true;U.stMsg="Bijwerken…";draw();
+  await Promise.all(S.pos.map(async p=>{try{const x=await yq(p.sym);Q[p.sym]=x;HIST[p.sym+"|5d"]=x.closes}catch(e){Q[p.sym]={err:e.message||"Geen verbinding"}}}));
+  const curs=[...new Set(S.pos.map(p=>Q[p.sym]).filter(q=>q&&q.cur&&q.cur!=="EUR").map(q=>q.cur))];
   await Promise.all(curs.map(async c=>{try{const x=await yq("EUR"+c+"=X");FXQ[c]={now:x.c,prev:x.prev}}catch(e){}}));
-  busy=false;$("st").textContent="Bijgewerkt om "+new Date().toLocaleTimeString("nl-BE",{hour:"2-digit",minute:"2-digit"});
-  render();
+  busy=false;U.stMsg="Koersen bijgewerkt om "+hhmm();
+  recordHist();draw();
+}
+const RG=["5d","1mo","1y"];
+async function loadHist(){
+  const rg=RG[U.per];if(rg==="5d"||!S.proxy)return;
+  await Promise.all(S.pos.filter(p=>!HIST[p.sym+"|"+rg]).map(async p=>{try{HIST[p.sym+"|"+rg]=(await yq(p.sym,rg)).closes}catch(e){HIST[p.sym+"|"+rg]=[]}}));
+  draw();
+}
+async function startUp(){
+  if(account&&S.file&&S.file.sheet)await syncExcel(false);
+  await refresh();
+  if(U.tab===0&&U.view===1)loadHist();
 }
 
-function render(){
-  let tot=0,val=0,gain=0,cost=0,rows="",fxMiss=false;
-  S.pos.forEach((p,i)=>{
-    const q=Q[p.sym];let line;
-    if(!q)line='<span class="m">…</span>';
-    else if(q.err)line=`<span class="neg">${esc(q.err)}</span>`;
+/* ---------- berekeningen ---------- */
+function items(){
+  fxMiss=false;
+  return S.pos.map(p=>{
+    const q=Q[p.sym],it={p,k:p.sym,nm:(q&&q.name)||p.sym,cur:"",sub:"",v:null,d:null,pct:null,g:null,gp:null};
+    if(!q)it.sub="…";
+    else if(q.err)it.sub=q.err;
     else{
+      it.cur=q.cur||"";
       const fx=q.cur==="EUR"?{now:1,prev:1}:FXQ[q.cur];
-      line=`<div>${f(q.c,q.cur)}</div>`;
-      if(!fx){fxMiss=true;line+='<div class="neg"><small>wisselkoers niet beschikbaar</small></div>'}
+      if(!fx){fxMiss=true;it.sub="wisselkoers niet beschikbaar"}
       else{
-        const vE=q.c*p.qty/fx.now,pE=q.prev*p.qty/fx.prev,pl=vE-pE;
-        const pct=q.prev?((q.c/fx.now)/(q.prev/fx.prev)-1)*100:0,cl=pl>=0?"pos":"neg";
-        tot+=pl;val+=vE;
-        line+=`<div class="${cl}"><b>${sg(pl)}</b> (${pc(pct)}) vandaag</div>`;
-        if(p.paid>0){
-          const g=vE-p.paid,gp=g/p.paid*100;
-          gain+=g;cost+=p.paid;
-          line+=`<div class="${g>=0?"pos":"neg"}"><small>${sg(g)} (${pc(gp)}) sinds aankoop</small></div>`;
-        }
+        it.v=q.c*p.qty/fx.now;const pe=q.prev*p.qty/fx.prev;it.d=it.v-pe;
+        it.pct=q.prev?((q.c/fx.now)/(q.prev/fx.prev)-1)*100:0;
+        if(p.paid>0){it.g=it.v-p.paid;it.gp=it.g/p.paid*100}
       }
     }
-    rows+=`<div class="row"><div><b>${esc(p.sym)}</b> <small>${esc((q&&q.cur)||"")}</small><br><input class="qty" type="number" inputmode="decimal" step="any" min="0" value="${p.qty}" data-q="${i}"> <small>stuks</small><br><input class="qty" type="number" inputmode="decimal" step="any" min="0" value="${p.paid||""}" placeholder="betaald €" data-b="${i}"></div><div class="r">${line}</div><button class="x" data-d="${i}">✕</button></div>`;
+    return it;
   });
-  $("list").innerHTML=rows||'<span class="m">Nog geen aandelen. Voeg een symbool en aantal toe.</span>';
-  const t=$("tot");
-  t.textContent=S.pos.length?sg(tot):"–";
-  t.className="big "+(tot>=0?"pos":"neg");
-  $("val").textContent=(val?"Waarde portefeuille: "+f(val):"")+(fxMiss?" (wisselkoers ontbreekt bij sommige aandelen)":"");
-  $("all").textContent=cost?`Sinds aankoop: ${sg(gain)} (${pc(gain/cost*100)})`:"";
+}
+function agg(l){
+  const ok=l.filter(i=>i.v!=null),sd=sum(ok,i=>i.d),sv=sum(ok,i=>i.v),gg=ok.filter(i=>i.g!=null);
+  return{ok,sd,sv,stt:sum(gg,i=>i.g),cost:sum(gg,i=>i.p.paid),hasG:gg.length>0,sp:(sv-sd)?sd/(sv-sd)*100:0};
+}
+function groups(its){
+  const m={};its.forEach(i=>(m[i.cur]=m[i.cur]||[]).push(i));
+  return Object.keys(m).sort((a,b)=>a===""?1:b===""?-1:a.localeCompare(b)).map(k=>Object.assign({k,l:m[k]},agg(m[k])));
 }
 
-$("list").addEventListener("change",e=>{
-  const d=e.target.dataset,v=parseFloat(e.target.value);
-  if(d.q!==undefined)S.pos[d.q].qty=v>=0?v:0;
-  else if(d.b!==undefined)S.pos[d.b].paid=v>0?v:0;
-  else return;
+/* ---------- onderdelen ---------- */
+function seg(a,opts,cur){return '<div class="seg">'+opts.map(o=>`<button data-a="${a}" data-v="${o[0]}" class="${String(cur)===String(o[0])?"on":""}">${o[1]}</button>`).join("")+"</div>"}
+function diverge(rows,fn){
+  const m=Math.max(...rows.map(r=>Math.abs(r[1])),0.0001);
+  return rows.map(r=>{
+    const w=Math.abs(r[1])/m*50,pos=r[1]>=0,s=pos?`left:50%;width:${w}%`:`left:${50-w}%;width:${w}%`;
+    return `<div class="dv"><div class="nm">${esc(r[0])}</div><div class="ar"><div class="bar ${pos?"bu":"bd"}" style="${s}"></div></div><div class="vl ${cl(r[1])}">${fn(r[1])}</div></div>`;
+  }).join("");
+}
+function prog(rows,mark){
+  return rows.map(r=>`<div class="pg"><div class="tp"><span>${esc(r[0])}</span><span>${(r[1]<0?"−":"")+nm(r[1],r[1]%1?2:0)}%</span></div><div class="tk"><div class="fl" style="width:${Math.max(0,Math.min(100,r[1]))}%"></div>${mark!=null?`<div class="mk" style="left:${Math.max(0,Math.min(100,mark))}%"></div>`:""}</div></div>`).join("")+(mark!=null?`<div class="lbl">| = verlopen tijd (${nm(mark,mark%1?2:0)}%)</div>`:"");
+}
+function t3row(i){return `<div class="t3"><div class="nm">${esc(i.nm)}</div><div class="${cl(i.pct)}">${pc(i.pct)}</div><div class="${cl(i.d)}">${es(i.d,2)}</div></div>`}
+function top3H(gs){
+  const h=gs.filter(x=>x.k!==""&&x.ok.length).map(x=>{
+    const w=x.ok.filter(i=>i.d>0).sort((a,b)=>b.d-a.d).slice(0,3),v=x.ok.filter(i=>i.d<0).sort((a,b)=>a.d-b.d).slice(0,3);
+    return `<div class="cb"><div class="ch">${esc(x.k)} <span class="sub m">(${x.l.length} aandelen)</span></div><div class="lb">Top dagwinnaars</div>${w.length?w.map(t3row).join(""):'<div class="m">Geen</div>'}<div class="lb">Top dagverliezers</div>${v.length?v.map(t3row).join(""):'<div class="m">Geen</div>'}<div class="t3 tt"><div>Totaal ${esc(x.k)}</div><div class="${cl(x.sp)}">${pc(x.sp)}</div><div class="${cl(x.sd)}">${es(x.sd,2)}</div></div></div>`;
+  }).join("");
+  return h||'<div class="m">Nog geen koersen geladen.</div>';
+}
+function cells(p,d,t,v,hasG){
+  return `<div class="${cl(p)}">${pc(p)}</div><div class="${cl(d)}">${ec(d,2)}</div>${hasG?`<div class="${cl(t)}">${ec(t,0)}</div>`:'<div class="m">–</div>'}<div class="wv">${ev(v)}</div>`;
+}
+function tableH(gs,ta){
+  let h=`<div class="${S.showVal?"":"nv"}"><div class="r" style="font-size:11px;color:var(--mut);border-bottom:1px solid var(--b2);padding:6px 2px;"><div>Bedrijf</div><div>Dag %</div><div>Dag €</div><div>Totaal €</div><div class="wv">Waarde</div></div>`;
+  gs.forEach(x=>{
+    const key=x.k||"?",o=!S.collapsed[key];
+    h+=`<div class="r gh" data-a="grp" data-v="${esc(key)}"><div>${o?"▾":"▸"} ${esc(x.k||"Niet geladen")} <small>(${x.l.length})</small></div>${x.ok.length?cells(x.sp,x.sd,x.stt,x.sv,x.hasG):"<div></div><div></div><div></div><div class='wv'></div>"}</div>`;
+    if(o)x.l.forEach(i=>{
+      h+=`<div class="r"><div class="n"><a href="https://finance.yahoo.com/quote/${encodeURIComponent(i.k)}" target="_blank" rel="noopener">${esc(i.nm)}</a>${i.sub?`<br><small class="dn">${esc(i.sub)}</small>`:""}</div>${i.v!=null?cells(i.pct,i.d,i.g||0,i.v,i.g!=null):"<div></div><div></div><div></div><div class='wv'></div>"}</div>`;
+    });
+  });
+  h+=`<div class="r" style="font-weight:600;border-top:1px solid var(--b2);border-bottom:none;margin-top:6px;"><div>Totaal</div>${cells(ta.sp,ta.sd,ta.stt,ta.sv,ta.hasG)}</div></div>`;
+  return h;
+}
+function portOverH(){
+  const its=items(),gs=groups(its),ta=agg(its);
+  let h=`<div class="sec" style="margin-top:6px;"><span>Dagwinnaars en -verliezers per valuta</span></div>${top3H(gs)}`;
+  h+=`<div class="big"><div class="lbl">Winst/verlies vandaag (in euro)</div><div class="x ${cl(ta.sd)}">${S.pos.length?es(ta.sd,2):"–"}</div>${S.showVal&&ta.sv?`<div class="lbl">Waarde portefeuille: ${eur(ta.sv)}</div>`:""}${ta.hasG&&ta.cost?`<div class="lbl">Sinds aankoop: ${es(ta.stt,0)} (${sg(ta.stt/ta.cost*100,1)}%)</div>`:""}${fxMiss?'<div class="warn">Wisselkoers ontbreekt bij sommige aandelen</div>':""}</div>`;
+  h+=`<div style="margin:0 2px 8px;"><button data-a="sync" class="sm">⇄ Lijst bijwerken uit Excel</button> <small>${esc(U.syMsg)}</small></div>`;
+  h+=`<label style="display:flex;align-items:center;gap:8px;margin:0 2px 10px;font-size:14px;cursor:pointer;"><input type="checkbox" data-a="sv"${S.showVal?" checked":""}> Toon waarde</label>`;
+  h+=S.pos.length?tableH(gs,ta):'<div class="m" style="padding:12px 2px;">Nog geen aandelen. Kies bij Instellingen je Excel-bestand en tik op "Lijst bijwerken uit Excel".</div>';
+  return h+`<div class="foot">${esc(U.stMsg)} · tik op een valuta om in of uit te klappen</div>`;
+}
+const COL=["#3B82F6","#F59E0B","#10B981","#8B5CF6","#EF4444","#06B6D4","#9CA3AF"];
+function donutH(its){
+  const ok=its.filter(i=>i.v!=null),tot=sum(ok,i=>i.v);
+  if(!tot)return '<div class="m">Nog geen koersen geladen.</div>';
+  let rows;
+  if(U.dm==="a"){const s=ok.slice().sort((a,b)=>b.v-a.v),top=s.slice(0,6).map(x=>[x.nm,x.v]);rows=s.length>6?top.concat([["Overige ("+(s.length-6)+")",sum(s.slice(6),x=>x.v)]]):top}
+  else{const m={};ok.forEach(i=>m[i.cur]=(m[i.cur]||0)+i.v);rows=Object.keys(m).sort().map(k=>[k,m[k]])}
+  const R=58,C=2*Math.PI*R;let off=0,arcs="";
+  rows.forEach((r,i)=>{const len=r[1]/tot*C,c=(U.dm==="a"&&i===6)?COL[6]:COL[i%6];arcs+=`<circle cx="80" cy="80" r="${R}" fill="none" stroke="${c}" stroke-width="26" stroke-dasharray="${len.toFixed(2)} ${(C-len).toFixed(2)}" stroke-dashoffset="${(-off).toFixed(2)}" transform="rotate(-90 80 80)"></circle>`;off+=len});
+  const lg=rows.map((r,i)=>`<div><span class="sw" style="background:${(U.dm==="a"&&i===6)?COL[6]:COL[i%6]}"></span>${esc(r[0])}<b>${Math.round(r[1]/tot*100)}%</b></div>`).join("");
+  return `<div style="display:flex;justify-content:center;"><svg width="160" height="160" viewBox="0 0 160 160" role="img" aria-label="Verdeling van de portefeuille">${arcs}<text x="80" y="${S.showVal?77:84}" text-anchor="middle" font-size="11" fill="var(--mut)">${S.showVal?"Totaal":"Verdeling"}</text>${S.showVal?`<text x="80" y="94" text-anchor="middle" font-size="14" font-weight="600" fill="var(--tx)">${eur(tot)}</text>`:""}</svg></div><div class="lg">${lg}</div>`;
+}
+function gainH(its){
+  const e=U.gm==="e",ok=its.filter(i=>i.g!=null);
+  if(!ok.length)return '<div class="m">Vul in je Excel het totaal betaald in € in om dit te zien.</div>';
+  const rows=ok.slice().sort((a,b)=>e?b.g-a.g:b.gp-a.gp).map(i=>[i.nm,e?i.g:i.gp]);
+  return diverge(rows,e?v=>es(v,0):v=>sg(v,1)+"%");
+}
+function sparkH(its){
+  const rg=RG[U.per];
+  return its.map(i=>{
+    const a=HIST[i.k+"|"+rg];
+    if(!a)return `<div class="sp"><div class="nm">${esc(i.nm)}</div><div class="m">…</div><div></div></div>`;
+    if(a.length<2)return `<div class="sp"><div class="nm">${esc(i.nm)}</div><div class="m">geen gegevens</div><div></div></div>`;
+    const mn=Math.min(...a),mx=Math.max(...a),w=120,h=24,pts=a.map((v,j)=>(j/(a.length-1)*w).toFixed(1)+","+(h-2-(v-mn)/(mx-mn||1)*(h-4)).toFixed(1));
+    const ch=(a[a.length-1]/a[0]-1)*100;
+    return `<div class="sp"><div class="nm">${esc(i.nm)}</div><svg width="100%" height="24" viewBox="0 0 120 24" preserveAspectRatio="none" role="img" aria-label="Koersverloop ${esc(i.nm)}"><polyline points="${pts.join(" ")}" fill="none" stroke="${ch>=0?"var(--up)":"var(--dn)"}" stroke-width="1.5" vector-effect="non-scaling-stroke"/></svg><div class="pc ${cl(ch)}">${sg(ch,1)}%</div></div>`;
+  }).join("");
+}
+function lineH(){
+  const keys=Object.keys(S.hist).sort(),days=[31,92,100000][U.wp];
+  const cut=new Date(Date.now()-days*864e5).toLocaleDateString("sv-SE");
+  const ks=keys.filter(k=>k>=cut),a=ks.map(k=>S.hist[k]);
+  if(a.length<2)return '<div class="m" style="font-size:13px;">Nog te weinig gegevens. De app bewaart elke dag het totaal van je portefeuille, op dit apparaat. Na een paar dagen verschijnt hier een lijn.</div>';
+  const mn=Math.min(...a),mx=Math.max(...a),W=320,H=110,pl=6,pt=8,pb=8;
+  const pts=a.map((x,i)=>[pl+i/(a.length-1)*(W-2*pl),pt+(1-(x-mn)/(mx-mn||1))*(H-pt-pb)]);
+  const p=pts.map(q=>q[0].toFixed(1)+","+q[1].toFixed(1)).join(" ");
+  const area="M"+pts[0][0].toFixed(1)+","+(H-pb)+" L"+p.replace(/ /g," L")+" L"+pts[pts.length-1][0].toFixed(1)+","+(H-pb)+" Z";
+  const ch=(a[a.length-1]/a[0]-1)*100;
+  return `<svg width="100%" viewBox="0 0 ${W} ${H}" role="img" aria-label="Waardeverloop van de portefeuille"><path d="${area}" fill="var(--p)" opacity="0.12"></path><polyline points="${p}" fill="none" stroke="var(--p)" stroke-width="2"/></svg><div style="display:flex;justify-content:space-between;font-size:11.5px;color:var(--mut);margin-top:2px;"><span>${S.showVal?"Laag "+eur(mn):""}</span><span class="${cl(ch)}">${sg(ch,1)}% sinds ${esc(ks[0])}</span><span>${S.showVal?"Hoog "+eur(mx):""}</span></div>`;
+}
+function portGrafH(){
+  const its=items();
+  return `<div class="sec" style="margin-top:6px;"><span>Verdeling</span>${seg("dm",[["a","Aandeel"],["v","Valuta"]],U.dm)}</div>${donutH(its)}`+
+  `<div class="sec"><span>Winst/verlies sinds aankoop</span>${seg("gm",[["e","€"],["p","%"]],U.gm)}</div>${gainH(its)}`+
+  `<div class="sec"><span>Koersverloop</span>${seg("per",[[0,"5 d"],[1,"1 m"],[2,"1 j"]],U.per)}</div>${sparkH(its)}`+
+  `<div class="sec"><span>Waardeverloop</span>${seg("wp",[[0,"1 m"],[1,"3 m"],[2,"Alles"]],U.wp)}</div>${lineH()}`;
+}
+/* ---------- Target ---------- */
+const short=v=>v.replace(/,\d\d$/,"");
+function vcls(label,v){return /voor\s*\/\s*achter/i.test(label)?(parseNum(v)<0?"dn":"up"):""}
+function tgtOverH(){
+  const P=S.tgt;
+  if(!P)return '<div class="m" style="padding:12px 2px;">Nog geen targets geladen. Kies bij Instellingen het tabblad met targets en tik bij Portefeuille op "Lijst bijwerken uit Excel".</div>';
+  const n=P.names.length;if(U.sc>n)U.sc=0;
+  const all=U.sc===n&&n>1;
+  let h='<div class="seg" style="margin-bottom:10px;">'+P.names.map((x,i)=>`<button data-a="sc" data-v="${i}" class="${U.sc===i?"on":""}" style="flex:1;font-size:11.5px;padding:6px 3px;line-height:1.2;">${esc(x)}</button>`).join("")+(n>1?`<button data-a="sc" data-v="${n}" class="${all?"on":""}" style="flex:1;font-size:11.5px;padding:6px 3px;line-height:1.2;">Alle</button>`:"")+"</div>";
+  if(!all){
+    const sc=Math.min(U.sc,n-1),jt=P.rows.find(r=>r.label==="Jaartarget");
+    if(jt)h+=`<div class="big"><div class="lbl">Jaartarget ${esc(P.names[sc])}</div><div class="x">${esc(jt.vals[sc])}</div></div>`;
+    P.rows.forEach(r=>{
+      if(r===jt)return;
+      const v=r.vals[sc];
+      h+=`<div class="ln${r.gap?" gap":""}"><div>${esc(r.label)}${r.extra.length?`<small>${esc(P.extraLabel)}: ${esc(r.extra.join(" · "))}</small>`:""}</div><div class="v ${vcls(r.label,v)}">${esc(v)}</div></div>`;
+    });
+  } else {
+    const gt=`grid-template-columns:minmax(0,1.3fr) repeat(${n},1fr)`;
+    h+=`<div class="gn" style="${gt};font-size:11px;color:var(--mut);border-bottom:1px solid var(--b2);"><div></div>${P.names.map(x=>`<div>${esc(x.replace(/scenario/i,"Scen."))}</div>`).join("")}</div>`;
+    P.rows.forEach(r=>{h+=`<div class="gn${r.gap?" gap":""}" style="${gt}"><div>${esc(r.label)}</div>${r.vals.map(v=>`<div class="${vcls(r.label,v)}">${esc(short(v))}</div>`).join("")}</div>`});
+  }
+  return h;
+}
+function tgtGrafH(){
+  if(!S.tgt)return '<div class="m" style="padding:12px 2px;">Nog geen targets geladen.</div>';
+  const C=targetCharts(S.tgt),N=S.tgt.names;
+  if(!C.prog.length&&!C.schema.length)return '<div class="m" style="padding:12px 2px;">Geen rijen "Budget gehaald" of "Voor / achter op schema" gevonden voor de grafieken.</div>';
+  let h="";
+  C.prog.forEach((p,i)=>{h+=`<div class="sec"${i===0?' style="margin-top:6px;"':""}><span>${esc(p.title)} <span class="sub">budget gehaald</span></span></div>`+prog(p.vals.map((v,j)=>[N[j],v]),p.mark)});
+  C.schema.forEach(s=>{h+=`<div class="sec"><span>${esc(s.title)}</span></div>`+diverge(s.vals.map((v,j)=>[N[j],v]),v=>es(v,0))});
+  return h;
+}
+
+/* ---------- schermen ---------- */
+function appH(){
+  const t=U.tab===0;
+  let h=`<div class="hd"><div class="t">${t?esc(TITLE):"Target"}</div><span class="ib" data-a="refresh" aria-label="Koersen verversen">↻</span><span class="ib" data-a="cfg" aria-label="Instellingen">⚙</span></div><div class="body"><div class="top"><button data-a="view" data-v="0" class="${U.view===0?"on":""}">Overzicht</button><button data-a="view" data-v="1" class="${U.view===1?"on":""}">Grafieken</button></div>`;
+  h+=t?(U.view===0?portOverH():portGrafH()):(U.view===0?tgtOverH():tgtGrafH());
+  return h+`</div><div class="tabs"><div data-a="tab" data-v="0" class="${t?"on":""}"><b>📈</b>Portefeuille</div><div data-a="tab" data-v="1" class="${t?"":"on"}"><b>🎯</b>Target</div></div>`;
+}
+function lockH(title,setup){
+  let d="";for(let i=0;i<9;i++)d+=`<div class="dot${i<U.code.length?" on":""}"></div>`;
+  let p="";["1","2","3","4","5","6","7","8","9","","0","del"].forEach(k=>{p+=k===""?"<div></div>":`<button data-a="${k==="del"?"del":"key"}" data-v="${k}">${k==="del"?"⌫":k}</button>`});
+  return `<div class="hd"><div class="t">${esc(TITLE)}</div></div><div class="body" style="text-align:center;padding-top:28px;"><div style="font-size:30px;">🔒</div><div style="font-size:16px;margin-top:6px;">${esc(title)}</div><div class="dots">${d}</div><div class="lbl" style="min-height:18px;${U.msg?"color:var(--dn)":""}">${esc(U.msg||"9 cijfers")}</div><div class="pad">${p}</div>${setup?'<button class="ghost sm" data-a="cancel">Annuleren</button>':""}</div>`;
+}
+function settingsH(){
+  const f=S.file,lk=S.lock;
+  return `<div class="hd"><span class="ib" data-a="back" aria-label="Terug">←</span><div class="t">Instellingen</div></div><div class="body">`+
+  `<div class="sec" style="margin-top:4px;">Koersen</div><div class="m" style="font-size:12px;margin-bottom:6px;">Adres van je eigen koersen-doorgever (Cloudflare Worker)</div><input type="url" id="proxy" placeholder="https://…workers.dev" value="${esc(S.proxy)}" style="width:100%"><div style="margin-top:8px;"><button class="sm" data-a="sp">Opslaan</button> <small>${esc(U.cfgMsg)}</small></div>`+
+  `<div class="sec">Excel in OneDrive</div>`+
+  `<div class="stg"><div>Microsoft-account<br><span class="lbl">${account?esc(account.username||"Ingelogd"):"Niet ingelogd"}</span></div>${account?"":'<button class="sm" data-a="login">Inloggen</button>'}</div>`+
+  `<div class="stg"><div>Bestand<br><span class="lbl">${f?esc(f.name):"Nog niet gekozen"}</span></div><button class="sm" data-a="pf">Kies</button></div>`+
+  `<div class="stg"><div>Tabblad met aandelen<br><span class="lbl">${f&&f.sheet?esc(f.sheet):"Nog niet gekozen"}</span></div><button class="sm" data-a="pts"${f?"":" disabled"}>Kies</button></div>`+
+  `<div class="stg"><div>Tabblad met targets<br><span class="lbl">${f&&f.tsheet?esc(f.tsheet):"Geen"}</span></div><button class="sm" data-a="ptt"${f?"":" disabled"}>Kies</button></div>`+
+  `<div class="sec">Weergave</div><div class="stg"><label style="display:flex;align-items:center;gap:8px;cursor:pointer;"><input type="checkbox" data-a="sv"${S.showVal?" checked":""}> Toon waarde</label></div>`+
+  `<div class="sec">Toegangscode</div><div class="stg"><div>Code (9 cijfers)<br><span class="lbl">${lk?"Ingesteld":"Uit"}</span></div><button class="sm" data-a="cs">${lk?"Wijzigen":"Instellen"}</button></div>`+
+  (lk?`<div class="stg"><div>Vergrendel na</div><select data-a="la"><option value="0"${lk.after==0?" selected":""}>Direct</option><option value="60"${lk.after==60?" selected":""}>1 minuut</option><option value="300"${lk.after==300?" selected":""}>5 minuten</option><option value="900"${lk.after==900?" selected":""}>15 minuten</option></select></div><div class="stg"><div>Code uitzetten</div><button class="sm ghost" data-a="cx">Uitzetten</button></div>`:"")+
+  `<div class="sec">Gegevens</div><div class="stg"><div>Alle bewaarde gegevens wissen<br><span class="lbl">Instellingen, code en waardeverloop verdwijnen</span></div><button class="sm ghost" data-a="wipe">Wissen</button></div></div>`;
+}
+function pickerH(){
+  const ps=U.ps;
+  let h=`<div class="hd"><span class="ib" data-a="pback" aria-label="Terug">←</span><div class="t">${ps.mode==="file"?"Kies Excel-bestand":ps.which==="aandelen"?"Tabblad met aandelen":"Tabblad met targets"}</div></div><div class="body">`;
+  if(ps.err)h+=`<p class="warn">${esc(ps.err)}</p>`;
+  if(ps.busy)return h+'<p class="m">Laden…</p></div>';
+  if(ps.mode==="file"){
+    h+=`<p><b>/ ${esc(ps.stack.map(s=>s.name).join(" / "))}</b></p>`+(ps.stack.length?'<button class="sm ghost" data-a="pup">← Terug</button>':"")+'<ul class="pl">'+(ps.items.map((x,i)=>`<li data-a="pi" data-v="${i}">${x.folder?"📁":"📄"} ${esc(x.name)}</li>`).join("")||"<li>Geen mappen of Excel-bestanden hier</li>")+"</ul>";
+  } else {
+    h+=`<p class="m">${esc(S.file.name)}</p><ul class="pl">`+ps.items.map((x,i)=>`<li data-a="pi" data-v="${i}">${esc(x)}</li>`).join("")+"</ul>"+(ps.which==="targets"?'<button class="ghost" data-a="psk">Geen targets gebruiken</button>':"");
+  }
+  return h+"</div>";
+}
+function render(){
+  const y=window.scrollY;
+  $("ph").innerHTML=U.scr==="lock"?lockH("Voer je code in",false):U.scr==="setup"?lockH(U.step===0?"Kies een nieuwe code":"Herhaal de code",true):U.scr==="settings"?settingsH():U.scr==="picker"?pickerH():appH();
+  window.scrollTo(0,y);
+}
+function draw(){if(U.scr==="app"||U.scr==="picker")render()}
+
+/* ---------- bestand kiezen ---------- */
+async function pFolder(){
+  const ps=U.ps;ps.busy=true;ps.err="";render();
+  try{
+    const cur=ps.stack[ps.stack.length-1];
+    let url=(cur?`/me/drive/items/${cur.id}/children`:"/me/drive/root/children")+"?$select=id,name,folder&$top=200",its=[];
+    while(url){const d=await g(url.replace("https://graph.microsoft.com/v1.0",""),true);its=its.concat(d.value);url=d["@odata.nextLink"]||null}
+    ps.items=its.filter(x=>x.folder||/\.xls[xm]$/i.test(x.name)).sort((a,b)=>(!!b.folder-!!a.folder)||a.name.localeCompare(b.name));
+  }catch(e){ps.err=e.message}
+  ps.busy=false;render();
+}
+async function pSheets(which,chain){
+  U.ps={mode:"sheet",which,chain,items:[],busy:true,err:"",stack:[]};U.scr="picker";render();
+  try{const d=await g(`/me/drive/items/${S.file.id}/workbook/worksheets?$select=name`,true);U.ps.items=d.value.map(s=>s.name)}catch(e){U.ps.err=e.message}
+  U.ps.busy=false;render();
+}
+function pFinish(chain){
+  if(chain){U.scr="app";U.tab=0;U.view=0;render();syncExcel(true).then(()=>refresh())}
+  else{U.scr="settings";render()}
+}
+function pStart(){
+  if(!account){app.loginRedirect({scopes:SCOPES});return}
+  U.ps={mode:"file",stack:[],items:[],busy:true,err:""};U.scr="picker";pFolder();
+}
+
+/* ---------- code ---------- */
+async function hashCode(c,salt){
+  const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(salt+":"+c));
+  return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("");
+}
+async function key(v){
+  if(U.scr==="lock"&&Date.now()<S.until)return;
+  U.code.push(v);
+  if(U.code.length<9){render();return}
+  const c=U.code.join("");U.code=[];
+  try{
+    if(U.scr==="lock"){
+      if(await hashCode(c,S.lock.salt)===S.lock.hash){S.fails=0;S.until=0;save();U.msg="";U.scr="app";render();startUp();return}
+      S.fails++;const wait=S.fails>=5?30*Math.pow(2,Math.min(S.fails-5,6)):0;
+      S.until=wait?Date.now()+wait*1000:0;save();
+      U.msg=wait?"Te veel pogingen. Wacht "+wait+" seconden.":"Onjuiste code.";render();return;
+    }
+    if(U.scr==="setup"){
+      if(U.step===0){U.tmp=c;U.step=1;U.msg="";render();return}
+      if(c!==U.tmp){U.step=0;U.tmp="";U.msg="De codes waren verschillend. Probeer opnieuw.";render();return}
+      const salt=[...crypto.getRandomValues(new Uint8Array(16))].map(x=>x.toString(16).padStart(2,"0")).join("");
+      S.lock={salt,hash:await hashCode(c,salt),after:S.lock?S.lock.after:60};S.fails=0;S.until=0;save();
+      U.tmp="";U.msg="";U.scr="settings";render();
+    }
+  }catch(e){U.msg="Code instellen lukt niet in deze browser.";U.step=0;render()}
+}
+
+/* ---------- acties ---------- */
+const root=$("ph");
+root.addEventListener("click",e=>{
+  const t=e.target.closest("[data-a]");if(!t)return;
+  const a=t.getAttribute("data-a"),v=t.getAttribute("data-v");
+  if(a==="sv"||a==="la")return;
+  if(a==="key"){key(v);return}
+  if(a==="del"){U.code.pop();render();return}
+  if(a==="cancel"){U.scr="settings";U.step=0;U.tmp="";U.code=[];U.msg="";render();return}
+  if(a==="tab"){U.tab=+v}
+  else if(a==="view"){U.view=+v;if(U.tab===0&&U.view===1)loadHist()}
+  else if(a==="sc")U.sc=+v;
+  else if(a==="grp")S.collapsed[v]=!S.collapsed[v];
+  else if(a==="dm")U.dm=v;
+  else if(a==="gm")U.gm=v;
+  else if(a==="per"){U.per=+v;loadHist()}
+  else if(a==="wp")U.wp=+v;
+  else if(a==="refresh"){refresh();return}
+  else if(a==="sync"){syncExcel(true).then(ok=>{if(ok)refresh()});return}
+  else if(a==="cfg")U.scr="settings";
+  else if(a==="back"){U.scr="app";render();refresh();return}
+  else if(a==="sp"){S.proxy=$("proxy").value.trim();save();Q={};FXQ={};HIST={};U.cfgMsg="Opgeslagen.";render();return}
+  else if(a==="login"){app.loginRedirect({scopes:SCOPES});return}
+  else if(a==="pf"){pStart();return}
+  else if(a==="pts"){pSheets("aandelen",false);return}
+  else if(a==="ptt"){pSheets("targets",false);return}
+  else if(a==="pback"){U.scr="settings"}
+  else if(a==="pup"){U.ps.stack.pop();pFolder();return}
+  else if(a==="pi"){
+    const ps=U.ps,i=+v;
+    if(ps.mode==="file"){
+      const x=ps.items[i];
+      if(x.folder){ps.stack.push({id:x.id,name:x.name});pFolder()}
+      else{S.file={id:x.id,name:x.name,sheet:"",tsheet:""};save();pSheets("aandelen",true)}
+      return;
+    }
+    const name=ps.items[i];
+    if(ps.which==="aandelen"){S.file.sheet=name;save();if(ps.chain)pSheets("targets",true);else{U.scr="settings";render()}}
+    else{S.file.tsheet=name;save();pFinish(ps.chain)}
+    return;
+  }
+  else if(a==="psk"){S.file.tsheet="";S.tgt=null;save();pFinish(U.ps.chain);return}
+  else if(a==="cs"){U.scr="setup";U.step=0;U.tmp="";U.code=[];U.msg="";}
+  else if(a==="cx"){if(confirm("Toegangscode uitzetten?")){S.lock=null;S.fails=0;S.until=0}}
+  else if(a==="wipe"){if(confirm("Alle bewaarde gegevens wissen? Dit kan niet ongedaan worden gemaakt.")){try{localStorage.clear()}catch(x){}location.reload()}return}
   save();render();
 });
-$("list").addEventListener("click",e=>{
-  const i=e.target.dataset.d;if(i===undefined)return;
-  if(confirm("Verwijderen: "+S.pos[i].sym+"?")){S.pos.splice(i,1);save();render()}
+root.addEventListener("change",e=>{
+  const a=e.target.getAttribute("data-a");
+  if(a==="sv"){S.showVal=e.target.checked;save();render()}
+  else if(a==="la"&&S.lock){S.lock.after=+e.target.value;save()}
 });
-$("ad").onclick=()=>{
-  const sym=$("sym").value.trim().toUpperCase(),qty=parseFloat($("qty").value),buy=parseFloat($("buy").value)||0;
-  if(!sym||!(qty>=0))return;
-  const ex=S.pos.find(p=>p.sym===sym);
-  if(ex){ex.qty=qty;if(buy)ex.paid=buy}else S.pos.push({sym,qty,paid:buy});
-  save();$("sym").value="";$("qty").value="";$("buy").value="";refresh();
-};
-$("sk").onclick=()=>{S.proxy=$("proxy").value.trim();save();Q={};FXQ={};refresh()};
-$("rf").onclick=refresh;
-$("proxy").value=S.proxy;
-document.addEventListener("visibilitychange",()=>{if(!document.hidden)refresh()});
-setInterval(()=>{if(!document.hidden)refresh()},60000);
+document.addEventListener("visibilitychange",()=>{
+  if(document.hidden){hiddenAt=Date.now();return}
+  if(S.lock&&U.scr!=="lock"&&U.scr!=="setup"&&(Date.now()-hiddenAt)/1000>=S.lock.after){U.scr="lock";U.code=[];U.msg="";render();return}
+  if(U.scr==="app")refresh();
+});
+setInterval(()=>{if(!document.hidden&&U.scr==="app")refresh()},60000);
+setInterval(()=>{
+  if(U.scr!=="lock")return;
+  if(S.until>Date.now()){U.msg="Wacht "+Math.ceil((S.until-Date.now())/1000)+" seconden";render()}
+  else if(U.msg.startsWith("Wacht")||U.msg.startsWith("Te veel")){U.msg="";render()}
+},1000);
 if("serviceWorker"in navigator)navigator.serviceWorker.register("sw.js");
-render();refresh();
+
+(async()=>{
+  try{const r=await app.handleRedirectPromise();account=(r&&r.account)||app.getAllAccounts()[0]||null}catch(e){U.syMsg=e.message}
+  render();
+  if(U.scr==="app")startUp();
+})();
 </script></body></html>
