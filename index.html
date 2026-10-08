@@ -182,7 +182,7 @@ S.collapsed=S.collapsed||{};S.hist=S.hist||{};if(S.showVal===undefined)S.showVal
 const save=()=>{try{localStorage.setItem("aand",JSON.stringify(S))}catch(e){}};
 const U={scr:S.lock?"lock":(S.proxy&&S.file&&S.file.sheet?"app":"settings"),tab:0,view:0,sc:0,dm:"a",gm:"e",per:1,wp:1,code:[],step:0,tmp:"",msg:"",ps:null,syMsg:"",stMsg:"",cfgMsg:""};
 let Q={},FXQ={},HIST={},busy=false,fxMiss=false,account=null,hiddenAt=0;
-const app=new msal.PublicClientApplication({auth:{clientId:CLIENT_ID,authority:"https://login.microsoftonline.com/common",redirectUri:location.origin+location.pathname},cache:{cacheLocation:"localStorage",storeAuthStateInCookie:true}});
+const app=new msal.PublicClientApplication({auth:{clientId:CLIENT_ID,authority:"https://login.microsoftonline.com/consumers",redirectUri:location.origin+location.pathname},cache:{cacheLocation:"localStorage",storeAuthStateInCookie:true}});
 function clearStale(){try{[localStorage,sessionStorage].forEach(st=>Object.keys(st).filter(k=>/interaction\.status|\.request\.|request\.params|request\.state|\.nonce\./i.test(k)).forEach(k=>st.removeItem(k)))}catch(e){}}
 async function doLogin(){
   clearStale();U.cfgMsg="Doorsturen naar Microsoft…";U.syMsg="Doorsturen naar Microsoft…";render();
