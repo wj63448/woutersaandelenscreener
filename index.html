@@ -182,7 +182,13 @@ S.collapsed=S.collapsed||{};S.hist=S.hist||{};if(S.showVal===undefined)S.showVal
 const save=()=>{try{localStorage.setItem("aand",JSON.stringify(S))}catch(e){}};
 const U={scr:S.lock?"lock":(S.proxy&&S.file&&S.file.sheet?"app":"settings"),tab:0,view:0,sc:0,dm:"a",gm:"e",per:1,wp:1,code:[],step:0,tmp:"",msg:"",ps:null,syMsg:"",stMsg:"",cfgMsg:""};
 let Q={},FXQ={},HIST={},busy=false,fxMiss=false,account=null,hiddenAt=0;
-const app=new msal.PublicClientApplication({auth:{clientId:CLIENT_ID,authority:"https://login.microsoftonline.com/common",redirectUri:location.origin+location.pathname},cache:{cacheLocation:"localStorage"}});
+const app=new msal.PublicClientApplication({auth:{clientId:CLIENT_ID,authority:"https://login.microsoftonline.com/common",redirectUri:location.origin+location.pathname},cache:{cacheLocation:"localStorage",storeAuthStateInCookie:true}});
+function clearStale(){try{[localStorage,sessionStorage].forEach(st=>Object.keys(st).filter(k=>/interaction\.status|\.request\.|request\.params|request\.state|\.nonce\./i.test(k)).forEach(k=>st.removeItem(k)))}catch(e){}}
+async function doLogin(){
+  clearStale();U.cfgMsg="Doorsturen naar Microsoft…";U.syMsg="Doorsturen naar Microsoft…";render();
+  try{await app.loginRedirect({scopes:SCOPES})}
+  catch(e){clearStale();U.cfgMsg="Inloggen mislukt: "+(e.errorMessage||e.message||e);U.syMsg=U.cfgMsg;render()}
+}
 
 /* ---------- opmaak ---------- */
 const cl=n=>n>=0?"up":"dn";
@@ -212,7 +218,7 @@ async function g(url,interactive){
 }
 async function syncExcel(interactive){
   if(!S.file||!S.file.sheet){U.syMsg="Kies eerst een bestand en tabbladen bij Instellingen.";draw();return false}
-  if(!account){if(interactive)await app.loginRedirect({scopes:SCOPES});U.syMsg="Log eerst in bij Instellingen.";draw();return false}
+  if(!account){if(interactive){await doLogin();return false}U.syMsg="Log eerst in bij Instellingen.";draw();return false}
   U.syMsg="Lijst ophalen…";draw();
   const base=`/me/drive/items/${S.file.id}/workbook/worksheets/`;
   let msg="";
@@ -496,7 +502,7 @@ function pFinish(chain){
   else{U.scr="settings";render()}
 }
 function pStart(){
-  if(!account){app.loginRedirect({scopes:SCOPES});return}
+  if(!account){doLogin();return}
   U.ps={mode:"file",stack:[],items:[],busy:true,err:""};U.scr="picker";pFolder();
 }
 
@@ -549,7 +555,7 @@ root.addEventListener("click",e=>{
   else if(a==="cfg")U.scr="settings";
   else if(a==="back"){U.scr="app";render();refresh();return}
   else if(a==="sp"){S.proxy=$("proxy").value.trim();save();Q={};FXQ={};HIST={};U.cfgMsg="Opgeslagen.";render();return}
-  else if(a==="login"){app.loginRedirect({scopes:SCOPES});return}
+  else if(a==="login"){doLogin();return}
   else if(a==="pf"){pStart();return}
   else if(a==="pts"){pSheets("aandelen",false);return}
   else if(a==="ptt"){pSheets("targets",false);return}
@@ -593,7 +599,7 @@ setInterval(()=>{
 if("serviceWorker"in navigator)navigator.serviceWorker.register("sw.js");
 
 (async()=>{
-  try{const r=await app.handleRedirectPromise();account=(r&&r.account)||app.getAllAccounts()[0]||null}catch(e){U.syMsg=e.message}
+  try{const r=await app.handleRedirectPromise();account=(r&&r.account)||app.getAllAccounts()[0]||null;if(!r&&!/[#?].*(code|error)=/.test(location.hash+location.search))clearStale();if(r&&r.account){U.cfgMsg="Ingelogd als "+(r.account.username||"")}}catch(e){clearStale();U.cfgMsg="Inloggen mislukt: "+(e.errorMessage||e.message);U.syMsg=U.cfgMsg}
   render();
   if(U.scr==="app")startUp();
 })();
