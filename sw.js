@@ -1,4 +1,4 @@
-const C="aandelen-v8",F=["./","index.html","manifest.json","icon.svg"];
+const C="aandelen-v9",F=["./","index.html","manifest.json","icon.svg","icon-192.png","icon-512.png"];
 self.addEventListener("install",e=>e.waitUntil(caches.open(C).then(c=>c.addAll(F))));
 self.addEventListener("fetch",e=>{if(e.request.method!=="GET"||new URL(e.request.url).origin!==location.origin)return;
 e.respondWith(fetch(e.request).catch(()=>caches.match(e.request)))});
