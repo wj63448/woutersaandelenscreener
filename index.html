@@ -87,6 +87,7 @@ input[type=text],input[type=url],select{font:inherit;padding:9px;border:1px soli
 .warn{font-size:12px;color:var(--dn);margin:6px 2px}
 .ix{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}.ix button{font-size:12px;padding:4px 9px;border-radius:14px;background:transparent;color:var(--tx);border:1px solid var(--b2);display:inline-flex;align-items:center;gap:5px}.ix button.off{opacity:.45}.ix .sw{width:10px;height:10px;border-radius:2px;display:inline-block}
 .ixr{display:grid;grid-template-columns:minmax(0,1fr) 62px 96px;gap:6px;padding:6px 2px;border-bottom:1px solid var(--b);font-size:12px;align-items:center}.ixr>div:nth-child(n+2){text-align:right;font-variant-numeric:tabular-nums}
+.tg{font-size:10.5px;padding:1px 6px;border-radius:10px;background:transparent;color:var(--mut);border:1px solid var(--b2);white-space:nowrap}
 </style></head><body>
 <div id="ph"></div>
 <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@2.39.0/lib/msal-browser.min.js"></script>
@@ -181,7 +182,7 @@ const $=id=>document.getElementById(id);
 const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 let S={proxy:"",pos:[],file:null,tgt:null,showVal:true,collapsed:{},hist:{},lock:null,fails:0,until:0};
 try{Object.assign(S,JSON.parse(localStorage.getItem("aand")||"{}"))}catch(e){}
-S.collapsed=S.collapsed||{};S.hist=S.hist||{};if(!Array.isArray(S.idxOn))S.idxOn=["msci","spx"];if(S.showVal===undefined)S.showVal=true;
+S.collapsed=S.collapsed||{};S.hist=S.hist||{};if(S.totMode!=="p")S.totMode="e";if(!Array.isArray(S.idxOn))S.idxOn=["msci","spx"];if(S.showVal===undefined)S.showVal=true;
 const save=()=>{try{localStorage.setItem("aand",JSON.stringify(S))}catch(e){}};
 const U={scr:S.lock?"lock":(S.proxy&&S.file&&S.file.sheet?"app":"settings"),tab:0,view:0,sc:0,dm:"a",gm:"e",per:1,wp:1,code:[],step:0,tmp:"",msg:"",ps:null,syMsg:"",stMsg:"",cfgMsg:"",ip:1};
 let IXD={};
@@ -383,19 +384,20 @@ function top3H(gs){
   }).join("");
   return h||'<div class="m">Nog geen koersen geladen.</div>';
 }
-function cells(p,d,t,v,hasG){
-  return `<div class="${cl(p)}">${pc(p)}</div><div class="${cl(d)}">${ec(d,2)}</div>${hasG?`<div class="${cl(t)}">${ec(t,0)}</div>`:'<div class="m">–</div>'}<div class="wv">${ev(v)}</div>`;
+function cells(p,d,t,v,hasG,tp){
+  const pm=S.totMode==="p"&&tp!=null;
+  return `<div class="${cl(p)}">${pc(p)}</div><div class="${cl(d)}">${ec(d,2)}</div>${hasG?`<div class="${cl(t)}">${pm?pc(tp):ec(t,0)}</div>`:'<div class="m">–</div>'}<div class="wv">${ev(v)}</div>`;
 }
 function tableH(gs,ta){
-  let h=`<div class="${S.showVal?"":"nv"}"><div class="r" style="font-size:11px;color:var(--mut);border-bottom:1px solid var(--b2);padding:6px 2px;"><div>Bedrijf</div><div>Dag %</div><div>Dag €</div><div>Totaal €</div><div class="wv">Waarde</div></div>`;
+  let h=`<div class="${S.showVal?"":"nv"}"><div class="r" style="font-size:11px;color:var(--mut);border-bottom:1px solid var(--b2);padding:6px 2px;"><div>Bedrijf</div><div>Dag %</div><div>Dag €</div><div><button class="tg" data-a="tm">Totaal ${S.totMode==="p"?"%":"€"} ⇄</button></div><div class="wv">Waarde</div></div>`;
   gs.forEach(x=>{
     const key=x.k||"?",o=!S.collapsed[key];
-    h+=`<div class="r gh" data-a="grp" data-v="${esc(key)}"><div>${o?"▾":"▸"} ${esc(x.k||"Niet geladen")} <small>(${x.l.length})</small></div>${x.ok.length?cells(x.sp,x.sd,x.stt,x.sv,x.hasG):"<div></div><div></div><div></div><div class='wv'></div>"}</div>`;
+    h+=`<div class="r gh" data-a="grp" data-v="${esc(key)}"><div>${o?"▾":"▸"} ${esc(x.k||"Niet geladen")} <small>(${x.l.length})</small></div>${x.ok.length?cells(x.sp,x.sd,x.stt,x.sv,x.hasG,x.cost?x.stt/x.cost*100:null):"<div></div><div></div><div></div><div class='wv'></div>"}</div>`;
     if(o)x.l.forEach(i=>{
-      h+=`<div class="r${i.tr===false?" off":""}"><div class="n"><a href="https://finance.yahoo.com/quote/${encodeURIComponent(i.k)}" target="_blank" rel="noopener">${esc(i.nm)}</a>${i.sub?`<br><small class="dn">${esc(i.sub)}</small>`:""}</div>${i.v!=null?cells(i.pct,i.d,i.g||0,i.v,i.g!=null):"<div></div><div></div><div></div><div class='wv'></div>"}</div>`;
+      h+=`<div class="r${i.tr===false?" off":""}"><div class="n"><a href="https://finance.yahoo.com/quote/${encodeURIComponent(i.k)}" target="_blank" rel="noopener">${esc(i.nm)}</a>${i.sub?`<br><small class="dn">${esc(i.sub)}</small>`:""}</div>${i.v!=null?cells(i.pct,i.d,i.g||0,i.v,i.g!=null,i.gp):"<div></div><div></div><div></div><div class='wv'></div>"}</div>`;
     });
   });
-  h+=`<div class="r" style="font-weight:600;border-top:1px solid var(--b2);border-bottom:none;margin-top:6px;"><div>Totaal</div>${cells(ta.sp,ta.sd,ta.stt,ta.sv,ta.hasG)}</div></div>`;
+  h+=`<div class="r" style="font-weight:600;border-top:1px solid var(--b2);border-bottom:none;margin-top:6px;"><div>Totaal</div>${cells(ta.sp,ta.sd,ta.stt,ta.sv,ta.hasG,ta.cost?ta.stt/ta.cost*100:null)}</div></div>`;
   return h;
 }
 function portOverH(){
@@ -605,6 +607,7 @@ root.addEventListener("click",e=>{
   else if(a==="per"){U.per=+v;loadHist()}
   else if(a==="wp")U.wp=+v;
   else if(a==="ip")U.ip=+v;
+  else if(a==="tm"){S.totMode=S.totMode==="p"?"e":"p";save()}
   else if(a==="ix"){S.idxOn=S.idxOn.includes(v)?S.idxOn.filter(x=>x!==v):S.idxOn.concat(v);save();loadIdx()}
   else if(a==="refresh"){refresh();return}
   else if(a==="sync"){syncExcel(true).then(ok=>{if(ok)refresh()});return}
