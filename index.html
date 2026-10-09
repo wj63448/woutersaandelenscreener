@@ -85,6 +85,8 @@ input[type=text],input[type=url],select{font:inherit;padding:9px;border:1px soli
 .pl li{padding:11px 6px;border-bottom:1px solid var(--b);cursor:pointer}
 .foot{font-size:11px;color:var(--mut);margin:12px 2px 2px}
 .warn{font-size:12px;color:var(--dn);margin:6px 2px}
+.ix{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}.ix button{font-size:12px;padding:4px 9px;border-radius:14px;background:transparent;color:var(--tx);border:1px solid var(--b2);display:inline-flex;align-items:center;gap:5px}.ix button.off{opacity:.45}.ix .sw{width:10px;height:10px;border-radius:2px;display:inline-block}
+.ixr{display:grid;grid-template-columns:minmax(0,1fr) 62px 96px;gap:6px;padding:6px 2px;border-bottom:1px solid var(--b);font-size:12px;align-items:center}.ixr>div:nth-child(n+2){text-align:right;font-variant-numeric:tabular-nums}
 </style></head><body>
 <div id="ph"></div>
 <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@2.39.0/lib/msal-browser.min.js"></script>
@@ -179,9 +181,10 @@ const $=id=>document.getElementById(id);
 const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 let S={proxy:"",pos:[],file:null,tgt:null,showVal:true,collapsed:{},hist:{},lock:null,fails:0,until:0};
 try{Object.assign(S,JSON.parse(localStorage.getItem("aand")||"{}"))}catch(e){}
-S.collapsed=S.collapsed||{};S.hist=S.hist||{};if(S.showVal===undefined)S.showVal=true;
+S.collapsed=S.collapsed||{};S.hist=S.hist||{};if(!Array.isArray(S.idxOn))S.idxOn=["msci","spx"];if(S.showVal===undefined)S.showVal=true;
 const save=()=>{try{localStorage.setItem("aand",JSON.stringify(S))}catch(e){}};
-const U={scr:S.lock?"lock":(S.proxy&&S.file&&S.file.sheet?"app":"settings"),tab:0,view:0,sc:0,dm:"a",gm:"e",per:1,wp:1,code:[],step:0,tmp:"",msg:"",ps:null,syMsg:"",stMsg:"",cfgMsg:""};
+const U={scr:S.lock?"lock":(S.proxy&&S.file&&S.file.sheet?"app":"settings"),tab:0,view:0,sc:0,dm:"a",gm:"e",per:1,wp:1,code:[],step:0,tmp:"",msg:"",ps:null,syMsg:"",stMsg:"",cfgMsg:"",ip:1};
+let IXD={};
 let Q={},FXQ={},HIST={},busy=false,fxMiss=false,account=null,hiddenAt=0;
 const app=new msal.PublicClientApplication({auth:{clientId:CLIENT_ID,authority:"https://login.microsoftonline.com/consumers",redirectUri:location.origin+location.pathname},cache:{cacheLocation:"localStorage",storeAuthStateInCookie:true}});
 function clearStale(){try{[localStorage,sessionStorage].forEach(st=>Object.keys(st).filter(k=>/interaction\.status|\.request\.|request\.params|request\.state|\.nonce\./i.test(k)).forEach(k=>st.removeItem(k)))}catch(e){}}
@@ -280,10 +283,54 @@ async function loadHist(){
   await Promise.all(S.pos.filter(p=>!HIST[p.sym+"|"+rg]).map(async p=>{try{HIST[p.sym+"|"+rg]=(await yq(p.sym,rg)).closes}catch(e){HIST[p.sym+"|"+rg]=[]}}));
   draw();
 }
+const IDX=[{k:"msci",n:"MSCI World",s:"IWDA.AS",c:"#898781",da:"6 3",usd:false},{k:"ndx",n:"Nasdaq-100",s:"^NDX",c:"#eb6834",da:"2 3",usd:true},{k:"spx",n:"S&P 500",s:"^GSPC",c:"#1baf7a",da:"8 3 2 3",usd:true}];
+async function iq(sym){
+  const r=await fetch(S.proxy.replace(/\/+$/,"")+"/?s="+encodeURIComponent(sym)+"&r=3mo");
+  if(!r.ok)throw new Error("Fout "+r.status);
+  const j=await r.json(),res=j.chart&&j.chart.result&&j.chart.result[0];
+  if(!res)throw new Error("Geen gegevens");
+  const off=(res.meta.gmtoffset||0),ts=res.timestamp||[],cl=((res.indicators.quote||[])[0]||{}).close||[];
+  return ts.map((t,i)=>[new Date((t+off)*1000).toISOString().slice(0,10),cl[i]]).filter(b=>b[1]!=null).sort((a,b)=>a[0]<b[0]?-1:1);
+}
+async function loadIdx(){
+  if(!S.proxy)return;
+  const need=IDX.filter(x=>S.idxOn.includes(x.k)&&!IXD[x.k]);
+  if(!need.length)return;
+  const fxNeed=need.some(x=>x.usd)&&!IXD.fx;
+  const jobs=need.map(async x=>{try{IXD[x.k]=await iq(x.s)}catch(e){IXD[x.k]="err"}});
+  if(fxNeed)jobs.push((async()=>{try{IXD.fx=await iq("EURUSD=X")}catch(e){IXD.fx="err"}})());
+  await Promise.all(jobs);draw();
+}
+const idxAt=(a,d)=>{for(let i=a.length-1;i>=0;i--)if(a[i][0]<=d)return a[i][1];return null};
+function idxH(){
+  const days=U.ip?92:31,cut=new Date(Date.now()-days*864e5).toLocaleDateString("sv-SE");
+  const ks=Object.keys(S.hist).sort().filter(k=>k>=cut);
+  const chips='<div class="ix">'+IDX.map(x=>`<button data-a="ix" data-v="${x.k}" class="${S.idxOn.includes(x.k)?"":"off"}"><span class="sw" style="background:${x.c}"></span>${esc(x.n)}</button>`).join("")+"</div>";
+  if(ks.length<2)return chips+'<div class="m" style="font-size:13px;">Nog te weinig gegevens. De lijn van je portefeuille begint op de dag dat de app het eerste totaal bewaarde. Na een paar dagen verschijnt hier de vergelijking.</div>';
+  const base=(v)=>v.map(x=>x==null?null:x/v[0]*100);
+  const L=[{n:"Portefeuille",c:"var(--p)",da:"",v:base(ks.map(k=>S.hist[k]))}];
+  const st=[];
+  IDX.filter(x=>S.idxOn.includes(x.k)).forEach(x=>{
+    const d=IXD[x.k],f=IXD.fx;
+    if(d===undefined||(x.usd&&f===undefined)){st.push([x.n,"…"]);return}
+    if(d==="err"||(x.usd&&f==="err")||!d.length){st.push([x.n,"geen gegevens"]);return}
+    const v=ks.map(k=>{const c=idxAt(d,k);if(c==null)return null;if(!x.usd)return c;const fx=idxAt(f,k);return fx?c/fx:null});
+    if(v[0]==null){st.push([x.n,"geen gegevens"]);return}
+    L.push({n:x.n,c:x.c,da:x.da,v:base(v)});
+  });
+  const all=[].concat(...L.map(l=>l.v.filter(x=>x!=null))),mn=Math.min(...all),mx=Math.max(...all);
+  const W=320,H=130,pl=6,pt=8,pb=8,yv=x=>pt+(1-(x-mn)/(mx-mn||1))*(H-pt-pb),xv=i=>pl+i/(ks.length-1)*(W-2*pl);
+  const lines=L.map(l=>{const p=l.v.map((x,i)=>x==null?null:xv(i).toFixed(1)+","+yv(x).toFixed(1)).filter(Boolean).join(" ");return `<polyline points="${p}" fill="none" stroke="${l.c}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"${l.da?` stroke-dasharray="${l.da}"`:""}/>`}).join("");
+  const y100=(100>=mn&&100<=mx)?`<line x1="${pl}" x2="${W-pl}" y1="${yv(100).toFixed(1)}" y2="${yv(100).toFixed(1)}" stroke="var(--b2)" stroke-width="1" stroke-dasharray="3 3"/>`:"";
+  const fd=d=>d.slice(8,10)+"/"+d.slice(5,7);
+  const pr=L[0].v[L[0].v.length-1]-100;
+  const rows=L.map((l,i)=>{const r=l.v[l.v.length-1]-100;return `<div class="ixr"><div><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${l.c};margin-right:6px"></span>${esc(l.n)}</div><div class="${cl(r)}">${sg(r,1)}%</div><div class="m">${i?"jij "+sg(pr-r,1)+" pp":""}</div></div>`}).join("")+st.map(x=>`<div class="ixr"><div>${esc(x[0])}</div><div class="m">${x[1]}</div><div></div></div>`).join("");
+  return chips+`<svg width="100%" viewBox="0 0 ${W} ${H}" role="img" aria-label="Portefeuille tegenover indices, start is 100">${y100}${lines}</svg><div style="display:flex;justify-content:space-between;font-size:11.5px;color:var(--mut);"><span>${fd(ks[0])}</span><span>start = 100 · in euro</span><span>${fd(ks[ks.length-1])}</span></div>${rows}<div class="m" style="font-size:11.5px;margin-top:6px;">Stortingen of opnames in je portefeuille zijn niet verwerkt. De MSCI World wordt gevolgd via een ETF.</div>`;
+}
 async function startUp(){
   if(account&&S.file&&S.file.sheet)await syncExcel(false);
   await refresh();
-  if(U.tab===0&&U.view===1)loadHist();
+  if(U.tab===0&&U.view===1){loadHist();loadIdx()}
 }
 
 /* ---------- berekeningen ---------- */
@@ -298,7 +345,7 @@ function items(){
       const fx=q.cur==="EUR"?{now:1,prev:1}:FXQ[q.cur];
       if(!fx){fxMiss=true;it.sub="wisselkoers niet beschikbaar"}
       else{
-        it.v=q.c*p.qty/fx.now;const pe=q.prev*p.qty/fx.prev;it.d=it.v-pe;
+        it.v=q.c*p.qty/fx.now;const pe=q.prev*p.qty/fx.prev;it.d=it.v-pe;it.dk=(q.c-q.prev)*p.qty/fx.prev;it.dv=it.d-it.dk;
         it.pct=q.prev?((q.c/fx.now)/(q.prev/fx.prev)-1)*100:0;
         if(p.paid>0){it.g=it.v-p.paid;it.gp=it.g/p.paid*100}
       }
@@ -307,8 +354,8 @@ function items(){
   });
 }
 function agg(l){
-  const ok=l.filter(i=>i.v!=null),td=ok.filter(i=>i.tr),sd=sum(td,i=>i.d),sv=sum(ok,i=>i.v),gg=ok.filter(i=>i.g!=null),tv=sum(td,i=>i.v);
-  return{ok,sd,sv,stt:sum(gg,i=>i.g),cost:sum(gg,i=>i.p.paid),hasG:gg.length>0,sp:(tv-sd)?sd/(tv-sd)*100:0,nt:ok.length-td.length};
+  const ok=l.filter(i=>i.v!=null),td=ok.filter(i=>i.tr),sd=sum(td,i=>i.d),sv=sum(ok,i=>i.v),gg=ok.filter(i=>i.g!=null),tv=sum(td,i=>i.v),sk=sum(td,i=>i.dk),sf=sum(td,i=>i.dv);
+  return{ok,sd,sv,stt:sum(gg,i=>i.g),cost:sum(gg,i=>i.p.paid),hasG:gg.length>0,sp:(tv-sd)?sd/(tv-sd)*100:0,nt:ok.length-td.length,sk,sf};
 }
 function groups(its){
   const m={};its.forEach(i=>(m[i.cur]=m[i.cur]||[]).push(i));
@@ -354,7 +401,7 @@ function tableH(gs,ta){
 function portOverH(){
   const its=items(),gs=groups(its),ta=agg(its);
   let h=`<div class="sec" style="margin-top:6px;"><span>Dagwinnaars en -verliezers per valuta</span></div>${top3H(gs)}`;
-  h+=`<div class="big"><div class="lbl">Winst/verlies vandaag (in euro)</div><div class="x ${cl(ta.sd)}">${S.pos.length?es(ta.sd,2):"–"}</div>${S.showVal&&ta.sv?`<div class="lbl">Waarde portefeuille: ${eur(ta.sv)}</div>`:""}${ta.nt?`<div class="lbl">${ta.nt} ${ta.nt===1?"aandeel":"aandelen"} zonder handel vandaag niet meegeteld</div>`:""}${ta.hasG&&ta.cost?`<div class="lbl">Sinds aankoop: ${es(ta.stt,0)} (${sg(ta.stt/ta.cost*100,1)}%)</div>`:""}${fxMiss?'<div class="warn">Wisselkoers ontbreekt bij sommige aandelen</div>':""}</div>`;
+  h+=`<div class="big"><div class="lbl">Winst/verlies vandaag (in euro)</div><div class="x ${cl(ta.sd)}">${S.pos.length?es(ta.sd,2):"–"}</div>${ta.ok.some(i=>i.tr)?`<div class="lbl">Koers ${es(ta.sk,2)} · Valuta ${es(ta.sf,2)}</div>`:""}${S.showVal&&ta.sv?`<div class="lbl">Waarde portefeuille: ${eur(ta.sv)}</div>`:""}${ta.nt?`<div class="lbl">${ta.nt} ${ta.nt===1?"aandeel":"aandelen"} zonder handel vandaag niet meegeteld</div>`:""}${ta.hasG&&ta.cost?`<div class="lbl">Sinds aankoop: ${es(ta.stt,0)} (${sg(ta.stt/ta.cost*100,1)}%)</div>`:""}${fxMiss?'<div class="warn">Wisselkoers ontbreekt bij sommige aandelen</div>':""}</div>`;
   h+=`<div style="margin:0 2px 8px;"><button data-a="sync" class="sm">⇄ Lijst bijwerken uit Excel</button> <small>${esc(U.syMsg)}</small></div>`;
   h+=`<label style="display:flex;align-items:center;gap:8px;margin:0 2px 10px;font-size:14px;cursor:pointer;"><input type="checkbox" data-a="sv"${S.showVal?" checked":""}> Toon waarde</label>`;
   h+=S.pos.length?tableH(gs,ta):'<div class="m" style="padding:12px 2px;">Nog geen aandelen. Kies bij Instellingen je Excel-bestand en tik op "Lijst bijwerken uit Excel".</div>';
@@ -406,7 +453,8 @@ function portGrafH(){
   return `<div class="sec" style="margin-top:6px;"><span>Verdeling</span>${seg("dm",[["a","Aandeel"],["v","Valuta"]],U.dm)}</div>${donutH(its)}`+
   `<div class="sec"><span>Winst/verlies sinds aankoop</span>${seg("gm",[["e","€"],["p","%"]],U.gm)}</div>${gainH(its)}`+
   `<div class="sec"><span>Koersverloop</span>${seg("per",[[0,"5 d"],[1,"1 m"],[2,"1 j"]],U.per)}</div>${sparkH(its)}`+
-  `<div class="sec"><span>Waardeverloop</span>${seg("wp",[[0,"1 m"],[1,"3 m"],[2,"Alles"]],U.wp)}</div>${lineH()}`;
+  `<div class="sec"><span>Waardeverloop</span>${seg("wp",[[0,"1 m"],[1,"3 m"],[2,"Alles"]],U.wp)}</div>${lineH()}`+
+  `<div class="sec"><span>Portefeuille tegenover indices</span>${seg("ip",[[0,"1 m"],[1,"3 m"]],U.ip)}</div>${idxH()}`;
 }
 /* ---------- Target ---------- */
 const short=v=>v.replace(/,\d\d$/,"");
@@ -549,18 +597,20 @@ root.addEventListener("click",e=>{
   if(a==="del"){U.code.pop();render();return}
   if(a==="cancel"){U.scr="settings";U.step=0;U.tmp="";U.code=[];U.msg="";render();return}
   if(a==="tab"){U.tab=+v}
-  else if(a==="view"){U.view=+v;if(U.tab===0&&U.view===1)loadHist()}
+  else if(a==="view"){U.view=+v;if(U.tab===0&&U.view===1){loadHist();loadIdx()}}
   else if(a==="sc")U.sc=+v;
   else if(a==="grp")S.collapsed[v]=!S.collapsed[v];
   else if(a==="dm")U.dm=v;
   else if(a==="gm")U.gm=v;
   else if(a==="per"){U.per=+v;loadHist()}
   else if(a==="wp")U.wp=+v;
+  else if(a==="ip")U.ip=+v;
+  else if(a==="ix"){S.idxOn=S.idxOn.includes(v)?S.idxOn.filter(x=>x!==v):S.idxOn.concat(v);save();loadIdx()}
   else if(a==="refresh"){refresh();return}
   else if(a==="sync"){syncExcel(true).then(ok=>{if(ok)refresh()});return}
   else if(a==="cfg")U.scr="settings";
   else if(a==="back"){U.scr="app";render();refresh();return}
-  else if(a==="sp"){S.proxy=$("proxy").value.trim();save();Q={};FXQ={};HIST={};U.cfgMsg="Opgeslagen.";render();return}
+  else if(a==="sp"){S.proxy=$("proxy").value.trim();save();Q={};FXQ={};HIST={};IXD={};U.cfgMsg="Opgeslagen.";render();return}
   else if(a==="login"){doLogin();return}
   else if(a==="pf"){pStart();return}
   else if(a==="pts"){pSheets("aandelen",false);return}
