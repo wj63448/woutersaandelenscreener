@@ -312,6 +312,7 @@ function agg(l){
 }
 function groups(its){
   const m={};its.forEach(i=>(m[i.cur]=m[i.cur]||[]).push(i));
+  Object.values(m).forEach(l=>l.sort((x,y)=>String(x.nm).localeCompare(String(y.nm),"nl",{sensitivity:"base"})));
   return Object.keys(m).sort((a,b)=>a===""?1:b===""?-1:a.localeCompare(b)).map(k=>Object.assign({k,l:m[k]},agg(m[k])));
 }
 
