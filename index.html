@@ -250,6 +250,8 @@ async function yq(sym,range){
     const p=same?bars[bars.length-2]:bars[bars.length-1];
     if(p)prev=p[1];
   }
+  const cp=m.regularMarketChangePercent;
+  if(typeof cp==="number"&&cp>-99&&m.regularMarketPrice>0)prev=m.regularMarketPrice/(1+cp/100);
   return{c:m.regularMarketPrice,prev,cur:m.currency,name:m.shortName||m.longName||sym,closes:bars.map(b=>b[1])};
 }
 function recordHist(){
