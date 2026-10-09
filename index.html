@@ -31,6 +31,7 @@ input[type=text],input[type=url],select{font:inherit;padding:9px;border:1px soli
 .n a{color:var(--tx);text-decoration:none;border-bottom:1px dotted var(--b2)}
 .gh{background:var(--bg2);font-weight:600;cursor:pointer;border-radius:6px;padding-left:6px;padding-right:6px;margin-top:4px}
 .gh small{font-weight:400;color:var(--mut)}
+.r.off>div:nth-child(2),.r.off>div:nth-child(3){opacity:.4}
 .up{color:var(--up)}.dn{color:var(--dn)}
 .m,small,.lbl{color:var(--mut)}
 .lbl{font-size:12px}
@@ -252,7 +253,9 @@ async function yq(sym,range){
   }
   const cp=m.regularMarketChangePercent;
   if(typeof cp==="number"&&cp>-99&&m.regularMarketPrice>0)prev=m.regularMarketPrice/(1+cp/100);
-  return{c:m.regularMarketPrice,prev,cur:m.currency,name:m.shortName||m.longName||sym,closes:bars.map(b=>b[1])};
+  const off=(m.gmtoffset||0)*1000,dayOf=t=>new Date(t*1000+off).toISOString().slice(0,10);
+  const tr=m.regularMarketTime?dayOf(m.regularMarketTime)===new Date(Date.now()+off).toISOString().slice(0,10):true;
+  return{c:m.regularMarketPrice,prev,tr,cur:m.currency,name:m.shortName||m.longName||sym,closes:bars.map(b=>b[1])};
 }
 function recordHist(){
   const its=items();
@@ -287,11 +290,11 @@ async function startUp(){
 function items(){
   fxMiss=false;
   return S.pos.map(p=>{
-    const q=Q[p.sym],it={p,k:p.sym,nm:(q&&q.name)||p.sym,cur:"",sub:"",v:null,d:null,pct:null,g:null,gp:null};
+    const q=Q[p.sym],it={p,k:p.sym,tr:true,nm:(q&&q.name)||p.sym,cur:"",sub:"",v:null,d:null,pct:null,g:null,gp:null};
     if(!q)it.sub="…";
     else if(q.err)it.sub=q.err;
     else{
-      it.cur=q.cur||"";
+      it.cur=q.cur||"";it.tr=q.tr!==false;
       const fx=q.cur==="EUR"?{now:1,prev:1}:FXQ[q.cur];
       if(!fx){fxMiss=true;it.sub="wisselkoers niet beschikbaar"}
       else{
@@ -304,8 +307,8 @@ function items(){
   });
 }
 function agg(l){
-  const ok=l.filter(i=>i.v!=null),sd=sum(ok,i=>i.d),sv=sum(ok,i=>i.v),gg=ok.filter(i=>i.g!=null);
-  return{ok,sd,sv,stt:sum(gg,i=>i.g),cost:sum(gg,i=>i.p.paid),hasG:gg.length>0,sp:(sv-sd)?sd/(sv-sd)*100:0};
+  const ok=l.filter(i=>i.v!=null),td=ok.filter(i=>i.tr),sd=sum(td,i=>i.d),sv=sum(ok,i=>i.v),gg=ok.filter(i=>i.g!=null),tv=sum(td,i=>i.v);
+  return{ok,sd,sv,stt:sum(gg,i=>i.g),cost:sum(gg,i=>i.p.paid),hasG:gg.length>0,sp:(tv-sd)?sd/(tv-sd)*100:0,nt:ok.length-td.length};
 }
 function groups(its){
   const m={};its.forEach(i=>(m[i.cur]=m[i.cur]||[]).push(i));
@@ -327,8 +330,8 @@ function prog(rows,mark){
 function t3row(i){return `<div class="t3"><div class="nm">${esc(i.nm)}</div><div class="${cl(i.pct)}">${pc(i.pct)}</div><div class="${cl(i.d)}">${es(i.d,2)}</div></div>`}
 function top3H(gs){
   const h=gs.filter(x=>x.k!==""&&x.ok.length).map(x=>{
-    const w=x.ok.filter(i=>i.d>0).sort((a,b)=>b.d-a.d).slice(0,3),v=x.ok.filter(i=>i.d<0).sort((a,b)=>a.d-b.d).slice(0,3);
-    return `<div class="cb"><div class="ch">${esc(x.k)} <span class="sub m">(${x.l.length} aandelen)</span></div><div class="lb">Top dagwinnaars</div>${w.length?w.map(t3row).join(""):'<div class="m">Geen</div>'}<div class="lb">Top dagverliezers</div>${v.length?v.map(t3row).join(""):'<div class="m">Geen</div>'}<div class="t3 tt"><div>Totaal ${esc(x.k)}</div><div class="${cl(x.sp)}">${pc(x.sp)}</div><div class="${cl(x.sd)}">${es(x.sd,2)}</div></div></div>`;
+    const w=x.ok.filter(i=>i.tr&&i.d>0).sort((a,b)=>b.d-a.d).slice(0,3),v=x.ok.filter(i=>i.tr&&i.d<0).sort((a,b)=>a.d-b.d).slice(0,3);
+    return `<div class="cb"><div class="ch">${esc(x.k)} <span class="sub m">(${x.l.length} aandelen)</span></div><div class="lb">Top 3 dagwinnaars</div>${w.length?w.map(t3row).join(""):'<div class="m">Geen</div>'}<div class="lb">Top 3 dagverliezers</div>${v.length?v.map(t3row).join(""):'<div class="m">Geen</div>'}<div class="t3 tt"><div>Totaal ${esc(x.k)}</div><div class="${cl(x.sp)}">${pc(x.sp)}</div><div class="${cl(x.sd)}">${es(x.sd,2)}</div></div></div>`;
   }).join("");
   return h||'<div class="m">Nog geen koersen geladen.</div>';
 }
@@ -341,7 +344,7 @@ function tableH(gs,ta){
     const key=x.k||"?",o=!S.collapsed[key];
     h+=`<div class="r gh" data-a="grp" data-v="${esc(key)}"><div>${o?"▾":"▸"} ${esc(x.k||"Niet geladen")} <small>(${x.l.length})</small></div>${x.ok.length?cells(x.sp,x.sd,x.stt,x.sv,x.hasG):"<div></div><div></div><div></div><div class='wv'></div>"}</div>`;
     if(o)x.l.forEach(i=>{
-      h+=`<div class="r"><div class="n"><a href="https://finance.yahoo.com/quote/${encodeURIComponent(i.k)}" target="_blank" rel="noopener">${esc(i.nm)}</a>${i.sub?`<br><small class="dn">${esc(i.sub)}</small>`:""}</div>${i.v!=null?cells(i.pct,i.d,i.g||0,i.v,i.g!=null):"<div></div><div></div><div></div><div class='wv'></div>"}</div>`;
+      h+=`<div class="r${i.tr===false?" off":""}"><div class="n"><a href="https://finance.yahoo.com/quote/${encodeURIComponent(i.k)}" target="_blank" rel="noopener">${esc(i.nm)}</a>${i.sub?`<br><small class="dn">${esc(i.sub)}</small>`:""}</div>${i.v!=null?cells(i.pct,i.d,i.g||0,i.v,i.g!=null):"<div></div><div></div><div></div><div class='wv'></div>"}</div>`;
     });
   });
   h+=`<div class="r" style="font-weight:600;border-top:1px solid var(--b2);border-bottom:none;margin-top:6px;"><div>Totaal</div>${cells(ta.sp,ta.sd,ta.stt,ta.sv,ta.hasG)}</div></div>`;
@@ -350,7 +353,7 @@ function tableH(gs,ta){
 function portOverH(){
   const its=items(),gs=groups(its),ta=agg(its);
   let h=`<div class="sec" style="margin-top:6px;"><span>Dagwinnaars en -verliezers per valuta</span></div>${top3H(gs)}`;
-  h+=`<div class="big"><div class="lbl">Winst/verlies vandaag (in euro)</div><div class="x ${cl(ta.sd)}">${S.pos.length?es(ta.sd,2):"–"}</div>${S.showVal&&ta.sv?`<div class="lbl">Waarde portefeuille: ${eur(ta.sv)}</div>`:""}${ta.hasG&&ta.cost?`<div class="lbl">Sinds aankoop: ${es(ta.stt,0)} (${sg(ta.stt/ta.cost*100,1)}%)</div>`:""}${fxMiss?'<div class="warn">Wisselkoers ontbreekt bij sommige aandelen</div>':""}</div>`;
+  h+=`<div class="big"><div class="lbl">Winst/verlies vandaag (in euro)</div><div class="x ${cl(ta.sd)}">${S.pos.length?es(ta.sd,2):"–"}</div>${S.showVal&&ta.sv?`<div class="lbl">Waarde portefeuille: ${eur(ta.sv)}</div>`:""}${ta.nt?`<div class="lbl">${ta.nt} ${ta.nt===1?"aandeel":"aandelen"} zonder handel vandaag niet meegeteld</div>`:""}${ta.hasG&&ta.cost?`<div class="lbl">Sinds aankoop: ${es(ta.stt,0)} (${sg(ta.stt/ta.cost*100,1)}%)</div>`:""}${fxMiss?'<div class="warn">Wisselkoers ontbreekt bij sommige aandelen</div>':""}</div>`;
   h+=`<div style="margin:0 2px 8px;"><button data-a="sync" class="sm">⇄ Lijst bijwerken uit Excel</button> <small>${esc(U.syMsg)}</small></div>`;
   h+=`<label style="display:flex;align-items:center;gap:8px;margin:0 2px 10px;font-size:14px;cursor:pointer;"><input type="checkbox" data-a="sv"${S.showVal?" checked":""}> Toon waarde</label>`;
   h+=S.pos.length?tableH(gs,ta):'<div class="m" style="padding:12px 2px;">Nog geen aandelen. Kies bij Instellingen je Excel-bestand en tik op "Lijst bijwerken uit Excel".</div>';
