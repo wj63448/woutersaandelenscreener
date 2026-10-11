@@ -521,7 +521,7 @@ function vparts(){
     if(i.v==null)return;
     (i.p.parts||[]).forEach(pt=>{
       const fr=pt.qty/i.p.qty,v=i.v*fr;
-      out.push({nm:i.nm,input:pt.input||"",sector:pt.sector||"",v,d:i.tr?i.d*fr:0,tr:i.tr,paid:pt.paid,g:pt.paid>0?v-pt.paid+pt.div*pt.qty:null});
+      out.push({nm:i.nm,input:pt.input||"",sector:pt.sector||"",v,d:i.tr?i.d*fr:0,tr:i.tr,paid:pt.paid,g:pt.paid>0?v-pt.paid+pt.div:null});
     });
   });
   return out;
