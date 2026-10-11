@@ -72,6 +72,7 @@ input[type=text],input[type=url],select{font:inherit;padding:9px;border:1px soli
 .lg .sw{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px}
 .lg b{font-weight:400;color:var(--mut);margin-left:4px}
 .vg{display:grid;grid-template-columns:76px repeat(5,minmax(0,1fr));gap:2px;font-size:11px;align-items:center;padding:7px 0;border-bottom:1px solid var(--b)}
+.vg.h2{grid-template-columns:minmax(0,1fr) 64px}
 .vg.h4{grid-template-columns:90px repeat(3,minmax(0,1fr))}
 .vg>span{text-align:right;white-space:nowrap}.vg>span:first-child{text-align:left;overflow:hidden;text-overflow:ellipsis}
 .vg.vh{color:var(--mut);font-size:10px;border-bottom:1px solid var(--b2);padding:4px 0}
@@ -538,7 +539,12 @@ function vagg(l,tot){
 }
 function vrow(nmH,a,cls,attr){
   const e=S.showVal;
-  return `<div class="vg${e?"":" h4"} ${cls||""}"${attr||""}><span>${nmH}</span>${e?`<span>${kk(a.v,false)}</span><span class="${a.hasG?cl(a.g):""}">${a.hasG?kk(a.g,true):"–"}</span>`:""}<span class="${a.gp==null?"":cl(a.gp)}">${a.gp==null?"–":sg(a.gp,0)+"%"}</span><span class="${a.dp==null?"":cl(a.dp)}">${a.dp==null?"–":sg(a.dp,2)+"%"}</span><span>${nm(a.w,2)}%</span></div>`;
+  return `<div class="vg${e?"":" h2"} ${cls||""}"${attr||""}><span>${nmH}</span>${e?`<span>${kk(a.v,false)}</span><span class="${a.hasG?cl(a.g):""}">${a.hasG?kk(a.g,true):"–"}</span><span class="${a.gp==null?"":cl(a.gp)}">${a.gp==null?"–":sg(a.gp,0)+"%"}</span><span class="${a.dp==null?"":cl(a.dp)}">${a.dp==null?"–":sg(a.dp,2)+"%"}</span>`:""}<span>${nm(a.w,2)}%</span></div>`;
+}
+function donutSvg(rows,tot,lbl){
+  const R=58,C=2*Math.PI*R;let off=0,arcs="";
+  rows.forEach(r=>{const len=r[1]/tot*C;arcs+=`<circle cx="80" cy="80" r="${R}" fill="none" stroke="${r[2]}" stroke-width="26" stroke-dasharray="${len.toFixed(2)} ${(C-len).toFixed(2)}" stroke-dashoffset="${(-off).toFixed(2)}" transform="rotate(-90 80 80)"></circle>`;off+=len});
+  return `<div style="display:flex;justify-content:center;"><svg width="160" height="160" viewBox="0 0 160 160" role="img" aria-label="Verdeling per ${lbl.toLowerCase()}">${arcs}${S.showVal?`<text x="80" y="77" text-anchor="middle" font-size="11" fill="var(--mut)">Totaal</text><text x="80" y="94" text-anchor="middle" font-size="14" font-weight="600" fill="var(--tx)">${eur(tot)}</text>`:""}</svg></div>`;
 }
 function verdH(){
   const hint=t=>`<div class="m" style="padding:12px 2px;">${t}</div>`;
@@ -549,33 +555,34 @@ function verdH(){
   if(miss)return hint(`Kolom "${U.vm==="i"?"Input":"Sector"}" niet gevonden. Voeg die toe in de eerste rij van je tabblad met aandelen en tik bij Portefeuille op "Lijst bijwerken uit Excel".`);
   const L=vparts(),tot=sum(L,x=>x.v);
   if(!tot)return hint("Nog geen koersen geladen.");
+  const cb=`<label style="display:flex;align-items:center;gap:8px;margin:0 2px 10px;font-size:14px;cursor:pointer;"><input type="checkbox" data-a="sv"${S.showVal?" checked":""}> Toon waarde</label>`;
   const nomiss=!f.hasDv?'<div class="foot" style="text-align:left;">Kolom "Dividenden" niet gevonden: winst/verlies is zonder dividend.</div>':"";
   if(U.vm==="i"){
     const m={};L.forEach(x=>(m[x.input]=m[x.input]||[]).push(x));
     const keys=INORD.filter(k=>m[k]).concat(Object.keys(m).filter(k=>!INORD.includes(k)&&k!=="").sort(),m[""]?[""]:[]);
     const e=S.showVal;
-    let h=`<div class="vg${e?"":" h4"} vh"><span>Input</span>${e?"<span>Waarde</span><span>W/V €</span>":""}<span>W/V %</span><span>Dag %</span><span>Weging</span></div>`;
+    const ic=k=>k===""?COL8[8]:COL8[Math.min(keys.indexOf(k),7)];
+    const sw=k=>`<i class="sw" style="display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:4px;background:${ic(k)}"></i>`;
+    let h=donutSvg(keys.map(k=>[k||"Zonder input",sum(m[k],x=>x.v),ic(k)]),tot,"Inputs")+`<div class="vg${e?"":" h2"} vh" style="margin-top:8px"><span>Input</span>${e?"<span>Waarde</span><span>W/V €</span><span>W/V %</span><span>Dag %</span>":""}<span>Weging</span></div>`;
     S.iopen=S.iopen||{};
     keys.forEach(k=>{
       const l=m[k],o=!!S.iopen[k],a=vagg(l,tot);
-      h+=vrow((o?"▾ ":"▸ ")+esc(k||"Zonder input"),a,"vp",` data-a="ig" data-v="${esc(k)}"`);
+      h+=vrow((o?"▾ ":"▸ ")+sw(k)+esc(k||"Zonder input"),a,"vp",` data-a="ig" data-v="${esc(k)}"`);
       if(o)l.slice().sort((x,y)=>y.v-x.v).forEach(x=>{h+=vrow(esc(x.nm),vagg([x],tot),"vs")});
     });
     h+=vrow("Totaal",vagg(L,tot),"vp");
-    return h+nomiss+'<div class="foot" style="text-align:left;">W/V inclusief dividend · bedragen in duizend (k) · Dag % enkel aandelen die vandaag handelden · tik op een input om uit te klappen</div>';
+    return cb+h+nomiss+'<div class="foot" style="text-align:left;">W/V inclusief dividend · bedragen in duizend (k) · Dag % enkel aandelen die vandaag handelden · tik op een input om uit te klappen</div>';
   }
   const m={};L.forEach(x=>{const k=x.sector||"Onbekend";m[k]=(m[k]||0)+x.v});
   const all=Object.keys(m).map(k=>[k,m[k]]).sort((a,b)=>b[1]-a[1]);
   const top=all.slice(0,8),rest=all.slice(8),show=U.sall?all:top;
   const rows=top.slice();if(rest.length)rows.push(["Overige ("+rest.length+")",sum(rest,r=>r[1])]);
-  const R=58,C=2*Math.PI*R;let off=0,arcs="";
-  rows.forEach((r,i)=>{const len=r[1]/tot*C,c=(rest.length&&i===rows.length-1)?COL8[8]:COL8[i%8];arcs+=`<circle cx="80" cy="80" r="${R}" fill="none" stroke="${c}" stroke-width="26" stroke-dasharray="${len.toFixed(2)} ${(C-len).toFixed(2)}" stroke-dashoffset="${(-off).toFixed(2)}" transform="rotate(-90 80 80)"></circle>`;off+=len});
-  let h=`<div style="display:flex;justify-content:center;"><svg width="160" height="160" viewBox="0 0 160 160" role="img" aria-label="Verdeling per sector">${arcs}<text x="80" y="${S.showVal?77:84}" text-anchor="middle" font-size="11" fill="var(--mut)">${S.showVal?"Totaal":"Sectoren"}</text>${S.showVal?`<text x="80" y="94" text-anchor="middle" font-size="14" font-weight="600" fill="var(--tx)">${eur(tot)}</text>`:""}</svg></div><div style="margin-top:8px;">`;
+  let h=donutSvg(rows.map((r,i)=>[r[0],r[1],(rest.length&&i===rows.length-1)?COL8[8]:COL8[i%8]]),tot,"Sector")+`<div style="margin-top:8px;">`;
   show.forEach((r,i)=>{h+=`<div class="vl"><span class="sw" style="background:${COL8[i<8?i:8]}"></span><span class="n">${esc(r[0])}</span><span class="p">${nm(r[1]/tot*100,2)}%</span>${S.showVal?`<span class="w">${ev(r[1])}</span>`:""}</div>`});
   if(!U.sall&&rest.length)h+=`<div class="vl"><span class="sw" style="background:${COL8[8]}"></span><span class="n">Overige (${rest.length})</span><span class="p">${nm(sum(rest,r=>r[1])/tot*100,2)}%</span>${S.showVal?`<span class="w">${ev(sum(rest,r=>r[1]))}</span>`:""}</div>`;
   h+=`<div class="vl tot"><span class="sw" style="background:transparent"></span><span class="n">Eindtotaal</span><span class="p">100,00%</span>${S.showVal?`<span class="w">${ev(tot)}</span>`:""}</div></div>`;
   if(all.length>8)h+=`<div style="margin-top:10px;"><button class="sm ghost" data-a="sall">${U.sall?"Toon top 8":"Toon alle "+all.length}</button></div>`;
-  return h+nomiss;
+  return cb+h+nomiss;
 }
 function lockH(title,setup){
   let d="";for(let i=0;i<9;i++)d+=`<div class="dot${i<U.code.length?" on":""}"></div>`;
