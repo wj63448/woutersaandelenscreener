@@ -42,6 +42,7 @@ input[type=text],input[type=url],select{font:inherit;padding:9px;border:1px soli
 .ln .v{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 .ln small{display:block;font-size:11px;margin-top:2px;white-space:normal}
 .gn{display:grid;gap:4px;padding:8px 2px;border-bottom:1px solid var(--b);font-size:11.5px;align-items:center}
+.gh{color:#fff;font-weight:600;font-size:13px;padding:6px 10px;border-radius:6px;margin:16px 0 0}
 .gn>div+div{text-align:right;font-variant-numeric:tabular-nums}
 .gn.gap{margin-top:14px}
 .big{text-align:center;padding:4px 0 8px}
@@ -496,7 +497,13 @@ function tgtOverH(){
   } else {
     const gt=`grid-template-columns:minmax(0,1.3fr) repeat(${n},1fr)`;
     h+=`<div class="gn" style="${gt};font-size:11px;color:var(--mut);border-bottom:1px solid var(--b2);"><div></div>${P.names.map(x=>`<div>${esc(x.replace(/scenario/i,"Scen."))}</div>`).join("")}</div>`;
-    P.rows.forEach(r=>{h+=`<div class="gn${r.gap?" gap":""}" style="${gt}"><div>${esc(r.label)}</div>${r.vals.map(v=>`<div class="${vcls(r.label,v)}">${esc(short(v))}</div>`).join("")}</div>`});
+    const HT0=[["Basissimulatie","#64748B"],["5 jaar target totaal","#3B82F6"],["5 jaar target op vandaag","#8B5CF6"],["1 jaar target op vandaag","#F59E0B"]];
+    const nb=P.rows.filter((r,i)=>i===0||r.gap).length,HT=nb===4?HT0:HT0.slice(1),hd=nb===HT.length;
+    let bi=-1;
+    P.rows.forEach((r,i)=>{
+      const nw=i===0||r.gap;if(nw)bi++;
+      if(hd&&nw)h+=`<div class="gh" style="background:${HT[bi][1]}">${HT[bi][0]}</div>`;
+      h+=`<div class="gn${r.gap&&!hd?" gap":""}" style="${gt}"><div>${esc(r.label)}</div>${r.vals.map(v=>`<div class="${vcls(r.label,v)}">${esc(short(v))}</div>`).join("")}</div>`});
   }
   return h;
 }
