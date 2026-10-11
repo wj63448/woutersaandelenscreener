@@ -129,11 +129,11 @@ function parseList(v){
     let sym=String(r[iS]==null?"":r[iS]).trim().toUpperCase();
     if(!sym&&mk>0)sym=nmx.toUpperCase();
     if(!sym)return;
-    const q=parseNum(r[iQ]),o=m[sym]||(m[sym]={sym,qty:0,paid:0,bq:0});
+    let q=parseNum(r[iQ]);if(mk>0&&q<=0)q=1;const o=m[sym]||(m[sym]={sym,qty:0,paid:0,bq:0});
     if(mk>0){o.man=mk;o.mname=nmx||sym;o.mcur=(iC>=0&&String(r[iC]||"").trim()?String(r[iC]).trim().toUpperCase():"EUR")}
     const pd=iP>=0?parseNum(r[iP]):0;
     o.qty+=q;o.paid+=pd;if(iB>=0)o.bq+=parseNum(r[iB])*q;
-    if(q>0)(o.parts=o.parts||[]).push({input:iIn>=0?String(r[iIn]==null?"":r[iIn]).trim():"",sector:iSe>=0?String(r[iSe]==null?"":r[iSe]).trim():"",qty:q,paid:pd,div:iDv>=0?parseNum(r[iDv]):0});
+    if(q>0)(o.parts=o.parts||[]).push({input:(iIn>=0?String(r[iIn]==null?"":r[iIn]).trim():"")||(sym==="CASH"?"Cash":""),sector:iSe>=0?String(r[iSe]==null?"":r[iSe]).trim():"",qty:q,paid:pd,div:iDv>=0?parseNum(r[iDv]):0});
   });
   return Object.values(m).filter(o=>o.qty>0).map(o=>({sym:o.sym,qty:o.qty,paid:o.paid,buy:o.qty&&o.bq?o.bq/o.qty:0,parts:o.parts||[],man:o.man||0,mname:o.mname||"",mcur:o.mcur||"EUR",hasIn:iIn>=0,hasSe:iSe>=0,hasDv:iDv>=0}));
 }
