@@ -119,18 +119,23 @@ function parseList(v){
   const find=(...k)=>h.findIndex(x=>k.some(y=>x.includes(y)));
   const iS=find("symbool","ticker","symbol"),iQ=find("aantal","stuks","quantity");
   const iP=find("totaal","betaald","aankoopwaarde");
-  const iB=h.findIndex(x=>(x.includes("koers")||x.includes("prijs"))&&!x.includes("totaal")&&!x.includes("waarde"));
+  const iB=h.findIndex(x=>(x.includes("koers")||x.includes("prijs"))&&!x.includes("handmatig")&&!x.includes("totaal")&&!x.includes("waarde"));
+  const iN=find("naam","name"),iM=find("handmatig"),iC=find("valuta","munt");
   const iIn=find("input"),iSe=find("sector"),iDv=find("dividend");
   if(iS<0||iQ<0)throw new Error("Kolommen 'Symbool' en 'Aantal' niet gevonden in de eerste rij van het tabblad met aandelen");
   const m={};
   v.slice(1).forEach(r=>{
-    const sym=String(r[iS]==null?"":r[iS]).trim().toUpperCase();if(!sym)return;
+    const mk=iM>=0?parseNum(r[iM]):0,nmx=iN>=0?String(r[iN]==null?"":r[iN]).trim():"";
+    let sym=String(r[iS]==null?"":r[iS]).trim().toUpperCase();
+    if(!sym&&mk>0)sym=nmx.toUpperCase();
+    if(!sym)return;
     const q=parseNum(r[iQ]),o=m[sym]||(m[sym]={sym,qty:0,paid:0,bq:0});
+    if(mk>0){o.man=mk;o.mname=nmx||sym;o.mcur=(iC>=0&&String(r[iC]||"").trim()?String(r[iC]).trim().toUpperCase():"EUR")}
     const pd=iP>=0?parseNum(r[iP]):0;
     o.qty+=q;o.paid+=pd;if(iB>=0)o.bq+=parseNum(r[iB])*q;
     if(q>0)(o.parts=o.parts||[]).push({input:iIn>=0?String(r[iIn]==null?"":r[iIn]).trim():"",sector:iSe>=0?String(r[iSe]==null?"":r[iSe]).trim():"",qty:q,paid:pd,div:iDv>=0?parseNum(r[iDv]):0});
   });
-  return Object.values(m).filter(o=>o.qty>0).map(o=>({sym:o.sym,qty:o.qty,paid:o.paid,buy:o.qty&&o.bq?o.bq/o.qty:0,parts:o.parts||[],hasIn:iIn>=0,hasSe:iSe>=0,hasDv:iDv>=0}));
+  return Object.values(m).filter(o=>o.qty>0).map(o=>({sym:o.sym,qty:o.qty,paid:o.paid,buy:o.qty&&o.bq?o.bq/o.qty:0,parts:o.parts||[],man:o.man||0,mname:o.mname||"",mcur:o.mcur||"EUR",hasIn:iIn>=0,hasSe:iSe>=0,hasDv:iDv>=0}));
 }
 function fmtT(raw,kind){
   const s=String(raw==null?"":raw).trim();
@@ -284,7 +289,7 @@ async function refresh(){
   if(!S.proxy){U.stMsg="Vul eerst het adres van je koersen-doorgever in bij Instellingen.";draw();return}
   if(!S.pos.length){draw();return}
   busy=true;U.stMsg="Bijwerken…";draw();
-  await Promise.all(S.pos.map(async p=>{try{const x=await yq(p.sym);Q[p.sym]=x;HIST[p.sym+"|5d"]=x.closes}catch(e){Q[p.sym]={err:e.message||"Geen verbinding"}}}));
+  await Promise.all(S.pos.map(async p=>{if(p.man>0){Q[p.sym]={c:p.man,prev:p.man,cur:p.mcur||"EUR",name:p.mname||p.sym,tr:false,closes:[],man:true};HIST[p.sym+"|5d"]=[];return}try{const x=await yq(p.sym);Q[p.sym]=x;HIST[p.sym+"|5d"]=x.closes}catch(e){Q[p.sym]={err:e.message||"Geen verbinding"}}}));
   const curs=[...new Set(S.pos.map(p=>Q[p.sym]).filter(q=>q&&q.cur&&q.cur!=="EUR").map(q=>q.cur))];
   await Promise.all(curs.map(async c=>{try{const x=await yq("EUR"+c+"=X");FXQ[c]={now:x.c,prev:x.prev}}catch(e){}}));
   busy=false;U.stMsg="Koersen bijgewerkt om "+hhmm();
@@ -293,7 +298,7 @@ async function refresh(){
 const RG=["5d","1mo","1y"];
 async function loadHist(){
   const rg=RG[U.per];if(rg==="5d"||!S.proxy)return;
-  await Promise.all(S.pos.filter(p=>!HIST[p.sym+"|"+rg]).map(async p=>{try{HIST[p.sym+"|"+rg]=(await yq(p.sym,rg)).closes}catch(e){HIST[p.sym+"|"+rg]=[]}}));
+  await Promise.all(S.pos.filter(p=>!p.man&&!HIST[p.sym+"|"+rg]).map(async p=>{try{HIST[p.sym+"|"+rg]=(await yq(p.sym,rg)).closes}catch(e){HIST[p.sym+"|"+rg]=[]}}));
   draw();
 }
 const IDX=[{k:"msci",n:"MSCI World",s:"IWDA.AS",c:"#898781",da:"6 3",usd:false},{k:"ndx",n:"Nasdaq-100",s:"^NDX",c:"#eb6834",da:"2 3",usd:true},{k:"spx",n:"S&P 500",s:"^GSPC",c:"#1baf7a",da:"8 3 2 3",usd:true}];
@@ -354,7 +359,7 @@ function items(){
     if(!q)it.sub="…";
     else if(q.err)it.sub=q.err;
     else{
-      it.cur=q.cur||"";it.tr=q.tr!==false;
+      it.cur=q.cur||"";it.tr=q.tr!==false;if(q.man){it.man=true;it.nm=(q.name||p.sym)+" ✎"}
       const fx=q.cur==="EUR"?{now:1,prev:1}:FXQ[q.cur];
       if(!fx){fxMiss=true;it.sub="wisselkoers niet beschikbaar"}
       else{
@@ -368,7 +373,7 @@ function items(){
 }
 function agg(l){
   const ok=l.filter(i=>i.v!=null),td=ok.filter(i=>i.tr),sd=sum(td,i=>i.d),sv=sum(ok,i=>i.v),gg=ok.filter(i=>i.g!=null),tv=sum(td,i=>i.v),sk=sum(td,i=>i.dk),sf=sum(td,i=>i.dv);
-  return{ok,sd,sv,stt:sum(gg,i=>i.g),cost:sum(gg,i=>i.p.paid),hasG:gg.length>0,sp:(tv-sd)?sd/(tv-sd)*100:0,nt:ok.length-td.length,sk,sf};
+  return{ok,sd,sv,stt:sum(gg,i=>i.g),cost:sum(gg,i=>i.p.paid),hasG:gg.length>0,sp:(tv-sd)?sd/(tv-sd)*100:0,nt:ok.filter(i=>!i.tr&&!i.man).length,sk,sf};
 }
 function groups(its){
   const m={};its.forEach(i=>(m[i.cur]=m[i.cur]||[]).push(i));
@@ -512,16 +517,17 @@ function appH(){
   return h+`</div><div class="tabs"><div data-a="tab" data-v="0" class="${U.tab===0?"on":""}"><b>📈</b>Portefeuille</div><div data-a="tab" data-v="2" class="${v?"on":""}"><b>🥧</b>Verdeling</div><div data-a="tab" data-v="1" class="${U.tab===1?"on":""}"><b>🎯</b>Target</div></div>`;
 }
 /* ---------- verdeling ---------- */
-const INORD=["Walter","Marino","WJ","Trends","VectorVest","De Belegger","Kroff Invest","Tiny Titans"];
+const INORD=["Walter","Marino","WJ","Trends","VectorVest","De Belegger","Kroff Invest","Tiny Titans","Cash"];
 const COL8=["#3B82F6","#F59E0B","#10B981","#8B5CF6","#EF4444","#06B6D4","#EC4899","#84CC16","#9CA3AF"];
 const kk=(n,sgn)=>{const a=Math.abs(n),s=sgn?(n>0.5?"+":n<-0.5?"−":""):(n<0?"−":""),b=a>=1000?nm(a/1000,a<10000?1:0)+"k":nm(a,0);return s+"€"+b};
+const canIn=x=>{x=String(x||"").trim();const c=INORD.find(k=>k.toLowerCase()===x.toLowerCase());return c||x};
 function vparts(){
   const out=[];
   items().forEach(i=>{
     if(i.v==null)return;
     (i.p.parts||[]).forEach(pt=>{
       const fr=pt.qty/i.p.qty,v=i.v*fr;
-      out.push({nm:i.nm,input:pt.input||"",sector:pt.sector||"",v,d:i.tr?i.d*fr:0,tr:i.tr,paid:pt.paid,g:pt.paid>0?v-pt.paid+pt.div:null});
+      out.push({nm:i.nm,input:canIn(pt.input),sector:pt.sector||"",v,d:i.tr?i.d*fr:0,tr:i.tr,paid:pt.paid,g:pt.paid>0?v-pt.paid+pt.div:null});
     });
   });
   return out;
