@@ -42,7 +42,7 @@ input[type=text],input[type=url],select{font:inherit;padding:9px;border:1px soli
 .ln .v{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 .ln small{display:block;font-size:11px;margin-top:2px;white-space:normal}
 .gn{display:grid;gap:4px;padding:8px 2px;border-bottom:1px solid var(--b);font-size:11.5px;align-items:center}
-.gh{color:#fff;font-weight:600;font-size:13px;padding:6px 10px;border-radius:6px;margin:16px 0 0}
+.th{color:#fff;font-weight:600;font-size:13px;padding:6px 10px;border-radius:6px;margin:16px 0 0}
 .gn>div+div{text-align:right;font-variant-numeric:tabular-nums}
 .gn.gap{margin-top:14px}
 .big{text-align:center;padding:4px 0 8px}
@@ -52,6 +52,7 @@ input[type=text],input[type=url],select{font:inherit;padding:9px;border:1px soli
 .dv .ar{position:relative;height:12px}
 .dv .ar:before{content:"";position:absolute;left:50%;top:-2px;bottom:-2px;width:1px;background:var(--b2)}
 .dv .bar{position:absolute;top:1px;height:10px;border-radius:2px}
+.no{color:var(--mut);font-size:.85em;margin-right:3px;font-variant-numeric:tabular-nums;font-weight:400}
 .dw .ar:before{display:none}.dw .bar{left:0;background:var(--p)}
 .dv .vl{text-align:right;font-variant-numeric:tabular-nums;font-size:11px}
 .bu{background:var(--up)}.bd{background:var(--dn)}
@@ -386,22 +387,23 @@ function groups(its){
 
 /* ---------- onderdelen ---------- */
 function seg(a,opts,cur){return '<div class="seg">'+opts.map(o=>`<button data-a="${a}" data-v="${o[0]}" class="${String(cur)===String(o[0])?"on":""}">${o[1]}</button>`).join("")+"</div>"}
-function diverge(rows,fn){
+const nr=n=>`<span class="no">(${n})</span>`;
+function diverge(rows,fn,num){
   const m=Math.max(...rows.map(r=>Math.abs(r[1])),0.0001);
-  return rows.map(r=>{
+  return rows.map((r,i)=>{
     const w=Math.abs(r[1])/m*50,pos=r[1]>=0,s=pos?`left:50%;width:${w}%`:`left:${50-w}%;width:${w}%`;
-    return `<div class="dv"><div class="nm">${esc(r[0])}</div><div class="ar"><div class="bar ${pos?"bu":"bd"}" style="${s}"></div></div><div class="vl ${cl(r[1])}">${fn(r[1])}</div></div>`;
+    return `<div class="dv"><div class="nm">${num?nr(i+1)+" ":""}${esc(r[0])}</div><div class="ar"><div class="bar ${pos?"bu":"bd"}" style="${s}"></div></div><div class="vl ${cl(r[1])}">${fn(r[1])}</div></div>`;
   }).join("");
 }
 function prog(rows,mark){
   return rows.map(r=>`<div class="pg"><div class="tp"><span>${esc(r[0])}</span><span>${(r[1]<0?"−":"")+nm(r[1],r[1]%1?2:0)}%</span></div><div class="tk"><div class="fl" style="width:${Math.max(0,Math.min(100,r[1]))}%"></div>${mark!=null?`<div class="mk" style="left:${Math.max(0,Math.min(100,mark))}%"></div>`:""}</div></div>`).join("")+(mark!=null?`<div class="lbl">| = verlopen tijd (${nm(mark,mark%1?2:0)}%)</div>`:"");
 }
-function t3row(i){return `<div class="t3"><div class="nm">${esc(i.nm)}</div><div class="${cl(i.pct)}">${pc(i.pct)}</div><div class="${cl(i.d)}">${es(i.d,2)}</div></div>`}
+function t3row(i,n){return `<div class="t3"><div class="nm">${esc(i.nm)}</div><div class="${cl(i.pct)}">${pc(i.pct)}</div><div class="${cl(i.d)}">${es(i.d,2)}</div></div>`}
 function top3H(gs){
   const h=gs.filter(x=>x.k!==""&&x.ok.length).map(x=>{
     const aw=x.ok.filter(i=>i.tr&&i.d>0),av=x.ok.filter(i=>i.tr&&i.d<0),nt=x.ok.filter(i=>i.tr).length,w=aw.slice().sort((a,b)=>b.d-a.d).slice(0,3),v=av.slice().sort((a,b)=>a.d-b.d).slice(0,3);
     const cn=a=>nt?`<span style="float:right;font-weight:400;font-variant-numeric:tabular-nums">${a.length}/${nt} · ${Math.round(a.length/nt*100)}%</span>`:"";
-    return `<div class="cb"><div class="ch">${esc(x.k)} <span class="sub m">(${x.l.length} aandelen)</span></div><div class="lb">Top 3 dagwinnaars${cn(aw)}</div>${w.length?w.map(t3row).join(""):'<div class="m">Geen</div>'}<div class="lb">Top 3 dagverliezers${cn(av)}</div>${v.length?v.map(t3row).join(""):'<div class="m">Geen</div>'}<div class="t3 tt"><div>Totaal ${esc(x.k)}</div><div class="${cl(x.sp)}">${pc(x.sp)}</div><div class="${cl(x.sd)}">${es(x.sd,2)}</div></div></div>`;
+    return `<div class="cb"><div class="ch">${esc(x.k)} <span class="sub m">(${x.l.length} aandelen)</span></div><div class="lb">Top 3 dagwinnaars${cn(aw)}</div>${w.length?w.map((t,k)=>t3row(t,k+1)).join(""):'<div class="m">Geen</div>'}<div class="lb">Top 3 dagverliezers${cn(av)}</div>${v.length?v.map((t,k)=>t3row(t,k+1)).join(""):'<div class="m">Geen</div>'}<div class="t3 tt"><div>Totaal ${esc(x.k)}</div><div class="${cl(x.sp)}">${pc(x.sp)}</div><div class="${cl(x.sd)}">${es(x.sd,2)}</div></div></div>`;
   }).join("");
   return h||'<div class="m">Nog geen koersen geladen.</div>';
 }
@@ -411,10 +413,13 @@ function cells(p,d,t,v,hasG,tp){
 }
 function tableH(gs,ta){
   let h=`<div class="${S.showVal?"":"nv"}"><div class="r" style="font-size:11px;color:var(--mut);border-bottom:1px solid var(--b2);padding:6px 2px;"><div>Bedrijf</div><div>Dag %</div><div>Dag €</div><div><button class="tg" data-a="tm">Totaal ${S.totMode==="p"?"%":"€"} ⇄</button></div><div class="wv">Waarde</div></div>`;
+  let cnt=0;
   gs.forEach(x=>{
     const key=x.k||"?",o=!S.collapsed[key];
     h+=`<div class="r gh" data-a="grp" data-v="${esc(key)}"><div>${o?"▾":"▸"} ${esc(x.k||"Niet geladen")} <small>(${x.l.length})</small></div>${x.ok.length?cells(x.sp,x.sd,x.stt,x.sv,x.hasG,x.cost?x.stt/x.cost*100:null):"<div></div><div></div><div></div><div class='wv'></div>"}</div>`;
+    if(!o)cnt+=x.l.length;
     if(o)x.l.forEach(i=>{
+      cnt++;
       h+=`<div class="r${i.tr===false?" off":""}"><div class="n"><a href="https://finance.yahoo.com/quote/${encodeURIComponent(i.k)}" target="_blank" rel="noopener">${esc(i.nm)}</a>${i.sub?`<br><small class="dn">${esc(i.sub)}</small>`:""}</div>${i.v!=null?cells(i.pct,i.d,i.g||0,i.v,i.g!=null,i.gp):"<div></div><div></div><div></div><div class='wv'></div>"}</div>`;
     });
   });
@@ -446,7 +451,7 @@ function weightH(its){
   const ok=its.filter(i=>i.v!=null),tot=sum(ok,i=>i.v);
   if(!tot)return '<div class="m">Nog geen koersen geladen.</div>';
   const rows=ok.slice().sort((a,b)=>b.v-a.v),m=rows[0].v/tot*100;
-  return rows.map(i=>{const w=i.v/tot*100;return `<div class="dv dw"><div class="nm">${esc(i.nm)}</div><div class="ar"><div class="bar" style="width:${(w/m*100).toFixed(1)}%"></div></div><div class="vl">${nm(w,2)}%</div></div>`}).join("");
+  return rows.map((i,k)=>{const w=i.v/tot*100;return `<div class="dv dw"><div class="nm">${nr(k+1)} ${esc(i.nm)}</div><div class="ar"><div class="bar" style="width:${(w/m*100).toFixed(1)}%"></div></div><div class="vl">${nm(w,2)}%</div></div>`}).join("");
 }
 function gainH(its){
   if(U.gm==="w")return weightH(its);
@@ -457,13 +462,13 @@ function gainH(its){
 }
 function sparkH(its){
   const rg=RG[U.per];
-  return its.map(i=>{
-    const a=HIST[i.k+"|"+rg];
-    if(!a)return `<div class="sp"><div class="nm">${esc(i.nm)}</div><div class="m">…</div><div></div></div>`;
-    if(a.length<2)return `<div class="sp"><div class="nm">${esc(i.nm)}</div><div class="m">geen gegevens</div><div></div></div>`;
+  return its.map((i,k)=>{
+    const a=HIST[i.k+"|"+rg],NM=esc(i.nm);
+    if(!a)return `<div class="sp"><div class="nm">${NM}</div><div class="m">…</div><div></div></div>`;
+    if(a.length<2)return `<div class="sp"><div class="nm">${NM}</div><div class="m">geen gegevens</div><div></div></div>`;
     const mn=Math.min(...a),mx=Math.max(...a),w=120,h=24,pts=a.map((v,j)=>(j/(a.length-1)*w).toFixed(1)+","+(h-2-(v-mn)/(mx-mn||1)*(h-4)).toFixed(1));
     const ch=(a[a.length-1]/a[0]-1)*100;
-    return `<div class="sp"><div class="nm">${esc(i.nm)}</div><svg width="100%" height="24" viewBox="0 0 120 24" preserveAspectRatio="none" role="img" aria-label="Koersverloop ${esc(i.nm)}"><polyline points="${pts.join(" ")}" fill="none" stroke="${ch>=0?"var(--up)":"var(--dn)"}" stroke-width="1.5" vector-effect="non-scaling-stroke"/></svg><div class="pc ${cl(ch)}">${sg(ch,1)}%</div></div>`;
+    return `<div class="sp"><div class="nm">${NM}</div><svg width="100%" height="24" viewBox="0 0 120 24" preserveAspectRatio="none" role="img" aria-label="Koersverloop ${esc(i.nm)}"><polyline points="${pts.join(" ")}" fill="none" stroke="${ch>=0?"var(--up)":"var(--dn)"}" stroke-width="1.5" vector-effect="non-scaling-stroke"/></svg><div class="pc ${cl(ch)}">${sg(ch,1)}%</div></div>`;
   }).join("");
 }
 function lineH(){
@@ -511,7 +516,7 @@ function tgtOverH(){
     let bi=-1;
     P.rows.forEach((r,i)=>{
       const nw=i===0||r.gap;if(nw)bi++;
-      if(hd&&nw)h+=`<div class="gh" style="background:${HT[bi][1]}">${HT[bi][0]}</div>`;
+      if(hd&&nw)h+=`<div class="th" style="background:${HT[bi][1]}">${HT[bi][0]}</div>`;
       h+=`<div class="gn${r.gap&&!hd?" gap":""}" style="${gt}"><div>${esc(r.label)}</div>${r.vals.map(v=>`<div class="${vcls(r.label,v)}">${esc(short(v))}</div>`).join("")}</div>`});
   }
   return h;
@@ -578,13 +583,13 @@ function verdH(){
     const keys=INORD.filter(k=>m[k]).concat(Object.keys(m).filter(k=>!INORD.includes(k)&&k!=="").sort(),m[""]?[""]:[]);
     const e=S.showVal;
     const ic=k=>k===""?COL8[8]:COL8[Math.min(keys.indexOf(k),7)];
-    const sw=k=>`<i class="sw" style="display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:4px;background:${ic(k)}"></i>`;
+    let gi=0;const sw=k=>`<i class="sw" style="display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:4px;background:${ic(k)}"></i>`;
     let h=donutSvg(keys.map(k=>[k||"Zonder input",sum(m[k],x=>x.v),ic(k)]),tot,"Inputs")+`<div class="vg${e?"":" h2"} vh" style="margin-top:8px"><span>Input</span>${e?"<span>Waarde</span><span>W/V €</span><span>W/V %</span><span>Dag %</span>":""}<span>Weging</span></div>`;
     S.iopen=S.iopen||{};
     keys.forEach(k=>{
       const l=m[k],o=!!S.iopen[k],a=vagg(l,tot);
       h+=vrow((o?"▾ ":"▸ ")+sw(k)+esc(k||"Zonder input"),a,"vp",` data-a="ig" data-v="${esc(k)}"`);
-      if(o)l.slice().sort((x,y)=>y.v-x.v).forEach(x=>{h+=vrow(esc(x.nm),vagg([x],tot),"vs")});
+      if(o)l.slice().sort((x,y)=>y.v-x.v).forEach((x,n)=>{h+=vrow(esc(x.nm),vagg([x],tot),"vs")});
     });
     h+=vrow("Totaal",vagg(L,tot),"vp");
     return cb+h+nomiss+'<div class="foot" style="text-align:left;">W/V inclusief dividend · bedragen in duizend (k) · Dag % enkel aandelen die vandaag handelden · tik op een input om uit te klappen</div>';
