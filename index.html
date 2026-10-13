@@ -52,6 +52,8 @@ input[type=text],input[type=url],select{font:inherit;padding:9px;border:1px soli
 .dv .ar{position:relative;height:12px}
 .dv .ar:before{content:"";position:absolute;left:50%;top:-2px;bottom:-2px;width:1px;background:var(--b2)}
 .dv .bar{position:absolute;top:1px;height:10px;border-radius:2px}
+.sth{position:sticky;top:var(--hh,46px);z-index:4;background:var(--bg)}
+.md{display:inline-block;width:9px;height:9px;border-radius:50%;margin:0 4px 0 2px;vertical-align:1px}.md.on{background:var(--up)}.md.off{background:#9ca3af}
 .no{color:var(--mut);font-size:.85em;margin-right:3px;font-variant-numeric:tabular-nums;font-weight:400}
 .dw .ar:before{display:none}.dw .bar{left:0;background:var(--p)}
 .dv .vl{text-align:right;font-variant-numeric:tabular-nums;font-size:11px}
@@ -282,7 +284,8 @@ async function yq(sym,range){
   if(typeof cp==="number"&&cp>-99&&m.regularMarketPrice>0)prev=m.regularMarketPrice/(1+cp/100);
   const off=(m.gmtoffset||0)*1000,dayOf=t=>new Date(t*1000+off).toISOString().slice(0,10);
   const tr=m.regularMarketTime?dayOf(m.regularMarketTime)===new Date(Date.now()+off).toISOString().slice(0,10):true;
-  return{c:m.regularMarketPrice,prev,tr,cur:m.currency,name:m.shortName||m.longName||sym,closes:bars.map(b=>b[1])};
+  const cr=m.currentTradingPeriod&&m.currentTradingPeriod.regular,reg=cr&&cr.start&&cr.end?[cr.start,cr.end]:null;
+  return{c:m.regularMarketPrice,prev,tr,reg,cur:m.currency,name:m.shortName||m.longName||sym,closes:bars.map(b=>b[1])};
 }
 function recordHist(){
   const its=items();
@@ -365,7 +368,7 @@ function items(){
     if(!q)it.sub="…";
     else if(q.err)it.sub=q.err;
     else{
-      it.cur=q.cur||"";it.tr=q.tr!==false;if(q.man){it.man=true;it.nm=(q.name||p.sym)+" ✎"}
+      it.cur=q.cur||"";it.tr=q.tr!==false;it.reg=q.reg||null;if(q.man){it.man=true;it.nm=(q.name||p.sym)+" ✎"}
       const fx=q.cur==="EUR"?{now:1,prev:1}:FXQ[q.cur];
       if(!fx){fxMiss=true;it.sub="wisselkoers niet beschikbaar"}
       else{
@@ -381,10 +384,24 @@ function agg(l){
   const ok=l.filter(i=>i.v!=null),td=ok.filter(i=>i.tr),sd=sum(td,i=>i.d),sv=sum(ok,i=>i.v),gg=ok.filter(i=>i.g!=null),tv=sum(td,i=>i.v),sk=sum(td,i=>i.dk),sf=sum(td,i=>i.dv);
   return{ok,sd,sv,stt:sum(gg,i=>i.g),cost:sum(gg,i=>i.p.paid),hasG:gg.length>0,sp:(tv-sd)?sd/(tv-sd)*100:0,nt:ok.filter(i=>!i.tr&&!i.man).length,sk,sf};
 }
+const MKT={CAD:"Toronto",EUR:"Euronext",USD:"NYSE/Nasdaq"};
+function mktOpen(l){
+  const c=l.filter(i=>!i.man&&i.v!=null);
+  if(!c.length)return null;
+  const now=Date.now()/1000;
+  if(c.some(i=>i.reg))return c.some(i=>i.tr&&i.reg&&now>=i.reg[0]&&now<=i.reg[1]);
+  const cur=c[0].cur,tz=cur==="EUR"?"Europe/Brussels":"America/New_York";
+  try{
+    const p=Object.fromEntries(new Intl.DateTimeFormat("en-GB",{timeZone:tz,weekday:"short",hour:"2-digit",minute:"2-digit",hour12:false}).formatToParts(new Date()).map(x=>[x.type,x.value]));
+    const mn=(+p.hour%24)*60+ +p.minute,wd=!/^(Sat|Sun)/.test(p.weekday),a=cur==="EUR"?540:570,b=cur==="EUR"?1050:960;
+    return wd&&mn>=a&&mn<b&&c.some(i=>i.tr);
+  }catch(e){return null}
+}
+const mdot=(k,o)=>MKT[k]&&o!=null?`<span class="md ${o?"on":"off"}" title="${MKT[k]} ${o?"open":"gesloten"}" aria-label="${MKT[k]} ${o?"open":"gesloten"}"></span>`:"";
 function groups(its){
   const m={};its.forEach(i=>(m[i.cur]=m[i.cur]||[]).push(i));
   Object.values(m).forEach(l=>l.sort((x,y)=>String(x.nm).localeCompare(String(y.nm),"nl",{sensitivity:"base"})));
-  return Object.keys(m).sort((a,b)=>a===""?1:b===""?-1:a.localeCompare(b)).map(k=>Object.assign({k,l:m[k]},agg(m[k])));
+  return Object.keys(m).sort((a,b)=>a===""?1:b===""?-1:a.localeCompare(b)).map(k=>Object.assign({k,l:m[k],open:mktOpen(m[k])},agg(m[k])));
 }
 
 /* ---------- onderdelen ---------- */
@@ -405,7 +422,7 @@ function top3H(gs){
   const h=gs.filter(x=>x.k!==""&&x.ok.length).map(x=>{
     const aw=x.ok.filter(i=>i.tr&&i.d>0),av=x.ok.filter(i=>i.tr&&i.d<0),nt=x.ok.filter(i=>i.tr).length,w=aw.slice().sort((a,b)=>b.d-a.d).slice(0,3),v=av.slice().sort((a,b)=>a.d-b.d).slice(0,3);
     const cn=a=>nt?`<span style="float:right;font-weight:400;font-variant-numeric:tabular-nums">${a.length}/${nt} · ${Math.round(a.length/nt*100)}%</span>`:"";
-    return `<div class="cb"><div class="ch">${esc(x.k)} <span class="sub m">(${x.l.length} aandelen)</span></div><div class="lb">Top 3 dagwinnaars${cn(aw)}</div>${w.length?w.map((t,k)=>t3row(t,k+1)).join(""):'<div class="m">Geen</div>'}<div class="lb">Top 3 dagverliezers${cn(av)}</div>${v.length?v.map((t,k)=>t3row(t,k+1)).join(""):'<div class="m">Geen</div>'}<div class="t3 tt"><div>Totaal ${esc(x.k)}</div><div class="${cl(x.sp)}">${pc(x.sp)}</div><div class="${cl(x.sd)}">${es(x.sd,2)}</div></div></div>`;
+    return `<div class="cb"><div class="ch">${esc(x.k)}${mdot(x.k,x.open)} <span class="sub m">(${x.l.length} aandelen)</span></div><div class="lb">Top 3 dagwinnaars${cn(aw)}</div>${w.length?w.map((t,k)=>t3row(t,k+1)).join(""):'<div class="m">Geen</div>'}<div class="lb">Top 3 dagverliezers${cn(av)}</div>${v.length?v.map((t,k)=>t3row(t,k+1)).join(""):'<div class="m">Geen</div>'}<div class="t3 tt"><div>Totaal ${esc(x.k)}</div><div class="${cl(x.sp)}">${pc(x.sp)}</div><div class="${cl(x.sd)}">${es(x.sd,2)}</div></div></div>`;
   }).join("");
   return h||'<div class="m">Nog geen koersen geladen.</div>';
 }
@@ -414,11 +431,11 @@ function cells(p,d,t,v,hasG,tp){
   return `<div class="${cl(p)}">${pc(p)}</div><div class="${cl(d)}">${ec(d,2)}</div>${hasG?`<div class="${cl(t)}">${pm?pc(tp):ec(t,0)}</div>`:'<div class="m">–</div>'}<div class="wv">${ev(v)}</div>`;
 }
 function tableH(gs,ta){
-  let h=`<div class="${S.showVal?"":"nv"}"><div class="r" style="font-size:11px;color:var(--mut);border-bottom:1px solid var(--b2);padding:6px 2px;"><div>Bedrijf</div><div>Dag %</div><div>Dag €</div><div><button class="tg" data-a="tm">Totaal ${S.totMode==="p"?"%":"€"} ⇄</button></div><div class="wv">Waarde</div></div>`;
+  let h=`<div class="${S.showVal?"":"nv"}"><div class="r sth" style="font-size:11px;color:var(--mut);border-bottom:1px solid var(--b2);padding:6px 2px;"><div>Bedrijf</div><div>Dag %</div><div>Dag €</div><div><button class="tg" data-a="tm">Totaal ${S.totMode==="p"?"%":"€"} ⇄</button></div><div class="wv">Waarde</div></div>`;
   let cnt=0;
   gs.forEach(x=>{
     const key=x.k||"?",o=!S.collapsed[key];
-    h+=`<div class="r gh" data-a="grp" data-v="${esc(key)}"><div>${o?"▾":"▸"} ${esc(x.k||"Niet geladen")} <small>(${x.l.length})</small></div>${x.ok.length?cells(x.sp,x.sd,x.stt,x.sv,x.hasG,x.cost?x.stt/x.cost*100:null):"<div></div><div></div><div></div><div class='wv'></div>"}</div>`;
+    h+=`<div class="r gh" data-a="grp" data-v="${esc(key)}"><div>${o?"▾":"▸"} ${esc(x.k||"Niet geladen")}${mdot(x.k,x.open)} <small>(${x.l.length})</small></div>${x.ok.length?cells(x.sp,x.sd,x.stt,x.sv,x.hasG,x.cost?x.stt/x.cost*100:null):"<div></div><div></div><div></div><div class='wv'></div>"}</div>`;
     if(!o)cnt+=x.l.length;
     if(o)x.l.forEach(i=>{
       cnt++;
@@ -641,6 +658,7 @@ function pickerH(){
 function render(){
   const y=window.scrollY;
   $("ph").innerHTML=U.scr==="lock"?lockH("Voer je code in",false):U.scr==="setup"?lockH(U.step===0?"Kies een nieuwe code":"Herhaal de code",true):U.scr==="settings"?settingsH():U.scr==="picker"?pickerH():appH();
+  const hd=document.querySelector(".hd");if(hd)document.documentElement.style.setProperty("--hh",hd.offsetHeight+"px");
   window.scrollTo(0,y);
 }
 function draw(){if(U.scr==="app"||U.scr==="picker")render()}
