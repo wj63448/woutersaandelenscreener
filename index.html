@@ -52,6 +52,8 @@ input[type=text],input[type=url],select{font:inherit;padding:9px;border:1px soli
 .dv .ar{position:relative;height:12px}
 .dv .ar:before{content:"";position:absolute;left:50%;top:-2px;bottom:-2px;width:1px;background:var(--b2)}
 .dv .bar{position:absolute;top:1px;height:10px;border-radius:2px}
+.pre{background:#e5e7eb;border-radius:5px;padding:1px 5px;display:inline-block}.pt{display:block;font-size:9px;color:var(--mut);margin-top:1px;text-transform:uppercase;letter-spacing:.04em}.r.off>div.pdv{opacity:1}
+@media (prefers-color-scheme:dark){.pre{background:#2a2f38}}
 .sth{position:sticky;top:var(--hh,46px);z-index:4;background:var(--bg)}
 .md{display:inline-block;width:9px;height:9px;border-radius:50%;margin:0 4px 0 2px;vertical-align:1px}.md.on{background:var(--up)}.md.off{background:#9ca3af}
 .no{color:var(--mut);font-size:.85em;margin-right:3px;font-variant-numeric:tabular-nums;font-weight:400}
@@ -205,7 +207,7 @@ const CLIENT_ID="2b2a7bff-3f04-4eee-9e5f-57138ea6d683";
 const SCOPES=["Files.Read","User.Read"];
 const $=id=>document.getElementById(id);
 const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-let S={proxy:"",pos:[],file:null,tgt:null,showVal:true,collapsed:{},hist:{},lock:null,fails:0,until:0};
+let S={rate:60,proxy:"",pos:[],file:null,tgt:null,showVal:true,collapsed:{},hist:{},lock:null,fails:0,until:0};
 try{Object.assign(S,JSON.parse(localStorage.getItem("aand")||"{}"))}catch(e){}
 S.collapsed=S.collapsed||{};S.hist=S.hist||{};if(S.totMode!=="p")S.totMode="e";if(!Array.isArray(S.idxOn))S.idxOn=["msci","spx"];if(S.showVal===undefined)S.showVal=true;
 const save=()=>{try{localStorage.setItem("aand",JSON.stringify(S))}catch(e){}};
@@ -293,12 +295,26 @@ function recordHist(){
   const day=new Date().toLocaleDateString("sv-SE");
   S.hist[day]=Math.round(sum(its,i=>i.v));save();
 }
+function usPre(){
+  try{const p=Object.fromEntries(new Intl.DateTimeFormat("en-GB",{timeZone:"America/New_York",weekday:"short",hour:"2-digit",minute:"2-digit",hour12:false}).formatToParts(new Date()).map(x=>[x.type,x.value]));const mn=(+p.hour%24)*60+ +p.minute;return !/^(Sat|Sun)/.test(p.weekday)&&mn>=240&&mn<570}catch(e){return false}
+}
+async function preq(sym,base){
+  const r=await fetch(S.proxy.replace(/\/+$/,"")+"/?s="+encodeURIComponent(sym)+"&pre=1");
+  if(!r.ok)return null;
+  const j=await r.json(),res=j.chart&&j.chart.result&&j.chart.result[0];
+  if(!res||!base)return null;
+  const ts=res.timestamp||[],c=((res.indicators.quote||[])[0]||{}).close||[],pr=res.meta&&res.meta.currentTradingPeriod&&res.meta.currentTradingPeriod.pre;
+  let last=null;ts.forEach((t,i)=>{if(c[i]!=null&&(!pr||(t>=pr.start&&t<pr.end)))last=[t,c[i]]});
+  return last?{p:last[1],pct:(last[1]/base-1)*100,t:last[0]}:null;
+}
 async function refresh(){
   if(busy||U.scr==="lock"||U.scr==="setup")return;
   if(!S.proxy){U.stMsg="Vul eerst het adres van je koersen-doorgever in bij Instellingen.";draw();return}
   if(!S.pos.length){draw();return}
   busy=true;U.stMsg="Bijwerken…";draw();
   await Promise.all(S.pos.map(async p=>{if(p.man>0){Q[p.sym]={c:p.man,prev:p.man,cur:p.mcur||"EUR",name:p.mname||p.sym,tr:false,closes:[],man:true};HIST[p.sym+"|5d"]=[];return}try{const x=await yq(p.sym);Q[p.sym]=x;HIST[p.sym+"|5d"]=x.closes}catch(e){Q[p.sym]={err:e.message||"Geen verbinding"}}}));
+  const pre=usPre();
+  await Promise.all(S.pos.map(async p=>{const q=Q[p.sym];if(!q)return;delete q.pre;if(!pre||p.man||q.err||q.cur!=="USD"||q.tr!==false)return;try{const x=await preq(p.sym,q.c);if(x)q.pre=x}catch(e){}}));
   const curs=[...new Set(S.pos.map(p=>Q[p.sym]).filter(q=>q&&q.cur&&q.cur!=="EUR").map(q=>q.cur))];
   await Promise.all(curs.map(async c=>{try{const x=await yq("EUR"+c+"=X");FXQ[c]={now:x.c,prev:x.prev}}catch(e){}}));
   busy=false;U.stMsg="Koersen bijgewerkt om "+hhmm();
@@ -368,7 +384,7 @@ function items(){
     if(!q)it.sub="…";
     else if(q.err)it.sub=q.err;
     else{
-      it.cur=q.cur||"";it.tr=q.tr!==false;it.reg=q.reg||null;if(q.man){it.man=true;it.nm=(q.name||p.sym)+" ✎"}
+      it.cur=q.cur||"";it.tr=q.tr!==false;it.reg=q.reg||null;it.pre=q.pre||null;if(q.man){it.man=true;it.nm=(q.name||p.sym)+" ✎"}
       const fx=q.cur==="EUR"?{now:1,prev:1}:FXQ[q.cur];
       if(!fx){fxMiss=true;it.sub="wisselkoers niet beschikbaar"}
       else{
@@ -426,9 +442,9 @@ function top3H(gs){
   }).join("");
   return h||'<div class="m">Nog geen koersen geladen.</div>';
 }
-function cells(p,d,t,v,hasG,tp){
+function cells(p,d,t,v,hasG,tp,pre){
   const pm=S.totMode==="p"&&tp!=null;
-  return `<div class="${cl(p)}">${pc(p)}</div><div class="${cl(d)}">${ec(d,2)}</div>${hasG?`<div class="${cl(t)}">${pm?pc(tp):ec(t,0)}</div>`:'<div class="m">–</div>'}<div class="wv">${ev(v)}</div>`;
+  return `${pre!=null?`<div class="pdv"><span class="pre ${cl(pre)}">${pc(pre)}</span><span class="pt">pre</span></div>`:`<div class="${cl(p)}">${pc(p)}</div>`}<div class="${cl(d)}">${ec(d,2)}</div>${hasG?`<div class="${cl(t)}">${pm?pc(tp):ec(t,0)}</div>`:'<div class="m">–</div>'}<div class="wv">${ev(v)}</div>`;
 }
 function tableH(gs,ta){
   let h=`<div class="${S.showVal?"":"nv"}"><div class="r sth" style="font-size:11px;color:var(--mut);border-bottom:1px solid var(--b2);padding:6px 2px;"><div>Bedrijf</div><div>Dag %</div><div>Dag €</div><div><button class="tg" data-a="tm">Totaal ${S.totMode==="p"?"%":"€"} ⇄</button></div><div class="wv">Waarde</div></div>`;
@@ -439,7 +455,7 @@ function tableH(gs,ta){
     if(!o)cnt+=x.l.length;
     if(o)x.l.forEach(i=>{
       cnt++;
-      h+=`<div class="r${i.tr===false?" off":""}"><div class="n"><a href="https://finance.yahoo.com/quote/${encodeURIComponent(i.k)}" target="_blank" rel="noopener">${esc(i.nm)}</a>${i.sub?`<br><small class="dn">${esc(i.sub)}</small>`:""}</div>${i.v!=null?cells(i.pct,i.d,i.g||0,i.v,i.g!=null,i.gp):"<div></div><div></div><div></div><div class='wv'></div>"}</div>`;
+      h+=`<div class="r${i.tr===false?" off":""}"><div class="n"><a href="https://finance.yahoo.com/quote/${encodeURIComponent(i.k)}" target="_blank" rel="noopener">${esc(i.nm)}</a>${i.sub?`<br><small class="dn">${esc(i.sub)}</small>`:""}</div>${i.v!=null?cells(i.pct,i.d,i.g||0,i.v,i.g!=null,i.gp,i.pre&&i.tr===false?i.pre.pct:null):"<div></div><div></div><div></div><div class='wv'></div>"}</div>`;
     });
   });
   h+=`<div class="r" style="font-weight:600;border-top:1px solid var(--b2);border-bottom:none;margin-top:6px;"><div>Totaal</div>${cells(ta.sp,ta.sd,ta.stt,ta.sv,ta.hasG,ta.cost?ta.stt/ta.cost*100:null)}</div></div>`;
@@ -639,6 +655,7 @@ function settingsH(){
   `<div class="stg"><div>Tabblad met aandelen<br><span class="lbl">${f&&f.sheet?esc(f.sheet):"Nog niet gekozen"}</span></div><button class="sm" data-a="pts"${f?"":" disabled"}>Kies</button></div>`+
   `<div class="stg"><div>Tabblad met targets<br><span class="lbl">${f&&f.tsheet?esc(f.tsheet):"Geen"}</span></div><button class="sm" data-a="ptt"${f?"":" disabled"}>Kies</button></div>`+
   `<div class="sec">Weergave</div><div class="stg"><label style="display:flex;align-items:center;gap:8px;cursor:pointer;"><input type="checkbox" data-a="sv"${S.showVal?" checked":""}> Toon waarde</label></div>`+
+  `<div class="stg"><div>Automatisch verversen<br><span class="lbl">Koersen opnieuw ophalen zolang de app open staat</span></div><select data-a="rate">${[[0,"Uit"],[30,"30 seconden"],[60,"1 minuut"],[120,"2 minuten"],[300,"5 minuten"],[900,"15 minuten"]].map(o=>`<option value="${o[0]}"${(S.rate==null?60:S.rate)==o[0]?" selected":""}>${o[1]}</option>`).join("")}</select></div>`+
   `<div class="sec">Toegangscode</div><div class="stg"><div>Code (9 cijfers)<br><span class="lbl">${lk?"Ingesteld":"Uit"}</span></div><button class="sm" data-a="cs">${lk?"Wijzigen":"Instellen"}</button></div>`+
   (lk?`<div class="stg"><div>Vergrendel na</div><select data-a="la"><option value="0"${lk.after==0?" selected":""}>Direct</option><option value="60"${lk.after==60?" selected":""}>1 minuut</option><option value="300"${lk.after==300?" selected":""}>5 minuten</option><option value="900"${lk.after==900?" selected":""}>15 minuten</option></select></div><div class="stg"><div>Code uitzetten</div><button class="sm ghost" data-a="cx">Uitzetten</button></div>`:"")+
   `<div class="sec">Gegevens</div><div class="stg"><div>Alle bewaarde gegevens wissen<br><span class="lbl">Instellingen, code en waardeverloop verdwijnen</span></div><button class="sm ghost" data-a="wipe">Wissen</button></div></div>`;
@@ -720,7 +737,7 @@ const root=$("ph");
 root.addEventListener("click",e=>{
   const t=e.target.closest("[data-a]");if(!t)return;
   const a=t.getAttribute("data-a"),v=t.getAttribute("data-v");
-  if(a==="sv"||a==="la")return;
+  if(a==="sv"||a==="la"||a==="rate")return;
   if(a==="key"){key(v);return}
   if(a==="del"){U.code.pop();render();return}
   if(a==="cancel"){U.scr="settings";U.step=0;U.tmp="";U.code=[];U.msg="";render();return}
@@ -772,13 +789,15 @@ root.addEventListener("change",e=>{
   const a=e.target.getAttribute("data-a");
   if(a==="sv"){S.showVal=e.target.checked;save();render()}
   else if(a==="la"&&S.lock){S.lock.after=+e.target.value;save()}
+  else if(a==="rate"){S.rate=+e.target.value;save();setRate()}
 });
 document.addEventListener("visibilitychange",()=>{
   if(document.hidden){hiddenAt=Date.now();return}
   if(S.lock&&U.scr!=="lock"&&U.scr!=="setup"&&(Date.now()-hiddenAt)/1000>=S.lock.after){U.scr="lock";U.code=[];U.msg="";render();return}
   if(U.scr==="app")refresh();
 });
-setInterval(()=>{if(!document.hidden&&U.scr==="app")refresh()},60000);
+let rt=null;function setRate(){clearInterval(rt);if(S.rate>0)rt=setInterval(()=>{if(!document.hidden&&U.scr==="app")refresh()},S.rate*1000)}
+setRate();
 setInterval(()=>{
   if(U.scr!=="lock")return;
   if(S.until>Date.now()){U.msg="Wacht "+Math.ceil((S.until-Date.now())/1000)+" seconden";render()}
