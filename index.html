@@ -57,7 +57,8 @@ input[type=text],input[type=url],select{font:inherit;padding:9px;border:1px soli
 .sth{position:sticky;top:var(--hh,46px);z-index:4;background:var(--bg)}
 .md{display:inline-block;width:9px;height:9px;border-radius:50%;margin:0 4px 0 2px;vertical-align:1px}.md.on{background:var(--up)}.md.off{background:#9ca3af}
 .no{color:var(--mut);font-size:.85em;margin-right:3px;font-variant-numeric:tabular-nums;font-weight:400}
-.dw .ar:before{display:none}.dw .bar{left:0;background:var(--p)}
+.vw{display:grid;grid-template-columns:minmax(0,1fr) 56px 74px 74px;gap:4px;font-size:12px;align-items:center;padding:7px 0;border-bottom:1px solid var(--b)}.vw.h2{grid-template-columns:minmax(0,1fr) 64px}.vw>span{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}.vw>span:first-child{text-align:left;overflow:hidden;text-overflow:ellipsis}.vw.vh{color:var(--mut);font-size:10.5px;padding:4px 0}.vw.tt{font-weight:600;border-top:1px solid var(--b2);border-bottom:none}
+.vw{display:grid;grid-template-columns:minmax(0,1fr) 56px 74px 74px;gap:4px;font-size:12px;align-items:center;padding:7px 0;border-bottom:1px solid var(--b)}.vw.h2{grid-template-columns:minmax(0,1fr) 64px}.vw>span{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}.vw>span:first-child{text-align:left;overflow:hidden;text-overflow:ellipsis}.vw.vh{color:var(--mut);font-size:10.5px;padding:4px 0}.vw.tt{font-weight:600;border-top:1px solid var(--b2);border-bottom:none}
 .dv .vl{text-align:right;font-variant-numeric:tabular-nums;font-size:11px}
 .bu{background:var(--up)}.bd{background:var(--dn)}
 .pg{margin:8px 0 12px}
@@ -211,7 +212,7 @@ let S={rate:60,proxy:"",pos:[],file:null,tgt:null,showVal:true,collapsed:{},hist
 try{Object.assign(S,JSON.parse(localStorage.getItem("aand")||"{}"))}catch(e){}
 S.collapsed=S.collapsed||{};S.hist=S.hist||{};if(S.totMode!=="p")S.totMode="e";if(!Array.isArray(S.idxOn))S.idxOn=["msci","spx"];if(S.showVal===undefined)S.showVal=true;
 const save=()=>{try{localStorage.setItem("aand",JSON.stringify(S))}catch(e){}};
-const U={scr:S.lock?"lock":(S.proxy&&S.file&&S.file.sheet?"app":"settings"),tab:0,view:0,sc:0,dm:"a",gm:"e",per:1,wp:1,code:[],step:0,tmp:"",msg:"",ps:null,syMsg:"",stMsg:"",cfgMsg:"",ip:1,vm:"s",sall:false};
+const U={scr:S.lock?"lock":(S.proxy&&S.file&&S.file.sheet?"app":"settings"),tab:0,view:0,sc:-1,dm:"a",gm:"e",per:1,wp:1,code:[],step:0,tmp:"",msg:"",ps:null,syMsg:"",stMsg:"",cfgMsg:"",ip:1,vm:"s",sall:false};
 let IXD={};
 let Q={},FXQ={},HIST={},busy=false,fxMiss=false,account=null,hiddenAt=0;
 const app=new msal.PublicClientApplication({auth:{clientId:CLIENT_ID,authority:"https://login.microsoftonline.com/consumers",redirectUri:location.origin+location.pathname},cache:{cacheLocation:"localStorage",storeAuthStateInCookie:true}});
@@ -435,7 +436,7 @@ function prog(rows,mark){
 }
 function t3row(i,n){return `<div class="t3"><div class="nm">${esc(i.nm)}</div><div class="${cl(i.pct)}">${pc(i.pct)}</div><div class="${cl(i.d)}">${es(i.d,2)}</div></div>`}
 function top3H(gs){
-  const h=gs.filter(x=>x.k!==""&&x.ok.length).map(x=>{
+  const h=gs.filter(x=>x.k!==""&&x.ok.length&&x.l.some(i=>!i.man)).map(x=>{
     const aw=x.ok.filter(i=>i.tr&&i.d>0),av=x.ok.filter(i=>i.tr&&i.d<0),nt=x.ok.filter(i=>i.tr).length,w=aw.slice().sort((a,b)=>b.d-a.d).slice(0,3),v=av.slice().sort((a,b)=>a.d-b.d).slice(0,3);
     const cn=a=>nt?`<span style="float:right;font-weight:400;font-variant-numeric:tabular-nums">${a.length}/${nt} · ${Math.round(a.length/nt*100)}%</span>`:"";
     return `<div class="cb"><div class="ch">${esc(x.k)}${mdot(x.k,x.open)} <span class="sub m">(${x.l.length} aandelen)</span></div><div class="lb">Top 3 dagwinnaars${cn(aw)}</div>${w.length?w.map((t,k)=>t3row(t,k+1)).join(""):'<div class="m">Geen</div>'}<div class="lb">Top 3 dagverliezers${cn(av)}</div>${v.length?v.map((t,k)=>t3row(t,k+1)).join(""):'<div class="m">Geen</div>'}<div class="t3 tt"><div>Totaal ${esc(x.k)}</div><div class="${cl(x.sp)}">${pc(x.sp)}</div><div class="${cl(x.sd)}">${es(x.sd,2)}</div></div></div>`;
@@ -485,8 +486,14 @@ function donutH(its){
 function weightH(its){
   const ok=its.filter(i=>i.v!=null),tot=sum(ok,i=>i.v);
   if(!tot)return '<div class="m">Nog geen koersen geladen.</div>';
-  const rows=ok.slice().sort((a,b)=>b.v-a.v),m=rows[0].v/tot*100;
-  return rows.map((i,k)=>{const w=i.v/tot*100;return `<div class="dv dw"><div class="nm">${nr(k+1)} ${esc(i.nm)}</div><div class="ar"><div class="bar" style="width:${(w/m*100).toFixed(1)}%"></div></div><div class="vl">${nm(w,2)}%</div></div>`}).join("");
+  const rows=ok.slice().sort((a,b)=>b.v-a.v),e=S.showVal,c=e?"":" h2";
+  const cb=`<label style="display:flex;align-items:center;gap:8px;margin:0 2px 10px;font-size:14px;cursor:pointer;"><input type="checkbox" data-a="sv"${e?" checked":""}> Toon waarde</label>`;
+  const line=(n,w,v,g,cls)=>`<div class="vw${c} ${cls||""}"><span>${n}</span><span>${nm(w,2)}%</span>${e?`<span>${ev(v)}</span><span class="${g!=null?cl(g):""}">${g!=null?ec(g,0):"–"}</span>`:""}</div>`;
+  let h=cb+`<div class="vw${c} vh"><span>Aandeel</span><span>Weging</span>${e?"<span>Waarde</span><span>W/V</span>":""}</div>`;
+  rows.forEach((i,k)=>{h+=line(nr(k+1)+" "+esc(i.nm),i.v/tot*100,i.v,i.g)});
+  const ga=rows.filter(i=>i.g!=null);
+  h+=line("Totaal",100,tot,ga.length?sum(ga,i=>i.g):null,"tt");
+  return h+(e?'<div class="foot" style="text-align:left;">W/V = totaal winst/verlies sinds aankoop, inclusief dividend</div>':"");
 }
 function gainH(its){
   const e=U.gm==="e"&&S.showVal,ok=its.filter(i=>i.g!=null);
@@ -531,26 +538,27 @@ function vcls(label,v){return /voor\s*\/\s*achter/i.test(label)?(parseNum(v)<0?"
 function tgtOverH(){
   const P=S.tgt;
   if(!P)return '<div class="m" style="padding:12px 2px;">Nog geen targets geladen. Kies bij Instellingen het tabblad met targets en tik bij Portefeuille op "Lijst bijwerken uit Excel".</div>';
-  const n=P.names.length;if(U.sc>n)U.sc=0;
+  const n=P.names.length;if(U.sc<0)U.sc=n>1?n:0;if(U.sc>n)U.sc=0;
   const all=U.sc===n&&n>1;
+  const HT0=[["Basissimulatie","#64748B"],["5 jaar target totaal","#3B82F6"],["5 jaar target op vandaag","#8B5CF6"],["1 jaar target op vandaag","#F59E0B"]];
+  const BI=[];let bb=-1;P.rows.forEach((r,i)=>{if(i===0||r.gap)bb++;BI.push(bb)});
+  const HT=(bb+1===4?HT0:HT0.slice(1)),hd=bb+1===HT.length,TH=k=>hd?`<div class="th" style="background:${HT[k][1]}">${HT[k][0]}</div>`:"";
   let h='<div class="seg" style="margin-bottom:10px;">'+P.names.map((x,i)=>`<button data-a="sc" data-v="${i}" class="${U.sc===i?"on":""}" style="flex:1;font-size:11.5px;padding:6px 3px;line-height:1.2;">${esc(x)}</button>`).join("")+(n>1?`<button data-a="sc" data-v="${n}" class="${all?"on":""}" style="flex:1;font-size:11.5px;padding:6px 3px;line-height:1.2;">Alle</button>`:"")+"</div>";
   if(!all){
     const sc=Math.min(U.sc,n-1),jt=P.rows.find(r=>r.label==="Jaartarget");
+    h+=TH(0);
     if(jt)h+=`<div class="big"><div class="lbl">Jaartarget ${esc(P.names[sc])}</div><div class="x">${esc(jt.vals[sc])}</div></div>`;
-    P.rows.forEach(r=>{
+    P.rows.forEach((r,ri)=>{
       if(r===jt)return;
       const v=r.vals[sc];
-      h+=`<div class="ln${r.gap?" gap":""}"><div>${esc(r.label)}${r.extra.length?`<small>${esc(P.extraLabel)}: ${esc(r.extra.join(" · "))}</small>`:""}</div><div class="v ${vcls(r.label,v)}">${esc(v)}</div></div>`;
+      if(hd&&r.gap)h+=TH(BI[ri]);
+      h+=`<div class="ln${r.gap&&!hd?" gap":""}"><div>${esc(r.label)}${r.extra.length?`<small>${esc(P.extraLabel)}: ${esc(r.extra.join(" · "))}</small>`:""}</div><div class="v ${vcls(r.label,v)}">${esc(v)}</div></div>`;
     });
   } else {
     const gt=`grid-template-columns:minmax(0,1.3fr) repeat(${n},1fr)`;
     h+=`<div class="gn" style="${gt};font-size:11px;color:var(--mut);border-bottom:1px solid var(--b2);"><div></div>${P.names.map(x=>`<div>${esc(x.replace(/scenario/i,"Scen."))}</div>`).join("")}</div>`;
-    const HT0=[["Basissimulatie","#64748B"],["5 jaar target totaal","#3B82F6"],["5 jaar target op vandaag","#8B5CF6"],["1 jaar target op vandaag","#F59E0B"]];
-    const nb=P.rows.filter((r,i)=>i===0||r.gap).length,HT=nb===4?HT0:HT0.slice(1),hd=nb===HT.length;
-    let bi=-1;
     P.rows.forEach((r,i)=>{
-      const nw=i===0||r.gap;if(nw)bi++;
-      if(hd&&nw)h+=`<div class="th" style="background:${HT[bi][1]}">${HT[bi][0]}</div>`;
+      if(hd&&(i===0||r.gap))h+=TH(BI[i]);
       h+=`<div class="gn${r.gap&&!hd?" gap":""}" style="${gt}"><div>${esc(r.label)}</div>${r.vals.map(v=>`<div class="${vcls(r.label,v)}">${esc(short(v))}</div>`).join("")}</div>`});
   }
   return h;
@@ -640,10 +648,26 @@ function verdH(){
   if(all.length>8)h+=`<div style="margin-top:10px;"><button class="sm ghost" data-a="sall">${U.sall?"Toon top 8":"Toon alle "+all.length}</button></div>`;
   return cb+h+nomiss;
 }
+const b64=a=>btoa(String.fromCharCode(...new Uint8Array(a))).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
+const unb64=t=>Uint8Array.from(atob(t.replace(/-/g,"+").replace(/_/g,"/")),c=>c.charCodeAt(0));
+let bioOK=false;
+try{if(window.PublicKeyCredential&&PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable)PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable().then(v=>{bioOK=!!v;if(U.scr==="settings")render()}).catch(()=>{})}catch(e){}
+async function bioReg(){
+  const c=await navigator.credentials.create({publicKey:{challenge:crypto.getRandomValues(new Uint8Array(32)),rp:{name:"Aandelenscreener"},user:{id:crypto.getRandomValues(new Uint8Array(16)),name:"eigenaar",displayName:"Eigenaar"},pubKeyCredParams:[{type:"public-key",alg:-7},{type:"public-key",alg:-257}],authenticatorSelection:{authenticatorAttachment:"platform",userVerification:"required",residentKey:"discouraged"},timeout:60000}});
+  S.bio={id:b64(c.rawId)};save();
+}
+async function bioUnlock(manual){
+  if(U.scr!=="lock"||!S.bio||Date.now()<S.until)return;
+  try{
+    await navigator.credentials.get({publicKey:{challenge:crypto.getRandomValues(new Uint8Array(32)),allowCredentials:[{type:"public-key",id:unb64(S.bio.id),transports:["internal"]}],userVerification:"required",timeout:60000}});
+    S.fails=0;S.until=0;save();U.msg="";U.scr="app";render();startUp();
+  }catch(e){if(manual){U.msg="Vingerafdruk niet herkend. Gebruik je code.";render()}}
+}
 function lockH(title,setup){
+  const bioBtn=!setup&&S.bio?'<div style="margin:10px 0 0;"><button class="sm" data-a="bio">🖐 Ontgrendel met vingerafdruk</button></div>':"";
   let d="";for(let i=0;i<9;i++)d+=`<div class="dot${i<U.code.length?" on":""}"></div>`;
   let p="";["1","2","3","4","5","6","7","8","9","","0","del"].forEach(k=>{p+=k===""?"<div></div>":`<button data-a="${k==="del"?"del":"key"}" data-v="${k}">${k==="del"?"⌫":k}</button>`});
-  return `<div class="hd"><div class="t">${esc(TITLE)}</div></div><div class="body" style="text-align:center;padding-top:28px;"><div style="font-size:30px;">🔒</div><div style="font-size:16px;margin-top:6px;">${esc(title)}</div><div class="dots">${d}</div><div class="lbl" style="min-height:18px;${U.msg?"color:var(--dn)":""}">${esc(U.msg||"9 cijfers")}</div><div class="pad">${p}</div>${setup?'<button class="ghost sm" data-a="cancel">Annuleren</button>':""}</div>`;
+  return `<div class="hd"><div class="t">${esc(TITLE)}</div></div><div class="body" style="text-align:center;padding-top:28px;"><div style="font-size:30px;">🔒</div><div style="font-size:16px;margin-top:6px;">${esc(title)}</div>${bioBtn}<div class="dots">${d}</div><div class="lbl" style="min-height:18px;${U.msg?"color:var(--dn)":""}">${esc(U.msg||"9 cijfers")}</div><div class="pad">${p}</div>${setup?'<button class="ghost sm" data-a="cancel">Annuleren</button>':""}</div>`;
 }
 function settingsH(){
   const f=S.file,lk=S.lock;
@@ -656,8 +680,8 @@ function settingsH(){
   `<div class="stg"><div>Tabblad met targets<br><span class="lbl">${f&&f.tsheet?esc(f.tsheet):"Geen"}</span></div><button class="sm" data-a="ptt"${f?"":" disabled"}>Kies</button></div>`+
   `<div class="sec">Weergave</div><div class="stg"><label style="display:flex;align-items:center;gap:8px;cursor:pointer;"><input type="checkbox" data-a="sv"${S.showVal?" checked":""}> Toon waarde</label></div>`+
   `<div class="stg"><div>Automatisch verversen<br><span class="lbl">Koersen opnieuw ophalen zolang de app open staat</span></div><select data-a="rate">${[[0,"Uit"],[30,"30 seconden"],[60,"1 minuut"],[120,"2 minuten"],[300,"5 minuten"],[900,"15 minuten"]].map(o=>`<option value="${o[0]}"${(S.rate==null?60:S.rate)==o[0]?" selected":""}>${o[1]}</option>`).join("")}</select></div>`+
-  `<div class="sec">Toegangscode</div><div class="stg"><div>Code (9 cijfers)<br><span class="lbl">${lk?"Ingesteld":"Uit"}</span></div><button class="sm" data-a="cs">${lk?"Wijzigen":"Instellen"}</button></div>`+
-  (lk?`<div class="stg"><div>Vergrendel na</div><select data-a="la"><option value="0"${lk.after==0?" selected":""}>Direct</option><option value="60"${lk.after==60?" selected":""}>1 minuut</option><option value="300"${lk.after==300?" selected":""}>5 minuten</option><option value="900"${lk.after==900?" selected":""}>15 minuten</option></select></div><div class="stg"><div>Code uitzetten</div><button class="sm ghost" data-a="cx">Uitzetten</button></div>`:"")+
+  `<div class="sec">Beveiliging</div><div class="stg"><div>Code (9 cijfers)<br><span class="lbl">${lk?"Ingesteld":"Uit"}</span></div><button class="sm" data-a="cs">${lk?"Wijzigen":"Instellen"}</button></div>`+
+  (lk?`<div class="stg"><div>Ontgrendelen met<br><span class="lbl">${esc(U.secMsg||(bioOK?"Vingerafdruk of code":"Vingerafdruk niet beschikbaar op dit toestel"))}</span></div><select data-a="meth"><option value="code"${S.bio?"":" selected"}>Code</option><option value="bio"${S.bio?" selected":""}${bioOK?"":" disabled"}>Vingerafdruk</option></select></div><div class="stg"><div>Vergrendel na</div><select data-a="la"><option value="0"${lk.after==0?" selected":""}>Direct</option><option value="60"${lk.after==60?" selected":""}>1 minuut</option><option value="300"${lk.after==300?" selected":""}>5 minuten</option><option value="900"${lk.after==900?" selected":""}>15 minuten</option></select></div><div class="stg"><div>Code uitzetten</div><button class="sm ghost" data-a="cx">Uitzetten</button></div>`:"")+
   `<div class="sec">Gegevens</div><div class="stg"><div>Alle bewaarde gegevens wissen<br><span class="lbl">Instellingen, code en waardeverloop verdwijnen</span></div><button class="sm ghost" data-a="wipe">Wissen</button></div></div>`;
 }
 function pickerH(){
@@ -674,8 +698,9 @@ function pickerH(){
 }
 function render(){
   const y=window.scrollY;
-  $("ph").innerHTML=U.scr==="lock"?lockH("Voer je code in",false):U.scr==="setup"?lockH(U.step===0?"Kies een nieuwe code":"Herhaal de code",true):U.scr==="settings"?settingsH():U.scr==="picker"?pickerH():appH();
+  $("ph").innerHTML=U.scr==="lock"?lockH(S.bio?"Vingerafdruk of code":"Voer je code in",false):U.scr==="setup"?lockH(U.step===0?"Kies een nieuwe code":"Herhaal de code",true):U.scr==="settings"?settingsH():U.scr==="picker"?pickerH():appH();
   const hd=document.querySelector(".hd");if(hd)document.documentElement.style.setProperty("--hh",hd.offsetHeight+"px");
+  if(U.scr==="lock"&&S.bio&&!U.bt){U.bt=true;setTimeout(()=>bioUnlock(false),350)}
   window.scrollTo(0,y);
 }
 function draw(){if(U.scr==="app"||U.scr==="picker")render()}
@@ -737,7 +762,8 @@ const root=$("ph");
 root.addEventListener("click",e=>{
   const t=e.target.closest("[data-a]");if(!t)return;
   const a=t.getAttribute("data-a"),v=t.getAttribute("data-v");
-  if(a==="sv"||a==="la"||a==="rate")return;
+  if(a==="sv"||a==="la"||a==="rate"||a==="meth")return;
+  if(a==="bio"){bioUnlock(true);return}
   if(a==="key"){key(v);return}
   if(a==="del"){U.code.pop();render();return}
   if(a==="cancel"){U.scr="settings";U.step=0;U.tmp="";U.code=[];U.msg="";render();return}
@@ -781,7 +807,7 @@ root.addEventListener("click",e=>{
   }
   else if(a==="psk"){S.file.tsheet="";S.tgt=null;save();pFinish(U.ps.chain);return}
   else if(a==="cs"){U.scr="setup";U.step=0;U.tmp="";U.code=[];U.msg="";}
-  else if(a==="cx"){if(confirm("Toegangscode uitzetten?")){S.lock=null;S.fails=0;S.until=0}}
+  else if(a==="cx"){if(confirm("Toegangscode uitzetten?")){S.lock=null;S.bio=null;S.fails=0;S.until=0}}
   else if(a==="wipe"){if(confirm("Alle bewaarde gegevens wissen? Dit kan niet ongedaan worden gemaakt.")){try{localStorage.clear()}catch(x){}location.reload()}return}
   save();render();
 });
@@ -789,11 +815,15 @@ root.addEventListener("change",e=>{
   const a=e.target.getAttribute("data-a");
   if(a==="sv"){S.showVal=e.target.checked;save();render()}
   else if(a==="la"&&S.lock){S.lock.after=+e.target.value;save()}
+  else if(a==="meth"){
+    if(e.target.value==="bio"){U.secMsg="Bevestig met je vingerafdruk…";render();bioReg().then(()=>{U.secMsg="Vingerafdruk ingesteld. Je code blijft de reserve.";render()}).catch(()=>{S.bio=null;save();U.secMsg="Instellen met vingerafdruk is niet gelukt. Je gebruikt de code.";render()})}
+    else{S.bio=null;save();U.secMsg="Je ontgrendelt nu met je code.";render()}
+  }
   else if(a==="rate"){S.rate=+e.target.value;save();setRate()}
 });
 document.addEventListener("visibilitychange",()=>{
   if(document.hidden){hiddenAt=Date.now();return}
-  if(S.lock&&U.scr!=="lock"&&U.scr!=="setup"&&(Date.now()-hiddenAt)/1000>=S.lock.after){U.scr="lock";U.code=[];U.msg="";render();return}
+  if(S.lock&&U.scr!=="lock"&&U.scr!=="setup"&&(Date.now()-hiddenAt)/1000>=S.lock.after){U.scr="lock";U.code=[];U.msg="";U.bt=false;render();return}
   if(U.scr==="app")refresh();
 });
 let rt=null;function setRate(){clearInterval(rt);if(S.rate>0)rt=setInterval(()=>{if(!document.hidden&&U.scr==="app")refresh()},S.rate*1000)}
