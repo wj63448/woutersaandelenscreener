@@ -57,8 +57,9 @@ input[type=text],input[type=url],select{font:inherit;padding:9px;border:1px soli
 .sth{position:sticky;top:var(--hh,46px);z-index:4;background:var(--bg)}
 .md{display:inline-block;width:9px;height:9px;border-radius:50%;margin:0 4px 0 2px;vertical-align:1px}.md.on{background:var(--up)}.md.off{background:#9ca3af}
 .no{color:var(--mut);font-size:.85em;margin-right:3px;font-variant-numeric:tabular-nums;font-weight:400}
+.cash{background:#fde047;color:#111827;padding:1px 6px;border-radius:4px;font-weight:600}
 .vw{display:grid;grid-template-columns:minmax(0,1fr) 56px 74px 74px;gap:4px;font-size:12px;align-items:center;padding:7px 0;border-bottom:1px solid var(--b)}.vw.h2{grid-template-columns:minmax(0,1fr) 64px}.vw>span{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}.vw>span:first-child{text-align:left;overflow:hidden;text-overflow:ellipsis}.vw.vh{color:var(--mut);font-size:10.5px;padding:4px 0}.vw.tt{font-weight:600;border-top:1px solid var(--b2);border-bottom:none}
-.vw{display:grid;grid-template-columns:minmax(0,1fr) 56px 74px 74px;gap:4px;font-size:12px;align-items:center;padding:7px 0;border-bottom:1px solid var(--b)}.vw.h2{grid-template-columns:minmax(0,1fr) 64px}.vw>span{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}.vw>span:first-child{text-align:left;overflow:hidden;text-overflow:ellipsis}.vw.vh{color:var(--mut);font-size:10.5px;padding:4px 0}.vw.tt{font-weight:600;border-top:1px solid var(--b2);border-bottom:none}
+
 .dv .vl{text-align:right;font-variant-numeric:tabular-nums;font-size:11px}
 .bu{background:var(--up)}.bd{background:var(--dn)}
 .pg{margin:8px 0 12px}
@@ -129,7 +130,7 @@ function parseList(v){
   const iS=find("symbool","ticker","symbol"),iQ=find("aantal","stuks","quantity");
   const iP=find("totaal","betaald","aankoopwaarde");
   const iB=h.findIndex(x=>(x.includes("koers")||x.includes("prijs"))&&!x.includes("handmatig")&&!x.includes("totaal")&&!x.includes("waarde"));
-  const iN=find("naam","name"),iM=find("handmatig"),iC=find("valuta","munt");
+  const iN=h.findIndex(x=>(x.includes("naam")||x.includes("name"))&&!x.includes("weergave")),iW=find("weergave"),iM=find("handmatig"),iC=find("valuta","munt");
   const iIn=find("input"),iSe=find("sector"),iDv=find("dividend");
   if(iS<0||iQ<0)throw new Error("Kolommen 'Symbool' en 'Aantal' niet gevonden in de eerste rij van het tabblad met aandelen");
   const m={};
@@ -138,13 +139,14 @@ function parseList(v){
     let sym=String(r[iS]==null?"":r[iS]).trim().toUpperCase();
     if(!sym&&mk>0)sym=nmx.toUpperCase();
     if(!sym)return;
-    let q=parseNum(r[iQ]);if(mk>0&&q<=0)q=1;const o=m[sym]||(m[sym]={sym,qty:0,paid:0,bq:0});
+    const dn=iW>=0?String(r[iW]==null?"":r[iW]).trim():"";
+    let q=parseNum(r[iQ]);if(mk>0&&q<=0)q=1;const o=m[sym]||(m[sym]={sym,qty:0,paid:0,bq:0});if(dn)o.disp=dn;
     if(mk>0){o.man=mk;o.mname=nmx||sym;o.mcur=(iC>=0&&String(r[iC]||"").trim()?String(r[iC]).trim().toUpperCase():"EUR")}
     const pd=iP>=0?parseNum(r[iP]):0;
     o.qty+=q;o.paid+=pd;if(iB>=0)o.bq+=parseNum(r[iB])*q;
     if(q>0)(o.parts=o.parts||[]).push({input:(iIn>=0?String(r[iIn]==null?"":r[iIn]).trim():"")||(sym==="CASH"?"Cash":""),sector:iSe>=0?String(r[iSe]==null?"":r[iSe]).trim():"",qty:q,paid:pd,div:iDv>=0?parseNum(r[iDv]):0});
   });
-  return Object.values(m).filter(o=>o.qty>0).map(o=>({sym:o.sym,qty:o.qty,paid:o.paid,buy:o.qty&&o.bq?o.bq/o.qty:0,parts:o.parts||[],man:o.man||0,mname:o.mname||"",mcur:o.mcur||"EUR",hasIn:iIn>=0,hasSe:iSe>=0,hasDv:iDv>=0}));
+  return Object.values(m).filter(o=>o.qty>0).map(o=>({sym:o.sym,qty:o.qty,paid:o.paid,buy:o.qty&&o.bq?o.bq/o.qty:0,parts:o.parts||[],disp:o.disp||"",man:o.man||0,mname:o.mname||"",mcur:o.mcur||"EUR",hasIn:iIn>=0,hasSe:iSe>=0,hasDv:iDv>=0}));
 }
 function fmtT(raw,kind){
   const s=String(raw==null?"":raw).trim();
@@ -381,11 +383,11 @@ async function startUp(){
 function items(){
   fxMiss=false;
   return S.pos.map(p=>{
-    const q=Q[p.sym],it={p,k:p.sym,tr:true,nm:(q&&q.name)||p.sym,cur:"",sub:"",v:null,d:null,pct:null,g:null,gp:null};
+    const q=Q[p.sym],it={p,k:p.sym,tr:true,nm:p.disp||(q&&q.name)||p.sym,cur:"",sub:"",v:null,d:null,pct:null,g:null,gp:null};
     if(!q)it.sub="…";
     else if(q.err)it.sub=q.err;
     else{
-      it.cur=q.cur||"";it.tr=q.tr!==false;it.reg=q.reg||null;it.pre=q.pre||null;if(q.man){it.man=true;it.nm=(q.name||p.sym)+" ✎"}
+      it.cur=q.cur||"";it.tr=q.tr!==false;it.reg=q.reg||null;it.pre=q.pre||null;if(q.man){it.man=true;it.nm=(p.disp||q.name||p.sym)+" ✎"}
       const fx=q.cur==="EUR"?{now:1,prev:1}:FXQ[q.cur];
       if(!fx){fxMiss=true;it.sub="wisselkoers niet beschikbaar"}
       else{
@@ -401,16 +403,16 @@ function agg(l){
   const ok=l.filter(i=>i.v!=null),td=ok.filter(i=>i.tr),sd=sum(td,i=>i.d),sv=sum(ok,i=>i.v),gg=ok.filter(i=>i.g!=null),tv=sum(td,i=>i.v),sk=sum(td,i=>i.dk),sf=sum(td,i=>i.dv);
   return{ok,sd,sv,stt:sum(gg,i=>i.g),cost:sum(gg,i=>i.p.paid),hasG:gg.length>0,sp:(tv-sd)?sd/(tv-sd)*100:0,nt:ok.filter(i=>!i.tr&&!i.man).length,sk,sf};
 }
-const MKT={CAD:"Toronto",EUR:"Euronext",USD:"NYSE/Nasdaq"};
+const MKT={CAD:"Toronto",EUR:"Euronext",USD:"NYSE/Nasdaq",PLN:"Warschau"};
 function mktOpen(l){
   const c=l.filter(i=>!i.man&&i.v!=null);
   if(!c.length)return null;
   const now=Date.now()/1000;
   if(c.some(i=>i.reg))return c.some(i=>i.tr&&i.reg&&now>=i.reg[0]&&now<=i.reg[1]);
-  const cur=c[0].cur,tz=cur==="EUR"?"Europe/Brussels":"America/New_York";
+  const cur=c[0].cur,tz=cur==="EUR"?"Europe/Brussels":cur==="PLN"?"Europe/Warsaw":"America/New_York";
   try{
     const p=Object.fromEntries(new Intl.DateTimeFormat("en-GB",{timeZone:tz,weekday:"short",hour:"2-digit",minute:"2-digit",hour12:false}).formatToParts(new Date()).map(x=>[x.type,x.value]));
-    const mn=(+p.hour%24)*60+ +p.minute,wd=!/^(Sat|Sun)/.test(p.weekday),a=cur==="EUR"?540:570,b=cur==="EUR"?1050:960;
+    const mn=(+p.hour%24)*60+ +p.minute,wd=!/^(Sat|Sun)/.test(p.weekday),a=cur==="EUR"||cur==="PLN"?540:570,b=cur==="EUR"?1050:cur==="PLN"?1005:960;
     return wd&&mn>=a&&mn<b&&c.some(i=>i.tr);
   }catch(e){return null}
 }
@@ -423,20 +425,21 @@ function groups(its){
 
 /* ---------- onderdelen ---------- */
 function seg(a,opts,cur){return '<div class="seg">'+opts.map(o=>`<button data-a="${a}" data-v="${o[0]}" class="${String(cur)===String(o[0])?"on":""}">${o[1]}</button>`).join("")+"</div>"}
+const cn=n=>/^cash\b/i.test(String(n))?`<span class="cash">${esc(n)}</span>`:esc(n);
 const nr=n=>`<span class="no">(${n})</span>`;
 function diverge(rows,fn,num){
   const m=Math.max(...rows.map(r=>Math.abs(r[1])),0.0001);
   return rows.map((r,i)=>{
     const w=Math.abs(r[1])/m*50,pos=r[1]>=0,s=pos?`left:50%;width:${w}%`:`left:${50-w}%;width:${w}%`;
-    return `<div class="dv"><div class="nm">${num?nr(i+1)+" ":""}${esc(r[0])}</div><div class="ar"><div class="bar ${pos?"bu":"bd"}" style="${s}"></div></div><div class="vl ${cl(r[1])}">${fn(r[1])}</div></div>`;
+    return `<div class="dv"><div class="nm">${num?nr(i+1)+" ":""}${cn(r[0])}</div><div class="ar"><div class="bar ${pos?"bu":"bd"}" style="${s}"></div></div><div class="vl ${cl(r[1])}">${fn(r[1])}</div></div>`;
   }).join("");
 }
 function prog(rows,mark){
-  return rows.map(r=>`<div class="pg"><div class="tp"><span>${esc(r[0])}</span><span>${(r[1]<0?"−":"")+nm(r[1],r[1]%1?2:0)}%</span></div><div class="tk"><div class="fl" style="width:${Math.max(0,Math.min(100,r[1]))}%"></div>${mark!=null?`<div class="mk" style="left:${Math.max(0,Math.min(100,mark))}%"></div>`:""}</div></div>`).join("")+(mark!=null?`<div class="lbl">| = verlopen tijd (${nm(mark,mark%1?2:0)}%)</div>`:"");
+  return rows.map(r=>`<div class="pg"><div class="tp"><span>${cn(r[0])}</span><span>${(r[1]<0?"−":"")+nm(r[1],r[1]%1?2:0)}%</span></div><div class="tk"><div class="fl" style="width:${Math.max(0,Math.min(100,r[1]))}%"></div>${mark!=null?`<div class="mk" style="left:${Math.max(0,Math.min(100,mark))}%"></div>`:""}</div></div>`).join("")+(mark!=null?`<div class="lbl">| = verlopen tijd (${nm(mark,mark%1?2:0)}%)</div>`:"");
 }
-function t3row(i,n){return `<div class="t3"><div class="nm">${esc(i.nm)}</div><div class="${cl(i.pct)}">${pc(i.pct)}</div><div class="${cl(i.d)}">${es(i.d,2)}</div></div>`}
+function t3row(i,n){return `<div class="t3"><div class="nm">${cn(i.nm)}</div><div class="${cl(i.pct)}">${pc(i.pct)}</div><div class="${cl(i.d)}">${es(i.d,2)}</div></div>`}
 function top3H(gs){
-  const h=gs.filter(x=>x.k!==""&&x.ok.length&&x.l.some(i=>!i.man)).map(x=>{
+  const h=gs.filter(x=>x.k!==""&&x.k!=="PLN"&&x.ok.length&&x.l.some(i=>!i.man)).map(x=>{
     const aw=x.ok.filter(i=>i.tr&&i.d>0),av=x.ok.filter(i=>i.tr&&i.d<0),nt=x.ok.filter(i=>i.tr).length,w=aw.slice().sort((a,b)=>b.d-a.d).slice(0,3),v=av.slice().sort((a,b)=>a.d-b.d).slice(0,3);
     const cn=a=>nt?`<span style="float:right;font-weight:400;font-variant-numeric:tabular-nums">${a.length}/${nt} · ${Math.round(a.length/nt*100)}%</span>`:"";
     return `<div class="cb"><div class="ch">${esc(x.k)}${mdot(x.k,x.open)} <span class="sub m">(${x.l.length} aandelen)</span></div><div class="lb">Top 3 dagwinnaars${cn(aw)}</div>${w.length?w.map((t,k)=>t3row(t,k+1)).join(""):'<div class="m">Geen</div>'}<div class="lb">Top 3 dagverliezers${cn(av)}</div>${v.length?v.map((t,k)=>t3row(t,k+1)).join(""):'<div class="m">Geen</div>'}<div class="t3 tt"><div>Totaal ${esc(x.k)}</div><div class="${cl(x.sp)}">${pc(x.sp)}</div><div class="${cl(x.sd)}">${es(x.sd,2)}</div></div></div>`;
@@ -456,7 +459,7 @@ function tableH(gs,ta){
     if(!o)cnt+=x.l.length;
     if(o)x.l.forEach(i=>{
       cnt++;
-      h+=`<div class="r${i.tr===false?" off":""}"><div class="n"><a href="https://finance.yahoo.com/quote/${encodeURIComponent(i.k)}" target="_blank" rel="noopener">${esc(i.nm)}</a>${i.sub?`<br><small class="dn">${esc(i.sub)}</small>`:""}</div>${i.v!=null?cells(i.pct,i.d,i.g||0,i.v,i.g!=null,i.gp,i.pre&&i.tr===false?i.pre.pct:null):"<div></div><div></div><div></div><div class='wv'></div>"}</div>`;
+      h+=`<div class="r${i.tr===false?" off":""}"><div class="n"><a href="https://finance.yahoo.com/quote/${encodeURIComponent(i.k)}" target="_blank" rel="noopener">${cn(i.nm)}</a>${i.sub?`<br><small class="dn">${esc(i.sub)}</small>`:""}</div>${i.v!=null?cells(i.pct,i.d,i.g||0,i.v,i.g!=null,i.gp,i.pre&&i.tr===false?i.pre.pct:null):"<div></div><div></div><div></div><div class='wv'></div>"}</div>`;
     });
   });
   h+=`<div class="r" style="font-weight:600;border-top:1px solid var(--b2);border-bottom:none;margin-top:6px;"><div>Totaal</div>${cells(ta.sp,ta.sd,ta.stt,ta.sv,ta.hasG,ta.cost?ta.stt/ta.cost*100:null)}</div></div>`;
@@ -480,7 +483,7 @@ function donutH(its){
   else{const m={};ok.forEach(i=>m[i.cur]=(m[i.cur]||0)+i.v);rows=Object.keys(m).sort().map(k=>[k,m[k]])}
   const R=58,C=2*Math.PI*R;let off=0,arcs="";
   rows.forEach((r,i)=>{const len=r[1]/tot*C,c=(U.dm==="a"&&i===6)?COL[6]:COL[i%6];arcs+=`<circle cx="80" cy="80" r="${R}" fill="none" stroke="${c}" stroke-width="26" stroke-dasharray="${len.toFixed(2)} ${(C-len).toFixed(2)}" stroke-dashoffset="${(-off).toFixed(2)}" transform="rotate(-90 80 80)"></circle>`;off+=len});
-  const lg=rows.map((r,i)=>`<div><span class="sw" style="background:${(U.dm==="a"&&i===6)?COL[6]:COL[i%6]}"></span>${esc(r[0])}<b>${Math.round(r[1]/tot*100)}%</b></div>`).join("");
+  const lg=rows.map((r,i)=>`<div><span class="sw" style="background:${(U.dm==="a"&&i===6)?COL[6]:COL[i%6]}"></span>${cn(r[0])}<b>${Math.round(r[1]/tot*100)}%</b></div>`).join("");
   return `<div style="display:flex;justify-content:center;"><svg width="160" height="160" viewBox="0 0 160 160" role="img" aria-label="Verdeling van de portefeuille">${arcs}<text x="80" y="${S.showVal?77:84}" text-anchor="middle" font-size="11" fill="var(--mut)">${S.showVal?"Totaal":"Verdeling"}</text>${S.showVal?`<text x="80" y="94" text-anchor="middle" font-size="14" font-weight="600" fill="var(--tx)">${eur(tot)}</text>`:""}</svg></div><div class="lg">${lg}</div>`;
 }
 function weightH(its){
@@ -490,7 +493,7 @@ function weightH(its){
   const cb=`<label style="display:flex;align-items:center;gap:8px;margin:0 2px 10px;font-size:14px;cursor:pointer;"><input type="checkbox" data-a="sv"${e?" checked":""}> Toon waarde</label>`;
   const line=(n,w,v,g,cls)=>`<div class="vw${c} ${cls||""}"><span>${n}</span><span>${nm(w,2)}%</span>${e?`<span>${ev(v)}</span><span class="${g!=null?cl(g):""}">${g!=null?ec(g,0):"–"}</span>`:""}</div>`;
   let h=cb+`<div class="vw${c} vh"><span>Aandeel</span><span>Weging</span>${e?"<span>Waarde</span><span>W/V</span>":""}</div>`;
-  rows.forEach((i,k)=>{h+=line(nr(k+1)+" "+esc(i.nm),i.v/tot*100,i.v,i.g)});
+  rows.forEach((i,k)=>{h+=line(nr(k+1)+" "+cn(i.nm),i.v/tot*100,i.v,i.g)});
   const ga=rows.filter(i=>i.g!=null);
   h+=line("Totaal",100,tot,ga.length?sum(ga,i=>i.g):null,"tt");
   return h+(e?'<div class="foot" style="text-align:left;">W/V = totaal winst/verlies sinds aankoop, inclusief dividend</div>':"");
@@ -504,7 +507,7 @@ function gainH(its){
 function sparkH(its){
   const rg=RG[U.per];
   return its.map((i,k)=>{
-    const a=HIST[i.k+"|"+rg],NM=esc(i.nm);
+    const a=HIST[i.k+"|"+rg],NM=cn(i.nm);
     if(!a)return `<div class="sp"><div class="nm">${NM}</div><div class="m">…</div><div></div></div>`;
     if(a.length<2)return `<div class="sp"><div class="nm">${NM}</div><div class="m">geen gegevens</div><div></div></div>`;
     const mn=Math.min(...a),mx=Math.max(...a),w=120,h=24,pts=a.map((v,j)=>(j/(a.length-1)*w).toFixed(1)+","+(h-2-(v-mn)/(mx-mn||1)*(h-4)).toFixed(1));
@@ -631,8 +634,8 @@ function verdH(){
     S.iopen=S.iopen||{};
     keys.forEach(k=>{
       const l=m[k],o=!!S.iopen[k],a=vagg(l,tot);
-      h+=vrow((o?"▾ ":"▸ ")+sw(k)+esc(k||"Zonder input"),a,"vp",` data-a="ig" data-v="${esc(k)}"`);
-      if(o)l.slice().sort((x,y)=>y.v-x.v).forEach((x,n)=>{h+=vrow(esc(x.nm),vagg([x],tot),"vs")});
+      h+=vrow((o?"▾ ":"▸ ")+sw(k)+cn(k||"Zonder input"),a,"vp",` data-a="ig" data-v="${esc(k)}"`);
+      if(o)l.slice().sort((x,y)=>y.v-x.v).forEach((x,n)=>{h+=vrow(cn(x.nm),vagg([x],tot),"vs")});
     });
     h+=vrow("Totaal",vagg(L,tot),"vp");
     return cb+h+nomiss+'<div class="foot" style="text-align:left;">W/V inclusief dividend · bedragen in duizend (k) · Dag % enkel aandelen die vandaag handelden · tik op een input om uit te klappen</div>';
@@ -642,7 +645,7 @@ function verdH(){
   const top=all.slice(0,8),rest=all.slice(8),show=U.sall?all:top;
   const rows=top.slice();if(rest.length)rows.push(["Overige ("+rest.length+")",sum(rest,r=>r[1])]);
   let h=donutSvg(rows.map((r,i)=>[r[0],r[1],(rest.length&&i===rows.length-1)?COL8[8]:COL8[i%8]]),tot,"Sector")+`<div style="margin-top:8px;">`;
-  show.forEach((r,i)=>{h+=`<div class="vl"><span class="sw" style="background:${COL8[i<8?i:8]}"></span><span class="n">${esc(r[0])}</span><span class="p">${nm(r[1]/tot*100,2)}%</span>${S.showVal?`<span class="w">${ev(r[1])}</span>`:""}</div>`});
+  show.forEach((r,i)=>{h+=`<div class="vl"><span class="sw" style="background:${COL8[i<8?i:8]}"></span><span class="n">${cn(r[0])}</span><span class="p">${nm(r[1]/tot*100,2)}%</span>${S.showVal?`<span class="w">${ev(r[1])}</span>`:""}</div>`});
   if(!U.sall&&rest.length)h+=`<div class="vl"><span class="sw" style="background:${COL8[8]}"></span><span class="n">Overige (${rest.length})</span><span class="p">${nm(sum(rest,r=>r[1])/tot*100,2)}%</span>${S.showVal?`<span class="w">${ev(sum(rest,r=>r[1]))}</span>`:""}</div>`;
   h+=`<div class="vl tot"><span class="sw" style="background:transparent"></span><span class="n">Eindtotaal</span><span class="p">100,00%</span>${S.showVal?`<span class="w">${ev(tot)}</span>`:""}</div></div>`;
   if(all.length>8)h+=`<div style="margin-top:10px;"><button class="sm ghost" data-a="sall">${U.sall?"Toon top 8":"Toon alle "+all.length}</button></div>`;
