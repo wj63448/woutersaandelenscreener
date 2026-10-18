@@ -57,6 +57,7 @@ input[type=text],input[type=url],select{font:inherit;padding:9px;border:1px soli
 .sth{position:sticky;top:var(--hh,46px);z-index:4;background:var(--bg)}
 .md{display:inline-block;width:9px;height:9px;border-radius:50%;margin:0 4px 0 2px;vertical-align:1px}.md.on{background:var(--up)}.md.off{background:#9ca3af}
 .no{color:var(--mut);font-size:.85em;margin-right:3px;font-variant-numeric:tabular-nums;font-weight:400}
+.vl.sx{cursor:pointer}.vl.sub{font-size:12px;padding-left:12px;color:var(--mut)}.vl.sub .n{padding-left:6px}
 .cash{background:#fde047;color:#111827;padding:1px 6px;border-radius:4px;font-weight:600}
 .vw{display:grid;grid-template-columns:minmax(0,1fr) 56px 74px 74px;gap:4px;font-size:12px;align-items:center;padding:7px 0;border-bottom:1px solid var(--b)}.vw.h2{grid-template-columns:minmax(0,1fr) 64px}.vw>span{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}.vw>span:first-child{text-align:left;overflow:hidden;text-overflow:ellipsis}.vw.vh{color:var(--mut);font-size:10.5px;padding:4px 0}.vw.tt{font-weight:600;border-top:1px solid var(--b2);border-bottom:none}
 
@@ -645,11 +646,17 @@ function verdH(){
   const top=all.slice(0,8),rest=all.slice(8),show=U.sall?all:top;
   const rows=top.slice();if(rest.length)rows.push(["Overige ("+rest.length+")",sum(rest,r=>r[1])]);
   let h=donutSvg(rows.map((r,i)=>[r[0],r[1],(rest.length&&i===rows.length-1)?COL8[8]:COL8[i%8]]),tot,"Sector")+`<div style="margin-top:8px;">`;
-  show.forEach((r,i)=>{h+=`<div class="vl"><span class="sw" style="background:${COL8[i<8?i:8]}"></span><span class="n">${cn(r[0])}</span><span class="p">${nm(r[1]/tot*100,2)}%</span>${S.showVal?`<span class="w">${ev(r[1])}</span>`:""}</div>`});
-  if(!U.sall&&rest.length)h+=`<div class="vl"><span class="sw" style="background:${COL8[8]}"></span><span class="n">Overige (${rest.length})</span><span class="p">${nm(sum(rest,r=>r[1])/tot*100,2)}%</span>${S.showVal?`<span class="w">${ev(sum(rest,r=>r[1]))}</span>`:""}</div>`;
+  S.sopen=S.sopen||{};
+  show.forEach((r,i)=>{
+    const o=!!S.sopen[r[0]];
+    h+=`<div class="vl sx" data-a="sg" data-v="${esc(r[0])}"><span class="sw" style="background:${COL8[i<8?i:8]}"></span><span class="n">${o?"▾":"▸"} ${cn(r[0])}</span><span class="p">${nm(r[1]/tot*100,2)}%</span>${S.showVal?`<span class="w">${ev(r[1])}</span>`:""}</div>`;
+    if(o){const q={};L.filter(x=>(x.sector||"Onbekend")===r[0]).forEach(x=>{q[x.nm]=(q[x.nm]||0)+x.v});
+      Object.keys(q).sort((a,b)=>q[b]-q[a]).forEach(k=>{h+=`<div class="vl sub"><span class="sw" style="background:transparent"></span><span class="n">${cn(k)}</span><span class="p">${nm(q[k]/tot*100,2)}%</span>${S.showVal?`<span class="w">${ev(q[k])}</span>`:""}</div>`})}
+  });
+  if(!U.sall&&rest.length)h+=`<div class="vl"><span class="sw" style="background:${COL8[8]}"></span><span class="n">Overige (${rest.length}) <small class="m">· "Toon alle" voor details</small></span><span class="p">${nm(sum(rest,r=>r[1])/tot*100,2)}%</span>${S.showVal?`<span class="w">${ev(sum(rest,r=>r[1]))}</span>`:""}</div>`;
   h+=`<div class="vl tot"><span class="sw" style="background:transparent"></span><span class="n">Eindtotaal</span><span class="p">100,00%</span>${S.showVal?`<span class="w">${ev(tot)}</span>`:""}</div></div>`;
   if(all.length>8)h+=`<div style="margin-top:10px;"><button class="sm ghost" data-a="sall">${U.sall?"Toon top 8":"Toon alle "+all.length}</button></div>`;
-  return cb+h+nomiss;
+  return cb+h+nomiss+'<div class="foot" style="text-align:left;">Tik op een sector om de aandelen te zien</div>';
 }
 const b64=a=>btoa(String.fromCharCode(...new Uint8Array(a))).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
 const unb64=t=>Uint8Array.from(atob(t.replace(/-/g,"+").replace(/_/g,"/")),c=>c.charCodeAt(0));
@@ -781,6 +788,7 @@ root.addEventListener("click",e=>{
   else if(a==="ip")U.ip=+v;
   else if(a==="vm")U.vm=v;
   else if(a==="sall")U.sall=!U.sall;
+  else if(a==="sg"){S.sopen=S.sopen||{};S.sopen[v]=!S.sopen[v];save()}
   else if(a==="ig"){S.iopen=S.iopen||{};S.iopen[v]=!S.iopen[v];save()}
   else if(a==="tm"){S.totMode=S.totMode==="p"?"e":"p";save()}
   else if(a==="ix"){S.idxOn=S.idxOn.includes(v)?S.idxOn.filter(x=>x!==v):S.idxOn.concat(v);save();loadIdx()}
