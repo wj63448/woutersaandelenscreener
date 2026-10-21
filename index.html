@@ -69,7 +69,7 @@ input[type=text],input[type=url],select{font:inherit;padding:9px;border:1px soli
 .pg .fl{position:absolute;left:0;top:0;bottom:0;border-radius:6px;background:var(--p)}
 .pg .mk{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--tx)}
 .cb{background:var(--bg2);border-radius:10px;padding:8px 10px;margin-bottom:10px}
-.ch{font-size:13px;font-weight:600;margin-bottom:4px}
+.ch{font-size:13px;font-weight:600;margin-bottom:4px}.t3b{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;margin-left:6px;border:1px solid var(--b2);border-radius:50%;font-size:15px;line-height:1;cursor:pointer;vertical-align:middle;color:var(--p)}
 .lb{font-size:10.5px;color:var(--mut);text-transform:uppercase;letter-spacing:.04em;margin:8px 0 2px}
 .t3{display:grid;grid-template-columns:minmax(0,1fr) 54px 76px;gap:6px;padding:4px 0;font-size:12px;border-bottom:1px solid var(--b)}
 .t3 .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -419,9 +419,9 @@ function mktOpen(l){
 }
 const mdot=(k,o)=>MKT[k]&&o!=null?`<span class="md ${o?"on":"off"}" title="${MKT[k]} ${o?"open":"gesloten"}" aria-label="${MKT[k]} ${o?"open":"gesloten"}"></span>`:"";
 function groups(its){
-  const m={};its.forEach(i=>(m[i.cur]=m[i.cur]||[]).push(i));
+  const m={};its.forEach(i=>{const g=i.k==="CASH"?"CASH":i.cur;(m[g]=m[g]||[]).push(i)});
   Object.values(m).forEach(l=>l.sort((x,y)=>String(x.nm).localeCompare(String(y.nm),"nl",{sensitivity:"base"})));
-  return Object.keys(m).sort((a,b)=>a===""?1:b===""?-1:a.localeCompare(b)).map(k=>Object.assign({k,l:m[k],open:mktOpen(m[k])},agg(m[k])));
+  return Object.keys(m).sort((a,b)=>a==="CASH"?(b===""?-1:1):b==="CASH"?(a===""?1:-1):a===""?1:b===""?-1:a.localeCompare(b)).map(k=>Object.assign({k,l:m[k],open:mktOpen(m[k])},agg(m[k])));
 }
 
 /* ---------- onderdelen ---------- */
@@ -441,9 +441,9 @@ function prog(rows,mark){
 function t3row(i,n){return `<div class="t3"><div class="nm">${cn(i.nm)}</div><div class="${cl(i.pct)}">${pc(i.pct)}</div><div class="${cl(i.d)}">${es(i.d,2)}</div></div>`}
 function top3H(gs){
   const h=gs.filter(x=>x.k!==""&&x.k!=="PLN"&&x.ok.length&&x.l.some(i=>!i.man)).map(x=>{
-    const aw=x.ok.filter(i=>i.tr&&i.d>0),av=x.ok.filter(i=>i.tr&&i.d<0),nt=x.ok.filter(i=>i.tr).length,w=aw.slice().sort((a,b)=>b.d-a.d).slice(0,3),v=av.slice().sort((a,b)=>a.d-b.d).slice(0,3);
+    const aw=x.ok.filter(i=>i.tr&&i.d>0),av=x.ok.filter(i=>i.tr&&i.d<0),nt=x.ok.filter(i=>i.tr).length,op=!!(U.t3o||{})[x.k],lim=op?999:3,w=aw.slice().sort((a,b)=>b.d-a.d).slice(0,lim),v=av.slice().sort((a,b)=>a.d-b.d).slice(0,lim),tl=op?"Alle":"Top 3";
     const cn=a=>nt?`<span style="float:right;font-weight:400;font-variant-numeric:tabular-nums">${a.length}/${nt} · ${Math.round(a.length/nt*100)}%</span>`:"";
-    return `<div class="cb"><div class="ch">${esc(x.k)}${mdot(x.k,x.open)} <span class="sub m">(${x.l.length} aandelen)</span></div><div class="lb">Top 3 dagwinnaars${cn(aw)}</div>${w.length?w.map((t,k)=>t3row(t,k+1)).join(""):'<div class="m">Geen</div>'}<div class="lb">Top 3 dagverliezers${cn(av)}</div>${v.length?v.map((t,k)=>t3row(t,k+1)).join(""):'<div class="m">Geen</div>'}<div class="t3 tt"><div>Totaal ${esc(x.k)}</div><div class="${cl(x.sp)}">${pc(x.sp)}</div><div class="${cl(x.sd)}">${es(x.sd,2)}</div></div></div>`;
+    return `<div class="cb"><div class="ch">${esc(x.k)}${mdot(x.k,x.open)} <span class="sub m">(${x.l.length} aandelen)</span><span class="t3b" data-a="t3" data-v="${esc(x.k)}" role="button" aria-label="${op?"Toon top 3":"Toon alle"}">${op?"−":"+"}</span></div><div class="lb">${tl} dagwinnaars${cn(aw)}</div>${w.length?w.map((t,k)=>t3row(t,k+1)).join(""):'<div class="m">Geen</div>'}<div class="lb">${tl} dagverliezers${cn(av)}</div>${v.length?v.map((t,k)=>t3row(t,k+1)).join(""):'<div class="m">Geen</div>'}<div class="t3 tt"><div>Totaal ${esc(x.k)}</div><div class="${cl(x.sp)}">${pc(x.sp)}</div><div class="${cl(x.sd)}">${es(x.sd,2)}</div></div></div>`;
   }).join("");
   return h||'<div class="m">Nog geen koersen geladen.</div>';
 }
@@ -456,11 +456,11 @@ function tableH(gs,ta){
   let cnt=0;
   gs.forEach(x=>{
     const key=x.k||"?",o=!S.collapsed[key];
-    h+=`<div class="r gh" data-a="grp" data-v="${esc(key)}"><div>${o?"▾":"▸"} ${esc(x.k||"Niet geladen")}${mdot(x.k,x.open)} <small>(${x.l.length})</small></div>${x.ok.length?cells(x.sp,x.sd,x.stt,x.sv,x.hasG,x.cost?x.stt/x.cost*100:null):"<div></div><div></div><div></div><div class='wv'></div>"}</div>`;
+    h+=`<div class="r gh" data-a="grp" data-v="${esc(key)}"><div>${o?"▾":"▸"} ${esc(x.k||"Niet geladen")}${mdot(x.k,x.open)} <small>(${x.l.length})</small></div>${x.k==="CASH"?`<div></div><div></div><div></div><div class="wv">${ev(x.sv)}</div>`:x.ok.length?cells(x.sp,x.sd,x.stt,x.sv,x.hasG,x.cost?x.stt/x.cost*100:null):"<div></div><div></div><div></div><div class='wv'></div>"}</div>`;
     if(!o)cnt+=x.l.length;
     if(o)x.l.forEach(i=>{
       cnt++;
-      h+=`<div class="r${i.tr===false?" off":""}"><div class="n"><a href="https://finance.yahoo.com/quote/${encodeURIComponent(i.k)}" target="_blank" rel="noopener">${cn(i.nm)}</a>${i.sub?`<br><small class="dn">${esc(i.sub)}</small>`:""}</div>${i.v!=null?cells(i.pct,i.d,i.g||0,i.v,i.g!=null,i.gp,i.pre&&i.tr===false?i.pre.pct:null):"<div></div><div></div><div></div><div class='wv'></div>"}</div>`;
+      h+=`<div class="r${i.tr===false?" off":""}"><div class="n">${i.k==="CASH"?cn(i.nm):`<a href="https://finance.yahoo.com/quote/${encodeURIComponent(i.k)}" target="_blank" rel="noopener">${cn(i.nm)}</a>`}${i.sub?`<br><small class="dn">${esc(i.sub)}</small>`:""}</div>${i.k==="CASH"&&i.v!=null?`<div></div><div></div><div></div><div class="wv">${ev(i.v)}</div>`:i.v!=null?cells(i.pct,i.d,i.g||0,i.v,i.g!=null,i.gp,i.pre&&i.tr===false?i.pre.pct:null):"<div></div><div></div><div></div><div class='wv'></div>"}</div>`;
     });
   });
   h+=`<div class="r" style="font-weight:600;border-top:1px solid var(--b2);border-bottom:none;margin-top:6px;"><div>Totaal</div>${cells(ta.sp,ta.sd,ta.stt,ta.sv,ta.hasG,ta.cost?ta.stt/ta.cost*100:null)}</div></div>`;
@@ -788,6 +788,7 @@ root.addEventListener("click",e=>{
   else if(a==="ip")U.ip=+v;
   else if(a==="vm")U.vm=v;
   else if(a==="sall")U.sall=!U.sall;
+  else if(a==="t3"){U.t3o=U.t3o||{};U.t3o[v]=!U.t3o[v]}
   else if(a==="sg"){S.sopen=S.sopen||{};S.sopen[v]=!S.sopen[v];save()}
   else if(a==="ig"){S.iopen=S.iopen||{};S.iopen[v]=!S.iopen[v];save()}
   else if(a==="tm"){S.totMode=S.totMode==="p"?"e":"p";save()}
