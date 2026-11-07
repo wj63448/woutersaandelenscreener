@@ -89,7 +89,7 @@ input[type=text],input[type=url],select{font:inherit;padding:9px;border:1px soli
 .vg.vp{cursor:pointer;font-weight:600;border-bottom:1px solid var(--b2)}
 .vg.vs{color:var(--tx);padding-left:10px;font-weight:400}
 .vl{display:flex;align-items:center;gap:8px;font-size:13px;padding:6px 0;border-bottom:1px solid var(--b)}
-.vl .sw{width:10px;height:10px;border-radius:2px;flex:none}.vl .n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.vl .p{width:62px;text-align:right}.vl .w{width:74px;text-align:right;color:var(--mut)}
+.vl .sw{width:10px;height:10px;border-radius:2px;flex:none}.vl .n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.vl .g{width:56px;text-align:right}.vl.vh{font-size:10.5px;color:var(--mut)}.vl .p{width:56px;text-align:right}.vl .w{width:70px;text-align:right;color:var(--mut)}
 .vl.tot{font-weight:600;border-bottom:none;border-top:1px solid var(--b2)}
 .tabs{display:flex;border-top:1px solid var(--b2);position:sticky;bottom:0;background:var(--bg)}
 .tabs div{flex:1;text-align:center;padding:8px 0 10px;font-size:12px;color:var(--mut);cursor:pointer}
@@ -109,6 +109,8 @@ input[type=text],input[type=url],select{font:inherit;padding:9px;border:1px soli
 .ixr{display:grid;grid-template-columns:minmax(0,1fr) 62px 96px;gap:6px;padding:6px 2px;border-bottom:1px solid var(--b);font-size:12px;align-items:center}.ixr>div:nth-child(n+2){text-align:right;font-variant-numeric:tabular-nums}
 .tg{font-size:10.5px;padding:1px 6px;border-radius:10px;background:transparent;color:var(--mut);border:1px solid var(--b2);white-space:nowrap}
 .bn{background:rgba(245,158,11,.16);border:1px solid #f59e0b;border-radius:8px;padding:8px 10px;margin-bottom:8px;font-size:13px;line-height:1.45;cursor:pointer}
+.sx2{margin-top:8px;padding:8px;background:var(--b);border-radius:8px}.sxh{font-size:11px;font-weight:600;color:var(--mut);margin-bottom:2px}
+.vb{padding:6px 10px;margin-bottom:8px;background:var(--b);border-radius:6px;font-size:12.5px}.vb.now{outline:2px solid var(--p)}.vb ul{margin:4px 0 2px;padding-left:16px}.vbh{font-size:13px}.nowt{background:var(--p);color:#fff;border-radius:8px;padding:0 6px;font-size:10.5px}
 .op{padding:10px 2px;border-bottom:1px solid var(--b)}
 .op .t1{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-size:13px;font-weight:600}
 .op .t1 .n{min-width:0;font-size:13px}
@@ -141,7 +143,7 @@ function parseList(v){
   const iP=find("totaal","betaald","aankoopwaarde");
   const iB=h.findIndex(x=>(x.includes("koers")||x.includes("prijs"))&&!x.includes("handmatig")&&!x.includes("totaal")&&!x.includes("waarde"));
   const iN=h.findIndex(x=>(x.includes("naam")||x.includes("name"))&&!x.includes("weergave")),iW=find("weergave"),iM=find("handmatig"),iC=find("valuta","munt");
-  const iIn=find("input"),iSe=find("sector"),iDv=find("dividend");
+  const iIn=find("input"),iSe=find("sector"),iDv=find("dividend"),iT=find("target");
   if(iS<0||iQ<0)throw new Error("Kolommen 'Symbool' en 'Aantal' niet gevonden in de eerste rij van het tabblad met aandelen");
   const m={};
   v.slice(1).forEach(r=>{
@@ -150,14 +152,14 @@ function parseList(v){
     if(!sym&&mk>0)sym=nmx.toUpperCase();
     if(!sym)return;
     const dn=iW>=0?String(r[iW]==null?"":r[iW]).trim():"";
-    let q=parseNum(r[iQ]);if(mk>0&&q<=0)q=1;const o=m[sym]||(m[sym]={sym,qty:0,paid:0,bq:0});if(dn)o.disp=dn;
+    let q=parseNum(r[iQ]);if(mk>0&&q<=0)q=1;const o=m[sym]||(m[sym]={sym,qty:0,paid:0,bq:0});if(dn)o.disp=dn;{const tg=iT>=0?parseNum(r[iT]):0;if(tg>0)o.tgt=tg}
     if(mk>0){o.man=mk;o.mname=nmx||sym;o.mcur=(iC>=0&&String(r[iC]||"").trim()?String(r[iC]).trim().toUpperCase():"EUR")}
     const pd=iP>=0?parseNum(r[iP]):0;
     o.qty+=q;o.paid+=pd;if(iB>=0)o.bq+=parseNum(r[iB])*q;
     if(iSe>=0&&/^opties?$/i.test(String(r[iSe]==null?"":r[iSe]).trim()))o.opt=true;
     if(q>0)(o.parts=o.parts||[]).push({input:(iIn>=0?String(r[iIn]==null?"":r[iIn]).trim():"")||(sym==="CASH"?"Cash":""),sector:iSe>=0?String(r[iSe]==null?"":r[iSe]).trim():"",qty:q,paid:pd,div:iDv>=0?parseNum(r[iDv]):0});
   });
-  return Object.values(m).filter(o=>o.qty>0).map(o=>({sym:o.sym,qty:o.qty,paid:o.paid,buy:o.qty&&o.bq?o.bq/o.qty:0,parts:o.parts||[],opt:!!o.opt,disp:o.disp||"",man:o.man||0,mname:o.mname||"",mcur:o.mcur||"EUR",hasIn:iIn>=0,hasSe:iSe>=0,hasDv:iDv>=0}));
+  return Object.values(m).filter(o=>o.qty>0).map(o=>({sym:o.sym,qty:o.qty,paid:o.paid,buy:o.qty&&o.bq?o.bq/o.qty:0,parts:o.parts||[],opt:!!o.opt,tgt:o.tgt||0,disp:o.disp||"",man:o.man||0,mname:o.mname||"",mcur:o.mcur||"EUR",hasIn:iIn>=0,hasSe:iSe>=0,hasDv:iDv>=0}));
 }
 function fmtT(raw,kind){
   const s=String(raw==null?"":raw).trim();
@@ -227,7 +229,7 @@ S.un=S.un||{};S.collapsed=S.collapsed||{};S.hist=S.hist||{};if(S.totMode!=="p")S
 const save=()=>{try{localStorage.setItem("aand",JSON.stringify(S))}catch(e){}};
 const U={scr:S.lock?"lock":(S.proxy&&S.file&&S.file.sheet?"app":"settings"),tab:0,view:0,sc:-1,dm:"a",gm:"e",per:1,wp:1,code:[],step:0,tmp:"",msg:"",ps:null,syMsg:"",stMsg:"",cfgMsg:"",ip:1,vm:"s",sall:false};
 let IXD={};
-let Q={},FXQ={},HIST={},busy=false,fxMiss=false,account=null,hiddenAt=0;
+let UQ={},VXD,Q={},FXQ={},HIST={},busy=false,fxMiss=false,account=null,hiddenAt=0;
 const app=new msal.PublicClientApplication({auth:{clientId:CLIENT_ID,authority:"https://login.microsoftonline.com/consumers",redirectUri:location.origin+location.pathname},cache:{cacheLocation:"localStorage",storeAuthStateInCookie:true}});
 function clearStale(){try{[localStorage,sessionStorage].forEach(st=>Object.keys(st).filter(k=>/interaction\.status|\.request\.|request\.params|request\.state|\.nonce\./i.test(k)).forEach(k=>st.removeItem(k)))}catch(e){}}
 async function doLogin(){
@@ -323,6 +325,7 @@ async function preq(sym,base){
 }
 async function refresh(){
   if(busy||U.scr==="lock"||U.scr==="setup")return;
+  if(U.tab===0&&U.view===2)loadVix();
   if(!S.proxy){U.stMsg="Vul eerst het adres van je koersen-doorgever in bij Instellingen.";draw();return}
   if(!S.pos.length){draw();return}
   busy=true;U.stMsg="Bijwerken…";draw();
@@ -330,11 +333,46 @@ async function refresh(){
   const pre=usPre();
   await Promise.all(S.pos.map(async p=>{const q=Q[p.sym];if(!q)return;delete q.pre;if(!pre||p.man||p.opt||q.err||q.cur!=="USD"||q.tr!==false)return;try{const x=await preq(p.sym,q.c);if(x)q.pre=x}catch(e){}}));
   const roots=[...new Set(S.pos.filter(p=>p.opt).map(p=>(optInfo(p.sym)||{}).root).filter(Boolean))];
-  await Promise.all(roots.map(async r=>{if(S.un[r])return;const q0=Q[r];if(q0&&!q0.err&&q0.name){S.un[r]=q0.name;return}try{S.un[r]=(await yq(r)).name;save()}catch(e){}}));
+  await Promise.all(roots.map(async r=>{const q0=Q[r];if(q0&&!q0.err&&q0.c!=null){UQ[r]=q0.c;if(!S.un[r]&&q0.name)S.un[r]=q0.name;return}try{const x=await yq(r);UQ[r]=x.c;if(!S.un[r]){S.un[r]=x.name;save()}}catch(e){}}));
   const curs=[...new Set(S.pos.map(p=>Q[p.sym]).filter(q=>q&&q.cur&&q.cur!=="EUR").map(q=>q.cur))];
   await Promise.all(curs.map(async c=>{try{const x=await yq("EUR"+c+"=X");FXQ[c]={now:x.c,prev:x.prev}}catch(e){}}));
   busy=false;U.stMsg="Koersen bijgewerkt om "+hhmm();
   recordHist();draw();
+}
+const VB=[{k:"14–17",t:"rustige markt",c:"#1baf7a",lo:0,hi:18,l:["Lage volatiliteit","Indices bewegen traag","Dipjes worden snel opgekocht","Opties zijn goedkoop","Vaak gunstig voor growth & momentum"]},
+{k:"19–20",t:"historisch gemiddelde",c:"#4f8ef7",lo:18,hi:21,l:["Gezonde volatiliteit","Markt reageert normaal op nieuws","Korte correcties van 1–3% zijn standaard","Dit is ongeveer het lange-termijngemiddelde","Geen paniek, wel alert blijven"]},
+{k:"22+",t:"stresszone",c:"#e5a812",lo:21,hi:25,l:["Onzekerheid neemt toe","Indices corrigeren vaak 3–7%","Groeiaandelen gevoelig voor grotere uitslagen","Traders zoeken naar hedges (puts)","Macro of geopolitiek speelt meestal een rol"]},
+{k:"25+",t:"risico op correctie",c:"#eb6834",lo:25,hi:30,l:["Markt begint nerveus te worden","Sentiment duikt weg","Veel beweging in intraday candles","Liquidity droogt op volatielere sessies","Typisch voor een stevige dip"]},
+{k:"30+",t:"paniek / capitulatierisico",c:"#d03b3b",lo:30,hi:1e9,l:["Grote rode dagen op de beurzen","Fear mode","Mogelijke 10–20% dalingen in brede indices","Overreacties, margin calls, algoritmisch verkopen","Dit zie je maar een paar keer per cyclus"]}];
+async function loadVix(){
+  if(!S.proxy)return;
+  try{
+    const r=await fetch(S.proxy.replace(/\/+$/,"")+"/?s="+encodeURIComponent("^VIX")+"&r=1y");
+    if(!r.ok)throw new Error("Fout "+r.status);
+    const j=await r.json(),res=j.chart&&j.chart.result&&j.chart.result[0];
+    if(!res)throw new Error("Geen gegevens");
+    const off=res.meta.gmtoffset||0,ts=res.timestamp||[],cl2=((res.indicators.quote||[])[0]||{}).close||[];
+    const bars=ts.map((t,i)=>[new Date((t+off)*1000).toISOString().slice(0,10),cl2[i]]).filter(b=>b[1]!=null).sort((a,b)=>a[0]<b[0]?-1:1);
+    if(bars.length<2)throw new Error("Geen gegevens");
+    VXD={bars,c:res.meta.regularMarketPrice!=null?res.meta.regularMarketPrice:bars[bars.length-1][1],prev:bars[bars.length-2][1]};
+  }catch(e){VXD="err"}
+  draw();
+}
+function vixH(){
+  if(VXD===undefined)return '<div class="m" style="padding:12px 2px;">VIX wordt opgehaald…</div>';
+  if(VXD==="err")return '<div class="m" style="padding:12px 2px;">De VIX kon niet worden opgehaald. Controleer je koersen-doorgever bij Instellingen en probeer opnieuw via ↻.</div>';
+  const mo=[1,3,6].includes(U.vp)?U.vp:3,cut=new Date(Date.now()-mo*30.4*864e5).toLocaleDateString("sv-SE"),d=VXD.bars.filter(b=>b[0]>=cut).map(b=>b[1]);
+  const cur=VXD.c,ch=cur-VXD.prev,chp=VXD.prev?ch/VXD.prev*100:0,band=VB.find(b=>cur>=b.lo&&cur<b.hi)||VB[VB.length-1];
+  const seg='<div class="seg" style="margin-bottom:6px">'+[1,3,6].map(m=>`<button data-a="vp" data-v="${m}" class="${m===mo?"on":""}">${m} mnd</button>`).join("")+"</div>";
+  let chart="";
+  if(d.length>1){
+    const W=320,H=140,pl=6,pt=8,pb=8,mn=Math.min(10,...d)-1,mx=Math.max(32,...d)+1,yv=v=>pt+(1-(v-mn)/(mx-mn))*(H-pt-pb),xv=i=>pl+i/(d.length-1)*(W-2*pl);
+    const ln=[20,25,30].map((v,i)=>`<line x1="${pl}" x2="${W-pl}" y1="${yv(v).toFixed(1)}" y2="${yv(v).toFixed(1)}" stroke="${["#4f8ef7","#eb6834","#d03b3b"][i]}" stroke-width="1" stroke-dasharray="3 3" opacity=".7"/><text x="${W-pl}" y="${(yv(v)-2).toFixed(1)}" text-anchor="end" font-size="8" fill="var(--mut)">${v}</text>`).join("");
+    chart=`<svg width="100%" viewBox="0 0 ${W} ${H}" role="img" aria-label="VIX over ${mo} maand"><g>${ln}</g><polyline points="${d.map((v,i)=>xv(i).toFixed(1)+","+yv(v).toFixed(1)).join(" ")}" fill="none" stroke="var(--p)" stroke-width="2" stroke-linejoin="round"/><circle cx="${xv(d.length-1).toFixed(1)}" cy="${yv(d[d.length-1]).toFixed(1)}" r="3.5" fill="${band.c}"/></svg><div style="display:flex;justify-content:space-between;font-size:11px;color:var(--mut)"><span>${mo} mnd geleden</span><span>gestippeld: 20 · 25 · 30</span><span>nu</span></div>`;
+  }
+  const blocks=VB.map(b=>`<div class="vb${b===band?" now":""}" style="border-left:4px solid ${b.c}"><div class="vbh"><b>VIX ${b.k}</b> ${b.t}${b===band?' <span class="nowt">nu</span>':""}</div><ul>${b.l.map(x=>`<li>${x}</li>`).join("")}</ul></div>`).join("");
+  const gen='<div class="vb" style="border-left:4px solid var(--b2)"><div class="vbh"><b>Algemeen</b></div><ul><li>Onder 20: markten zijn "gezond".</li><li>20–25: volatiliteit neemt toe, kansen voor swingtraders.</li><li>25–30: correctiezone, voorzichtig.</li><li>30+: capitulatie, vaak de beste koopmomenten (kwaliteit of brede ETF) en dus zeker niet paniekverkopen!</li></ul></div>';
+  return `<div style="display:flex;align-items:baseline;gap:10px;margin:8px 2px"><div style="font-size:36px;font-weight:700;color:${band.c}">${nm(cur,2)}</div><div class="${ch>0?"dn":"up"}">${sg(ch,2)} (${sg(chp,1)}%)</div><div class="m" style="margin-left:auto;font-size:12px">${band.t}</div></div>${seg}${chart}<div style="margin-top:12px">${blocks}${gen}</div>`;
 }
 const RG=["5d","1mo","1y"];
 async function loadHist(){
@@ -390,6 +428,7 @@ async function startUp(){
   if(account&&S.file&&S.file.sheet)await syncExcel(false);
   await refresh();
   if(U.tab===0&&U.view===1){loadHist();loadIdx()}
+  if(U.tab===0&&U.view===2)loadVix();
 }
 
 /* ---------- berekeningen ---------- */
@@ -601,10 +640,23 @@ function optBanner(){
   if(!l.length)return "";
   return `<div class="bn" data-a="optgo" role="button">`+l.map(x=>`⚠️ ${esc(optName(x.p))} vervalt ${x.d===0?"vandaag":x.d===1?"morgen":"over "+x.d+" dagen"} (${x.o.d} ${MON[x.o.mo-1]} ${x.o.y})`).join("<br>")+`</div>`;
 }
+function optScen(i,o){
+  const p=i.p;if(!o||i.v==null||!(p.paid>0))return "";
+  const fx=i.cur==="EUR"?1:(FXQ[i.cur]||{}).now;if(!fx)return "";
+  const n=p.qty*100,prem=p.paid*fx/n,call=o.cp==="C",be=call?o.strike+prem:o.strike-prem,u=UQ[o.root],t=p.tgt>0?p.tgt:null,K=t!=null?t:o.strike,c=cs(i.cur),sv=S.showVal;
+  const val=(call?Math.max(K-o.strike,0):Math.max(o.strike-K,0))*n/fx,wv=val-p.paid,rd=wv/p.paid*100;
+  const ce=(lab,v,k)=>`<div><small>${lab}</small><span class="${k||""}">${v}</span></div>`;
+  const need=u!=null&&u>0?(be/u-1)*100:null,nc=need==null?"m":(call?need>0:need<0)?"dn":"up";
+  return `<div class="sx2"><div class="sxh">${t!=null?"Bij target op vervaldag":"Bij aandeel = strike op vervaldag"} (${o.d} ${MON[o.mo-1]} ${o.y})</div>`+
+    `<div class="g4">${ce("Premie/aand.",c+nm(prem,2))}${ce("Break-even",c+nm(be,2))}${ce("Aandeel nu",u!=null?c+nm(u,2):"–")}${ce("Nog nodig",need!=null?sg(need,1)+"%":"–",nc)}</div>`+
+    `<div class="g4" style="margin-top:6px">${ce(t!=null?"Target":"Op strike",c+nm(K,2))}${ce("Optie waard",sv?ev(val):"–")}${ce("W/V",sv?ec(wv,0):"–",cl(wv))}${ce("Rendement",sg(rd,0)+"%",cl(wv))}</div>`+
+    (t==null?`<div class="m" style="font-size:10.5px;margin-top:6px">Vul "Optie target strike price" in Excel in voor een eigen scenario.</div>`:"")+`</div>`;
+}
 function optH(){
   const its=optItems();
-  let h=`<div style="margin:6px 2px 8px;"><button data-a="sync" class="sm">⇄ Lijst bijwerken uit Excel</button> <small>${esc(U.syMsg)}</small></div>`;
-  if(!its.length)return h+`<div class="m" style="padding:12px 2px;">Nog geen opties. Zet het optiesymbool (bv. NB280121C00005000) in de kolom Ticker en "optie" in de kolom Sector, en tik hierboven op "Lijst bijwerken uit Excel".</div>`;
+  let h=`<div class="seg" style="margin:6px 0 8px;"><button data-a="os" data-v="g" class="${U.os==="v"?"":"on"}">Gekocht</button><button data-a="os" data-v="v" class="${U.os==="v"?"on":""}">Verkocht</button></div>`;
+  if(U.os==="v")return h+`<div class="m" style="padding:12px 2px;">Nog geen verkochte (covered) calls.</div>`;
+  if(!its.length)return h+`<div class="m" style="padding:12px 2px;">Nog geen opties. Zet het optiesymbool (bv. NB280121C00005000) in de kolom Ticker en "optie" in de kolom Sector, en tik bij Aandelen op "Lijst bijwerken uit Excel".</div>`;
   const ex=o=>o?Date.UTC(o.y,o.mo-1,o.d):9e15;
   const rows=its.map(i=>({i,o:optInfo(i.k)})).sort((a,b)=>ex(a.o)-ex(b.o)||String(a.i.nm).localeCompare(String(b.i.nm),"nl"));
   const cell=(lab,val,cls)=>`<div><small>${lab}</small><span class="${cls||""}">${val}</span></div>`;
@@ -615,7 +667,7 @@ function optH(){
     const td=i.v!=null&&i.tr!==false;
     h+=`<div class="op"><div class="t1"><div class="n"><a href="https://finance.yahoo.com/quote/${encodeURIComponent(i.k)}" target="_blank" rel="noopener">${esc(i.nm)}</a>${i.sub?`<br><small class="dn">${esc(i.sub)}</small>`:""}</div>${S.showVal&&i.v!=null?`<div>${ev(i.v)}</div>`:""}</div>`+
       `<div class="g4">${cell("Vervalt",o?o.d+" "+MON[o.mo-1]+" "+o.y:"–")}${cell("Nog",nog,dc)}${cell("Strike",o?c+nm(o.strike,o.strike%1?2:0):"–")}${cell("Aantal",nm(i.p.qty,i.p.qty%1?2:0))}`+
-      `${cell("Koers",q&&!q.err&&q.c!=null?c+nm(q.c,2):"–")}${cell("Dag %",td?pc(i.pct):"–",td?cl(i.pct):"m")}${cell("Dag €",td?ec(i.d,2):"–",td?cl(i.d):"m")}${cell("Totaal",i.g!=null?ec(i.g,0)+`<span style="display:block;font-size:10.5px">${sg(i.gp,1)}%</span>`:"–",i.g!=null?cl(i.g):"m")}</div></div>`;
+      `${cell("Koers",q&&!q.err&&q.c!=null?c+nm(q.c,2):"–")}${cell("Dag %",td?pc(i.pct):"–",td?cl(i.pct):"m")}${cell("Dag €",td?ec(i.d,2):"–",td?cl(i.d):"m")}${cell("Totaal",i.g!=null?ec(i.g,0)+`<span style="display:block;font-size:10.5px">${sg(i.gp,1)}%</span>`:"–",i.g!=null?cl(i.g):"m")}</div>${optScen(i,o)}</div>`;
   });
   const ta=agg(its),any=ta.ok.some(i=>i.tr);
   h+=`<div class="op" style="border-top:1px solid var(--b2);border-bottom:none;margin-top:6px;"><div class="t1"><div>Totaal opties</div>${S.showVal&&ta.ok.length?`<div>${ev(ta.sv)}</div>`:""}</div><div class="g4">${cell("Dag %",any?pc(ta.sp):"–",any?cl(ta.sp):"m")}${cell("Dag €",any?ec(ta.sd,2):"–",any?cl(ta.sd):"m")}${cell("Totaal €",ta.hasG?ec(ta.stt,0):"–",ta.hasG?cl(ta.stt):"m")}${cell("Totaal %",ta.hasG&&ta.cost?sg(ta.stt/ta.cost*100,1)+"%":"–",ta.hasG&&ta.cost?cl(ta.stt):"m")}</div></div>`;
@@ -631,8 +683,8 @@ function curH(its){
 }
 function appH(){
   const t=U.tab===0,v=U.tab===2,o=U.tab===3;
-  let h=`<div class="hd"><div class="t">${t?esc(TITLE):o?"Optieportefeuille":v?"Verdeling":"Target"}</div><span class="ib" data-a="refresh" aria-label="Koersen verversen">↻</span><span class="ib" data-a="cfg" aria-label="Instellingen">⚙</span></div><div class="body">${o?"":optBanner()}${v?`<div class="top"><button data-a="vm" data-v="s" class="${U.vm==="s"?"on":""}">Sector</button><button data-a="vm" data-v="w" class="${U.vm==="w"?"on":""}">% Port</button><button data-a="vm" data-v="i" class="${U.vm==="i"?"on":""}">Input</button></div>`:o?"":`<div class="top"><button data-a="view" data-v="0" class="${U.view===0?"on":""}">Overzicht</button><button data-a="view" data-v="1" class="${U.view===1?"on":""}">Grafieken</button></div>`}`;
-  h+=v?verdH():o?optH():t?(U.view===0?portOverH():portGrafH()):(U.view===0?tgtOverH():tgtGrafH());
+  let h=`<div class="hd"><div class="t">${t?esc(TITLE):o?"Optieportefeuille":v?"Verdeling":"Target"}</div><span class="ib" data-a="refresh" aria-label="Koersen verversen">↻</span><span class="ib" data-a="cfg" aria-label="Instellingen">⚙</span></div><div class="body">${o?"":optBanner()}${v?`<div class="top"><button data-a="vm" data-v="s" class="${U.vm==="s"?"on":""}">Sector</button><button data-a="vm" data-v="w" class="${U.vm==="w"?"on":""}">% Port</button><button data-a="vm" data-v="i" class="${U.vm==="i"?"on":""}">Input</button></div>`:o?"":`<div class="top"><button data-a="view" data-v="0" class="${U.view===0?"on":""}">Overzicht</button><button data-a="view" data-v="1" class="${U.view===1?"on":""}">Grafieken</button><button data-a="view" data-v="2" class="${U.view===2?"on":""}">VIX</button></div>`}`;
+  h+=v?verdH():o?optH():t?(U.view===0?portOverH():U.view===2?vixH():portGrafH()):(U.view===0?tgtOverH():tgtGrafH());
   return h+`</div><div class="tabs"><div data-a="tab" data-v="0" class="${t?"on":""}"><b>📈</b>Aandelen</div><div data-a="tab" data-v="3" class="${o?"on":""}"><b>📜</b>Opties</div><div data-a="tab" data-v="2" class="${v?"on":""}"><b>🥧</b>Verdeling</div><div data-a="tab" data-v="1" class="${U.tab===1?"on":""}"><b>🎯</b>Target</div></div>`;
 }
 /* ---------- verdeling ---------- */
@@ -692,20 +744,21 @@ function verdH(){
   }
   const m={};L.forEach(x=>{const k=x.sector||"Onbekend";m[k]=(m[k]||0)+x.v});
   const all=Object.keys(m).map(k=>[k,m[k]]).sort((a,b)=>b[1]-a[1]);
-  const top=all.slice(0,8),rest=all.slice(8),show=U.sall?all:top;
-  const rows=top.slice();if(rest.length)rows.push(["Overige ("+rest.length+")",sum(rest,r=>r[1])]);
-  let h=`<div style="margin-top:8px;">`;
+  const top=all.slice(0,8),rest=all.slice(8),show=U.sall?all:top,SW=!!S.swp,e=S.showVal;
+  const wvc=l=>{if(!SW)return "";const gg=l.filter(x=>x.g!=null),pd=sum(gg,x=>x.paid);return gg.length&&pd>0?`<span class="g ${cl(sum(gg,x=>x.g))}">${sg(sum(gg,x=>x.g)/pd*100,1)}%</span>`:'<span class="g m">–</span>'};
+  const cb2=`<div style="display:flex;gap:22px;margin:0 2px 10px;font-size:14px;flex-wrap:wrap;"><label style="display:flex;align-items:center;gap:8px;cursor:pointer;"><input type="checkbox" data-a="sv"${e?" checked":""}> Toon waarde</label><label style="display:flex;align-items:center;gap:8px;cursor:pointer;"><input type="checkbox" data-a="swp"${SW?" checked":""}> Toon W/V %</label></div>`;
+  let h=`<div style="margin-top:8px;"><div class="vl vh"><span class="n">Sector</span>${SW?'<span class="g">W/V</span>':""}<span class="p">% Port</span>${e?'<span class="w">Waarde</span>':""}</div>`;
   S.sopen=S.sopen||{};
   show.forEach((r,i)=>{
-    const o=!!S.sopen[r[0]];
-    h+=`<div class="vl sx" data-a="sg" data-v="${esc(r[0])}"><span class="n">${o?"▾":"▸"} ${cn(r[0])}</span><span class="p">${nm(r[1]/tot*100,2)}%</span>${S.showVal?`<span class="w">${ev(r[1])}</span>`:""}</div>`;
-    if(o){const q={};L.filter(x=>(x.sector||"Onbekend")===r[0]).forEach(x=>{q[x.nm]=(q[x.nm]||0)+x.v});
-      Object.keys(q).sort((a,b)=>q[b]-q[a]).forEach(k=>{h+=`<div class="vl sub"><span class="sw" style="background:transparent"></span><span class="n">${cn(k)}</span><span class="p">${nm(q[k]/tot*100,2)}%</span>${S.showVal?`<span class="w">${ev(q[k])}</span>`:""}</div>`})}
+    const o=!!S.sopen[r[0]],sl=L.filter(x=>(x.sector||"Onbekend")===r[0]);
+    h+=`<div class="vl sx" data-a="sg" data-v="${esc(r[0])}"><span class="n">${o?"▾":"▸"} ${cn(r[0])}</span>${wvc(sl)}<span class="p">${nm(r[1]/tot*100,2)}%</span>${e?`<span class="w">${ev(r[1])}</span>`:""}</div>`;
+    if(o){const q={};sl.forEach(x=>{(q[x.nm]=q[x.nm]||[]).push(x)});
+      Object.keys(q).sort((a,b)=>sum(q[b],x=>x.v)-sum(q[a],x=>x.v)).forEach(k=>{const v=sum(q[k],x=>x.v);h+=`<div class="vl sub"><span class="n">${cn(k)}</span>${wvc(q[k])}<span class="p">${nm(v/tot*100,2)}%</span>${e?`<span class="w">${ev(v)}</span>`:""}</div>`})}
   });
-  if(!U.sall&&rest.length)h+=`<div class="vl"><span class="n">Overige (${rest.length}) <small class="m">· "Toon alle" voor details</small></span><span class="p">${nm(sum(rest,r=>r[1])/tot*100,2)}%</span>${S.showVal?`<span class="w">${ev(sum(rest,r=>r[1]))}</span>`:""}</div>`;
-  h+=`<div class="vl tot"><span class="n">Eindtotaal</span><span class="p">100,00%</span>${S.showVal?`<span class="w">${ev(tot)}</span>`:""}</div></div>`;
+  if(!U.sall&&rest.length){const rs=new Set(rest.map(r=>r[0])),rl=L.filter(x=>rs.has(x.sector||"Onbekend"));h+=`<div class="vl"><span class="n">Overige (${rest.length}) <small class="m">· "Toon alle" voor details</small></span>${wvc(rl)}<span class="p">${nm(sum(rest,r=>r[1])/tot*100,2)}%</span>${e?`<span class="w">${ev(sum(rest,r=>r[1]))}</span>`:""}</div>`}
+  h+=`<div class="vl tot"><span class="n">Eindtotaal</span>${wvc(L)}<span class="p">100,00%</span>${e?`<span class="w">${ev(tot)}</span>`:""}</div></div>`;
   if(all.length>8)h+=`<div style="margin-top:10px;"><button class="sm ghost" data-a="sall">${U.sall?"Toon top 8":"Toon alle "+all.length}</button></div>`;
-  return cb+h+nomiss+'<div class="foot" style="text-align:left;">Tik op een sector om de aandelen te zien</div>';
+  return cb2+h+nomiss+'<div class="foot" style="text-align:left;">Tik op een sector om de aandelen te zien'+(SW?' · W/V inclusief dividend':'')+'</div>';
 }
 const b64=a=>btoa(String.fromCharCode(...new Uint8Array(a))).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
 const unb64=t=>Uint8Array.from(atob(t.replace(/-/g,"+").replace(/_/g,"/")),c=>c.charCodeAt(0));
@@ -821,13 +874,13 @@ const root=$("ph");
 root.addEventListener("click",e=>{
   const t=e.target.closest("[data-a]");if(!t)return;
   const a=t.getAttribute("data-a"),v=t.getAttribute("data-v");
-  if(a==="sv"||a==="la"||a==="rate"||a==="meth")return;
+  if(a==="sv"||a==="swp"||a==="la"||a==="rate"||a==="meth")return;
   if(a==="bio"){bioUnlock(true);return}
   if(a==="key"){key(v);return}
   if(a==="del"){U.code.pop();render();return}
   if(a==="cancel"){U.scr="settings";U.step=0;U.tmp="";U.code=[];U.msg="";render();return}
   if(a==="tab"){U.tab=+v}
-  else if(a==="view"){U.view=+v;if(U.tab===0&&U.view===1){loadHist();loadIdx()}}
+  else if(a==="view"){U.view=+v;if(U.tab===0&&U.view===1){loadHist();loadIdx()}if(U.tab===0&&U.view===2)loadVix()}
   else if(a==="sc")U.sc=+v;
   else if(a==="grp")S.collapsed[v]=!S.collapsed[v];
   else if(a==="dm")U.dm=v;
@@ -838,6 +891,8 @@ root.addEventListener("click",e=>{
   else if(a==="vm")U.vm=v;
   else if(a==="sall")U.sall=!U.sall;
   else if(a==="optgo")U.tab=3;
+  else if(a==="os")U.os=v;
+  else if(a==="vp")U.vp=+v;
   else if(a==="t3"){U.t3o=U.t3o||{};U.t3o[v]=!U.t3o[v]}
   else if(a==="sg"){S.sopen=S.sopen||{};S.sopen[v]=!S.sopen[v];save()}
   else if(a==="ig"){S.iopen=S.iopen||{};S.iopen[v]=!S.iopen[v];save()}
@@ -847,7 +902,7 @@ root.addEventListener("click",e=>{
   else if(a==="sync"){syncExcel(true).then(ok=>{if(ok)refresh()});return}
   else if(a==="cfg")U.scr="settings";
   else if(a==="back"){U.scr="app";render();refresh();return}
-  else if(a==="sp"){S.proxy=$("proxy").value.trim();save();Q={};FXQ={};HIST={};IXD={};U.cfgMsg="Opgeslagen.";render();return}
+  else if(a==="sp"){S.proxy=$("proxy").value.trim();save();UQ={};VXD=undefined;Q={};FXQ={};HIST={};IXD={};U.cfgMsg="Opgeslagen.";render();return}
   else if(a==="login"){doLogin();return}
   else if(a==="pf"){pStart();return}
   else if(a==="pts"){pSheets("aandelen",false);return}
@@ -876,6 +931,7 @@ root.addEventListener("click",e=>{
 root.addEventListener("change",e=>{
   const a=e.target.getAttribute("data-a");
   if(a==="sv"){S.showVal=e.target.checked;save();render()}
+  else if(a==="swp"){S.swp=e.target.checked;save();render()}
   else if(a==="la"&&S.lock){S.lock.after=+e.target.value;save()}
   else if(a==="meth"){
     if(e.target.value==="bio"){U.secMsg="Bevestig met je vingerafdruk…";render();bioReg().then(()=>{U.secMsg="Vingerafdruk ingesteld. Je code blijft de reserve.";render()}).catch(()=>{S.bio=null;save();U.secMsg="Instellen met vingerafdruk is niet gelukt. Je gebruikt de code.";render()})}
