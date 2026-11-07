@@ -684,7 +684,7 @@ function curH(its){
 }
 function appH(){
   const t=U.tab===0,v=U.tab===2,o=U.tab===3;
-  let h=`<div class="hd"><div class="t">${t?esc(TITLE):o?"Optieportefeuille":v?"Verdeling":"Target"}</div><span class="ib" data-a="refresh" aria-label="Koersen verversen">↻</span><span class="ib" data-a="cfg" aria-label="Instellingen">⚙</span></div><div class="body">${o?"":optBanner()}${v?`<div class="top"><button data-a="vm" data-v="s" class="${U.vm==="s"?"on":""}">Sector</button><button data-a="vm" data-v="w" class="${U.vm==="w"?"on":""}">% Port</button><button data-a="vm" data-v="i" class="${U.vm==="i"?"on":""}">Input</button></div>`:o?"":`<div class="top"><button data-a="view" data-v="0" class="${U.view===0?"on":""}">Overzicht</button><button data-a="view" data-v="1" class="${U.view===1?"on":""}">Grafieken</button><button data-a="view" data-v="2" class="${U.view===2?"on":""}">VIX</button></div>`}`;
+  let h=`<div class="hd"><div class="t">${t?esc(TITLE):o?"Optieportefeuille":v?"Verdeling":"Target"}</div><span class="ib" data-a="refresh" aria-label="Koersen verversen">↻</span><span class="ib" data-a="cfg" aria-label="Instellingen">⚙</span></div><div class="body">${o?"":optBanner()}${v?`<div class="top"><button data-a="vm" data-v="s" class="${U.vm==="s"?"on":""}">Sector</button><button data-a="vm" data-v="w" class="${U.vm==="w"?"on":""}">% Port</button><button data-a="vm" data-v="i" class="${U.vm==="i"?"on":""}">Input</button></div>`:o?"":`<div class="top"><button data-a="view" data-v="0" class="${U.view===0?"on":""}">Overzicht</button><button data-a="view" data-v="1" class="${U.view===1?"on":""}">Grafieken</button>${t?`<button data-a="view" data-v="2" class="${U.view===2?"on":""}">VIX</button>`:""}</div>`}`;
   h+=v?verdH():o?optH():t?(U.view===0?portOverH():U.view===2?vixH():portGrafH()):(U.view===0?tgtOverH():tgtGrafH());
   return h+`</div><div class="tabs"><div data-a="tab" data-v="0" class="${t?"on":""}"><b>📈</b>Aandelen</div><div data-a="tab" data-v="3" class="${o?"on":""}"><b>📜</b>Opties</div><div data-a="tab" data-v="2" class="${v?"on":""}"><b>🥧</b>Verdeling</div><div data-a="tab" data-v="1" class="${U.tab===1?"on":""}"><b>🎯</b>Target</div></div>`;
 }
@@ -880,7 +880,7 @@ root.addEventListener("click",e=>{
   if(a==="key"){key(v);return}
   if(a==="del"){U.code.pop();render();return}
   if(a==="cancel"){U.scr="settings";U.step=0;U.tmp="";U.code=[];U.msg="";render();return}
-  if(a==="tab"){U.tab=+v}
+  if(a==="tab"){U.tab=+v;if(U.tab!==0&&U.view===2)U.view=0}
   else if(a==="view"){U.view=+v;if(U.tab===0&&U.view===1){loadHist();loadIdx()}if(U.tab===0&&U.view===2)loadVix()}
   else if(a==="sc")U.sc=+v;
   else if(a==="grp")S.collapsed[v]=!S.collapsed[v];
