@@ -649,7 +649,7 @@ function optScen(i,o){
   const need=u!=null&&u>0?(be/u-1)*100:null,nc=need==null?"m":(call?need>0:need<0)?"dn":"up";
   return `<div class="sx2"><div class="sxh">${t!=null?"Bij target op vervaldag":"Bij aandeel = strike op vervaldag"} (${o.d} ${MON[o.mo-1]} ${o.y})</div>`+
     `<div class="g4">${ce("Premie/aand.",c+nm(prem,2))}${ce("Break-even",c+nm(be,2))}${ce("Aandeel nu",u!=null?c+nm(u,2):"–")}${ce("Nog nodig",need!=null?sg(need,1)+"%":"–",nc)}</div>`+
-    `<div class="g4" style="margin-top:6px">${ce(t!=null?"Target":"Op strike",c+nm(K,2))}${ce("Optie waard",sv?ev(val):"–")}${ce("W/V",sv?ec(wv,0):"–",cl(wv))}${ce("Rendement",sg(rd,0)+"%",cl(wv))}</div>`+
+    `<div class="g4" style="margin-top:6px">${ce(t!=null?"Target":"Op strike",c+nm(K,2))}${ce("Optie waard",sv?ev(val):"–")}${ce("W/V",ec(wv,0),cl(wv))}${ce("Rendement",sg(rd,0)+"%",cl(wv))}</div>`+
     (t==null?`<div class="m" style="font-size:10.5px;margin-top:6px">Vul "Optie target strike price" in Excel in voor een eigen scenario.</div>`:"")+`</div>`;
 }
 function optH(){
