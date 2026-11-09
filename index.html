@@ -655,13 +655,18 @@ function optScen(i,o){
       return `<div class="g4" style="margin-top:6px">${ce(esc(lab),c+nm(K,2))}${ce("Optie waard",sv?ev(val):"–")}${ce("W/V",ec(wv,0),cl(wv))}${ce("Rendement",sg(rd,0)+"%",cl(wv))}</div>`}).join("");
     return `<div class="sx2"><div class="sxh">${when}</div><div class="g4">${ce("Premie/aand.",c+nm(prem,2))}${ce("Break-even",c+nm(be,2))}${ce("Aandeel nu",u!=null?c+nm(u,2):"–")}${ce("Nog nodig",need!=null?sg(need,1)+"%":"–",nc)}</div>${rows}${hint}</div>`;
   }
-  const stk=call?S.pos.find(x=>!x.opt&&(x.sym===o.root||String(x.sym).split(".")[0]===o.root)):null,cov=!!stk&&stk.qty>=n,pc2=cov&&stk.paid>0?stk.paid*n/stk.qty:null;
-  const tt=u!=null&&u>0?(o.strike/u-1)*100:null,mx=pc2!=null?p.paid+o.strike*n/fx-pc2:null;
+  const stk=call?S.pos.find(x=>!x.opt&&(x.sym===o.root||String(x.sym).split(".")[0]===o.root)):null,cov=!!stk&&stk.qty>=n,pc2=cov&&stk.paid>0?stk.paid*n/stk.qty:null,withS=cov&&pc2!=null;
+  const tt=u!=null&&u>0?(o.strike/u-1)*100:null,mx=withS?p.paid+o.strike*n/fx-pc2:null,closeNow=-i.v;
   const head=call?(cov?"Covered call · "+nm(stk.qty,0)+" aandelen "+esc(o.root)+" ✓":stk?"Call · slechts "+nm(stk.qty,0)+" aandelen "+esc(o.root)+" (niet volledig gedekt)":"Verkochte call · aandelen niet in portefeuille"):"Verkochte put";
-  const rows=list.map(([lab,K])=>{const cl2=intr(K),wc=p.paid-cl2,rd=wc/p.paid*100;
-    if(cov&&pc2!=null){const sa=K*n/fx-pc2,tot=wc+sa;return `<div class="g4" style="margin-top:6px">${ce(esc(lab),c+nm(K,2))}${ce("Call",ec(wc,0),cl(wc))}${ce("Aandelen",ec(sa,0),cl(sa))}${ce("Totaal",ec(tot,0),cl(tot))}</div>`}
-    return `<div class="g4" style="margin-top:6px">${ce(esc(lab),c+nm(K,2))}${ce("Terugkoop",sv?ev(cl2):"–")}${ce("W/V",ec(wc,0),cl(wc))}${ce("Rendement",sg(rd,0)+"%",cl(wc))}</div>`}).join("");
-  return `<div class="sx2"><div class="sxh">${head} · ontvangen premie ${ev(p.paid)}</div><div class="g4" style="margin-top:4px">${ce("Premie/aand.",c+nm(prem,2))}${ce("Break-even",c+nm(be,2))}${ce("Aandeel nu",u!=null?c+nm(u,2):"–")}${mx!=null?ce("Max winst",ec(mx,0),cl(mx)):ce("Tot strike",tt!=null?sg(tt,1)+"%":"–")}</div><div class="sxh" style="margin-top:8px">${when}</div>${rows}${cov&&pc2!=null?'<div class="m" style="font-size:10.5px;margin-top:6px">Boven de strike worden je aandelen aan de strike weggeroepen: de winst is begrensd (Max winst).</div>':""}${hint}</div>`;
+  const row=(lab,callR,aand)=>{
+    if(withS&&aand!=null){const tot=callR+aand;return `<div class="g4" style="margin-top:8px">${ce(lab,"")}${ce("Call",ec(callR,0),cl(callR))}${ce("Aandelen",ec(aand,0),cl(aand))}${ce("Totaal",ec(tot,0),cl(tot))}</div>`}
+    return `<div class="g4" style="margin-top:8px">${ce(lab,"")}${ce("W/V call",ec(callR,0),cl(callR))}${ce("Rendement",sg(callR/p.paid*100,0)+"%",cl(callR))}${ce("","")}</div>`;
+  };
+  let sc=`<div class="sxh" style="margin-top:10px">Sinds aankoop</div>`;
+  if(u!=null&&u>0)sc+=row("Vandaag "+c+nm(u,2),p.paid-closeNow,withS?u*n/fx-pc2:null);
+  sc+=row("Strike "+c+nm(o.strike,2),p.paid,withS?o.strike*n/fx-pc2:null);
+  if(withS&&u!=null&&u>0){const cN=closeNow,aN=(o.strike-u)*n/fx;sc+=`<div class="sxh" style="margin-top:10px">Op strike t.o.v. vandaag</div><div class="g4" style="margin-top:4px">${ce("Winst erbij","")}${ce("Call",ec(cN,0),cl(cN))}${ce("Aandelen",ec(aN,0),cl(aN))}${ce("Totaal",ec(cN+aN,0),cl(cN+aN))}</div>`}
+  return `<div class="sx2"><div class="sxh">${head} · ontvangen premie ${ev(p.paid)}</div><div class="g4" style="margin-top:4px">${ce("Premie/aand.",c+nm(prem,2))}${ce("Aandeel nu",u!=null?c+nm(u,2):"–")}${ce("Tot strike",tt!=null?sg(tt,1)+"%":"–")}${mx!=null?ce("Max winst",ec(mx,0),cl(mx)):ce("","")}</div>${sc}${withS?'<div class="m" style="font-size:10.5px;margin-top:6px">Op en boven de strike worden je aandelen aan de strike weggeroepen: de winst is begrensd.</div>':""}</div>`;
 }
 function optH(){
   const sold=U.os==="v",its=optItems().filter(i=>sold?i.p.qty<0:i.p.qty>0),evs=v=>(v<0?"−":"")+ev(v);
