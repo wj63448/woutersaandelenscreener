@@ -124,6 +124,15 @@ input[type=text],input[type=url],select{font:inherit;padding:9px;border:1px soli
 <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@2.39.0/lib/msal-browser.min.js"></script>
 <script>
 /*PURE-START*/
+const parseDate=t=>{
+  if(t==null||t==="")return "";
+  if(typeof t==="number"){if(t>20000&&t<80000)return new Date(Date.UTC(1899,11,30)+Math.round(t)*864e5).toISOString().slice(0,10);return ""}
+  const x=String(t).trim();let m=/^(\d{4})-(\d{1,2})-(\d{1,2})/.exec(x);
+  if(m)return m[1]+"-"+m[2].padStart(2,"0")+"-"+m[3].padStart(2,"0");
+  m=/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{2,4})/.exec(x);
+  if(m){const y=m[3].length===2?"20"+m[3]:m[3];return y+"-"+m[2].padStart(2,"0")+"-"+m[1].padStart(2,"0")}
+  return "";
+};
 const parseNum=t=>{
   if(typeof t==="number")return t;
   if(t==null)return 0;
@@ -143,7 +152,7 @@ function parseList(v){
   const iP=find("totaal","betaald","aankoopwaarde");
   const iB=h.findIndex(x=>(x.includes("koers")||x.includes("prijs"))&&!x.includes("handmatig")&&!x.includes("totaal")&&!x.includes("waarde"));
   const iN=h.findIndex(x=>(x.includes("naam")||x.includes("name"))&&!x.includes("weergave")),iW=find("weergave"),iM=find("handmatig"),iC=find("valuta","munt");
-  const iIn=find("input"),iSe=find("sector"),iDv=find("dividend"),iTs=h.map((x,i)=>x.includes("target")?i:-1).filter(i=>i>=0),tlab=ci=>{const t=String(v[0][ci]).replace(/optie|target|strike|price|prijs/ig," ").replace(/[-–_:]/g," ").replace(/\s+/g," ").trim();return t?t.charAt(0).toUpperCase()+t.slice(1):"Target"};
+  const iIn=find("input"),iSe=find("sector"),iDv=find("dividend"),iD=find("aankoopdatum","datum"),iTs=h.map((x,i)=>x.includes("target")?i:-1).filter(i=>i>=0),tlab=ci=>{const t=String(v[0][ci]).replace(/optie|target|strike|price|prijs/ig," ").replace(/[-–_:]/g," ").replace(/\s+/g," ").trim();return t?t.charAt(0).toUpperCase()+t.slice(1):"Target"};
   if(iS<0||iQ<0)throw new Error("Kolommen 'Symbool' en 'Aantal' niet gevonden in de eerste rij van het tabblad met aandelen");
   const m={};
   v.slice(1).forEach(r=>{
@@ -157,7 +166,7 @@ function parseList(v){
     const isOpt=iSe>=0&&/^opties?$/i.test(String(r[iSe]==null?"":r[iSe]).trim());let pd=iP>=0?parseNum(r[iP]):0;if(q<0&&isOpt)pd=Math.abs(pd);
     o.qty+=q;o.paid+=pd;if(iB>=0)o.bq+=parseNum(r[iB])*q;
     if(isOpt)o.opt=true;
-    if(q>0||(q<0&&isOpt))(o.parts=o.parts||[]).push({input:(iIn>=0?String(r[iIn]==null?"":r[iIn]).trim():"")||(sym==="CASH"?"Cash":""),sector:iSe>=0?String(r[iSe]==null?"":r[iSe]).trim():"",qty:q,paid:pd,div:iDv>=0?parseNum(r[iDv]):0});
+    if(q>0||(q<0&&isOpt))(o.parts=o.parts||[]).push({input:(iIn>=0?String(r[iIn]==null?"":r[iIn]).trim():"")||(sym==="CASH"?"Cash":""),sector:iSe>=0?String(r[iSe]==null?"":r[iSe]).trim():"",date:iD>=0?parseDate(r[iD]):"",qty:q,paid:pd,div:iDv>=0?parseNum(r[iDv]):0});
   });
   return Object.values(m).filter(o=>o.qty>0||(o.opt&&o.qty<0)).map(o=>({sym:o.sym,qty:o.qty,paid:o.paid,buy:o.qty&&o.bq?o.bq/o.qty:0,parts:o.parts||[],opt:!!o.opt,tgts:iTs.filter(ci=>o.tg&&o.tg[ci]).map(ci=>({l:tlab(ci),v:o.tg[ci]})),disp:o.disp||"",man:o.man||0,mname:o.mname||"",mcur:o.mcur||"EUR",hasIn:iIn>=0,hasSe:iSe>=0,hasDv:iDv>=0}));
 }
@@ -445,13 +454,20 @@ function items(){
       else{
         const mu=p.opt?100:1;it.v=q.c*p.qty*mu/fx.now;const pe=q.prev*p.qty*mu/fx.prev;it.d=it.v-pe;it.dk=(q.c-q.prev)*p.qty*mu/fx.prev;it.dv=it.d-it.dk;
         it.pct=q.prev?((q.c/fx.now)/(q.prev/fx.prev)-1)*100:0;
+        const td0=new Date().toLocaleDateString("sv-SE"),tp=(p.parts||[]).filter(x=>x.date===td0&&x.paid>0);
+        if(tp.length){
+          const qt=sum(tp,x=>x.qty),pt=sum(tp,x=>x.paid),qo=p.qty-qt,vt=q.c*qt*mu/fx.now,dT=qt<0?pt+vt:vt-pt;
+          const dO=q.c*qo*mu/fx.now-q.prev*qo*mu/fx.prev;
+          it.d=dO+dT;it.dk=(q.c-q.prev)*qo*mu/fx.prev;it.dv=it.d-it.dk;it.tr=true;it.today=true;
+          if(Math.abs(qo)<1e-9&&pt>0)it.pct=qt<0?-dT/pt*100:dT/pt*100;
+        }
         if(p.paid>0){it.g=p.qty<0?p.paid+it.v:it.v-p.paid;it.gp=it.g/p.paid*100}
       }
     }
     return it;
   });
 }
-const VER="2.0.0 · 9 nov 2026";
+const VER="2.1.0 · 9 nov 2026";
 const MON=["jan","feb","mrt","apr","mei","jun","jul","aug","sep","okt","nov","dec"];
 function optInfo(s){const m=/^([A-Z][A-Z.\-]{0,5})(\d{2})(\d{2})(\d{2})([CP])(\d{8})$/.exec(String(s||"").trim().toUpperCase());return m?{root:m[1],y:2000+ +m[2],mo:+m[3],d:+m[4],cp:m[5],strike:+m[6]/1000}:null}
 function optName(p){const o=optInfo(p.sym);if(!o)return "";const w=String(S.un[o.root]||o.root).split(/[\s,]+/)[0]||o.root;return w+" "+(o.cp==="C"?"call":"put")+" $"+nm(o.strike,o.strike%1?2:0)+" "+MON[o.mo-1]+" "+o.y}
