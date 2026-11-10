@@ -29,7 +29,7 @@ input[type=text],input[type=url],select{font:inherit;padding:9px;border:1px soli
 .r>div+div{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 .nv .wv{display:none}
 .n{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px}
-.n a{color:var(--tx);text-decoration:none;border-bottom:1px dotted var(--b2)}
+.n a,.t3 .nm a{color:var(--tx);text-decoration:none;border-bottom:1px dotted var(--b2)}
 .gh{background:var(--bg2);font-weight:600;cursor:pointer;border-radius:6px;padding-left:6px;padding-right:6px;margin-top:4px}
 .gh small{font-weight:400;color:var(--mut)}
 .r.off>div:nth-child(2),.r.off>div:nth-child(3){opacity:.4}
@@ -478,7 +478,7 @@ function items(){
     return it;
   });
 }
-const VER="2.3.4 · 10 nov 2026";
+const VER="2.3.5 · 10 nov 2026";
 const MON=["jan","feb","mrt","apr","mei","jun","jul","aug","sep","okt","nov","dec"];
 function optInfo(s){const m=/^([A-Z][A-Z.\-]{0,5})(\d{2})(\d{2})(\d{2})([CP])(\d{8})$/.exec(String(s||"").trim().toUpperCase());return m?{root:m[1],y:2000+ +m[2],mo:+m[3],d:+m[4],cp:m[5],strike:+m[6]/1000}:null}
 function optName(p){const o=optInfo(p.sym);if(!o)return "";const w=String(S.un[o.root]||o.root).split(/[\s,]+/)[0]||o.root;return w+" "+(o.cp==="C"?"call":"put")+" $"+nm(o.strike,o.strike%1?2:0)+" "+MON[o.mo-1]+" "+o.y}
@@ -535,7 +535,7 @@ function diverge(rows,fn,num){
 function prog(rows,mark){
   return rows.map(r=>`<div class="pg"><div class="tp"><span>${cn(r[0])}</span><span>${(r[1]<0?"−":"")+nm(r[1],r[1]%1?2:0)}%</span></div><div class="tk"><div class="fl" style="width:${Math.max(0,Math.min(100,r[1]))}%"></div>${mark!=null?`<div class="mk" style="left:${Math.max(0,Math.min(100,mark))}%"></div>`:""}</div></div>`).join("")+(mark!=null?`<div class="lbl">| = verlopen tijd (${nm(mark,mark%1?2:0)}%)</div>`:"");
 }
-function t3row(i,n){return `<div class="t3"><div class="nm">${cn(i.nm)}</div><div class="${cl(i.pct)}">${pc(i.pct)}</div><div class="${cl(i.d)}">${es(i.d,2)}</div></div>`}
+function t3row(i,n){return `<div class="t3"><div class="nm"><a href="https://finance.yahoo.com/quote/${encodeURIComponent(i.k)}" target="_blank" rel="noopener">${cn(i.nm)}</a></div><div class="${cl(i.pct)}">${pc(i.pct)}</div><div class="${cl(i.d)}">${es(i.d,2)}</div></div>`}
 function top3H(gs){
   const h=gs.filter(x=>x.k!==""&&x.k!=="PLN"&&x.ok.length&&x.l.some(i=>!i.man)).map(x=>{
     const aw=x.ok.filter(i=>i.tr&&i.d>0),av=x.ok.filter(i=>i.tr&&i.d<0),nt=x.ok.filter(i=>i.tr).length,op=!!(U.t3o||{})[x.k],lim=op?999:3,w=aw.slice().sort((a,b)=>b.d-a.d).slice(0,lim),v=av.slice().sort((a,b)=>a.d-b.d).slice(0,lim),tl=op?"Alle":"Top 3";
