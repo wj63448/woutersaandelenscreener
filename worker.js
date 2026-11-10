@@ -1,4 +1,4 @@
-// © 2026 Wouter Janssens. Alle rechten voorbehouden. Niet kopiëren of verspreiden zonder toestemming.
+// © 2026 Wouter Janssens. Alle rechten voorbehouden. Niet kopiëren of verspreiden zonder toestemming. Contact: wj.apps.store@gmail.com
 // Cloudflare Worker: geeft koersen van Yahoo Finance door aan je eigen app.
 // Toegangssleutels: voeg in Cloudflare (Settings > Variables and Secrets) een secret "KEYS" toe met een of meer
 // sleutels, gescheiden door een komma (bv. "sleutel1,sleutel2"). Staat KEYS niet ingesteld, dan is er geen controle.

@@ -2,7 +2,7 @@
 <html lang="nl"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#0b5ed7">
-<!-- © 2026 Wouter Janssens. Alle rechten voorbehouden. Deze code mag niet worden gekopieerd, aangepast, gebruikt of verspreid zonder schriftelijke toestemming van de auteur. -->
+<!-- © 2026 Wouter Janssens. Alle rechten voorbehouden. Deze code mag niet worden gekopieerd, aangepast, gebruikt of verspreid zonder schriftelijke toestemming van de auteur. Contact: wj.apps.store@gmail.com -->
 <link rel="manifest" href="manifest.json">
 <title>Wouter's aandelenscreener</title>
 <style>
@@ -478,7 +478,7 @@ function items(){
     return it;
   });
 }
-const VER="2.3.1 · 10 nov 2026";
+const VER="2.3.2 · 10 nov 2026";
 const MON=["jan","feb","mrt","apr","mei","jun","jul","aug","sep","okt","nov","dec"];
 function optInfo(s){const m=/^([A-Z][A-Z.\-]{0,5})(\d{2})(\d{2})(\d{2})([CP])(\d{8})$/.exec(String(s||"").trim().toUpperCase());return m?{root:m[1],y:2000+ +m[2],mo:+m[3],d:+m[4],cp:m[5],strike:+m[6]/1000}:null}
 function optName(p){const o=optInfo(p.sym);if(!o)return "";const w=String(S.un[o.root]||o.root).split(/[\s,]+/)[0]||o.root;return w+" "+(o.cp==="C"?"call":"put")+" $"+nm(o.strike,o.strike%1?2:0)+" "+MON[o.mo-1]+" "+o.y}
@@ -903,7 +903,7 @@ function settingsH(){
   `<div class="stg"><div>Automatisch verversen<br><span class="lbl">Koersen opnieuw ophalen zolang de app open staat</span></div><select data-a="rate">${[[0,"Uit"],[30,"30 seconden"],[60,"1 minuut"],[120,"2 minuten"],[300,"5 minuten"],[900,"15 minuten"]].map(o=>`<option value="${o[0]}"${(S.rate==null?60:S.rate)==o[0]?" selected":""}>${o[1]}</option>`).join("")}</select></div>`+
   `<div class="sec">Beveiliging</div><div class="stg"><div>Code (9 cijfers)<br><span class="lbl">${lk?"Ingesteld":"Uit"}</span></div><button class="sm" data-a="cs">${lk?"Wijzigen":"Instellen"}</button></div>`+
   (lk?`<div class="stg"><div>Ontgrendelen met<br><span class="lbl">${esc(U.secMsg||(bioOK?"Vingerafdruk of code":"Vingerafdruk niet beschikbaar op dit toestel"))}</span></div><select data-a="meth"><option value="code"${S.bio?"":" selected"}>Code</option><option value="bio"${S.bio?" selected":""}${bioOK?"":" disabled"}>Vingerafdruk</option></select></div><div class="stg"><div>Vergrendel na</div><select data-a="la"><option value="0"${lk.after==0?" selected":""}>Direct</option><option value="60"${lk.after==60?" selected":""}>1 minuut</option><option value="300"${lk.after==300?" selected":""}>5 minuten</option><option value="900"${lk.after==900?" selected":""}>15 minuten</option></select></div><div class="stg"><div>Code uitzetten</div><button class="sm ghost" data-a="cx">Uitzetten</button></div>`:"")+
-  `<div class="sec">Gegevens</div><div class="stg"><div>Alle bewaarde gegevens wissen<br><span class="lbl">Instellingen, code en waardeverloop verdwijnen</span></div><button class="sm ghost" data-a="wipe">Wissen</button></div><div class="sec">Over</div><div class="stg"><div>Versie<br><span class="lbl">Noteer dit nummer bij vragen of problemen</span></div><div style="font-variant-numeric:tabular-nums">${VER}</div></div><div class="m" style="font-size:11px;margin:8px 2px 0">© 2026 Wouter Janssens · alle rechten voorbehouden. Niet kopiëren, aanpassen of verspreiden zonder toestemming.</div></div>`;
+  `<div class="sec">Gegevens</div><div class="stg"><div>Alle bewaarde gegevens wissen<br><span class="lbl">Instellingen, code en waardeverloop verdwijnen</span></div><button class="sm ghost" data-a="wipe">Wissen</button></div><div class="sec">Over</div><div class="stg"><div>Versie<br><span class="lbl">Noteer dit nummer bij vragen of problemen</span></div><div style="font-variant-numeric:tabular-nums">${VER}</div></div><div class="m" style="font-size:11px;margin:8px 2px 0">© 2026 Wouter Janssens · alle rechten voorbehouden. Niet kopiëren, aanpassen of verspreiden zonder toestemming. Contact: <a href="mailto:wj.apps.store@gmail.com">wj.apps.store@gmail.com</a></div></div>`;
 }
 function pickerH(){
   const ps=U.ps;
@@ -1051,7 +1051,7 @@ root.addEventListener("change",e=>{
 });
 /* ---------- terugknop: een niveau terug, de app sluit nooit af ---------- */
 let hbuf=0;
-const harm=()=>{try{while(hbuf<3){history.pushState({b:1},"");hbuf++}}catch(e){}};
+const harm=()=>{try{while(hbuf<5){hbuf++;history.pushState({b:hbuf},"")}}catch(e){}};
 function goBack(){
   if(U.scr==="lock")return;
   if(U.scr==="setup"){U.scr="settings";U.step=0;U.tmp="";U.code=[];U.msg="";render();return}
@@ -1060,8 +1060,8 @@ function goBack(){
   if(U.tab!==0){U.tab=0;U.view=0;render();return}
   if(U.view!==0){U.view=0;render();return}
 }
-addEventListener("popstate",()=>{hbuf=Math.max(0,hbuf-1);goBack();if(hbuf===0)harm()});
-addEventListener("pointerdown",harm,{capture:true,passive:true});
+addEventListener("popstate",e=>{hbuf=(e.state&&e.state.b)||0;goBack();if(hbuf<2)harm()});
+["click","pointerup","touchend"].forEach(n=>addEventListener(n,harm,{capture:true,passive:true}));
 harm();
 const stamp=()=>{try{if(S.lock&&U.scr!=="lock"&&U.scr!=="setup")sessionStorage.setItem("aandAct",String(Date.now()));else sessionStorage.removeItem("aandAct")}catch(e){}};
 addEventListener("pagehide",stamp);
