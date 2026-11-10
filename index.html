@@ -2,6 +2,7 @@
 <html lang="nl"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#0b5ed7">
+<!-- © 2026 Wouter Janssens. Alle rechten voorbehouden. Deze code mag niet worden gekopieerd, aangepast, gebruikt of verspreid zonder schriftelijke toestemming van de auteur. -->
 <link rel="manifest" href="manifest.json">
 <title>Wouter's aandelenscreener</title>
 <style>
@@ -302,9 +303,10 @@ async function syncExcel(interactive){
 }
 
 /* ---------- Koersen ---------- */
+const pfetch=p=>fetch(S.proxy.replace(/\/+$/,"")+p,{headers:S.pkey?{"X-Key":S.pkey}:{}});
 async function yq(sym,range){
-  const r=await fetch(S.proxy.replace(/\/+$/,"")+"/?s="+encodeURIComponent(sym)+(range?"&r="+range:""));
-  if(!r.ok)throw new Error(r.status===404?"Symbool niet gevonden":"Fout "+r.status);
+  const r=await pfetch("/?s="+encodeURIComponent(sym)+(range?"&r="+range:""));
+  if(!r.ok)throw new Error(r.status===404?"Symbool niet gevonden":r.status===401?"Toegangssleutel ongeldig":"Fout "+r.status);
   const j=await r.json(),res=j.chart&&j.chart.result&&j.chart.result[0];
   if(!res)throw new Error("Symbool niet gevonden");
   const m=res.meta,ts=res.timestamp||[],cl2=((res.indicators.quote||[])[0]||{}).close||[];
@@ -333,7 +335,7 @@ function usPre(){
   try{const p=Object.fromEntries(new Intl.DateTimeFormat("en-GB",{timeZone:"America/New_York",weekday:"short",hour:"2-digit",minute:"2-digit",hour12:false}).formatToParts(new Date()).map(x=>[x.type,x.value]));const mn=(+p.hour%24)*60+ +p.minute;return !/^(Sat|Sun)/.test(p.weekday)&&mn>=240&&mn<570}catch(e){return false}
 }
 async function preq(sym,base){
-  const r=await fetch(S.proxy.replace(/\/+$/,"")+"/?s="+encodeURIComponent(sym)+"&pre=1");
+  const r=await pfetch("/?s="+encodeURIComponent(sym)+"&pre=1");
   if(!r.ok)return null;
   const j=await r.json(),res=j.chart&&j.chart.result&&j.chart.result[0];
   if(!res||!base)return null;
@@ -365,7 +367,7 @@ const VB=[{k:"14–17",t:"rustige markt",c:"#1baf7a",lo:0,hi:18,l:["Lage volatil
 async function loadVix(){
   if(!S.proxy)return;
   try{
-    const r=await fetch(S.proxy.replace(/\/+$/,"")+"/?s="+encodeURIComponent("^VIX")+"&r=1y");
+    const r=await pfetch("/?s="+encodeURIComponent("^VIX")+"&r=1y");
     if(!r.ok)throw new Error("Fout "+r.status);
     const j=await r.json(),res=j.chart&&j.chart.result&&j.chart.result[0];
     if(!res)throw new Error("Geen gegevens");
@@ -378,7 +380,7 @@ async function loadVix(){
 }
 function vixH(){
   if(VXD===undefined)return '<div class="m" style="padding:12px 2px;">VIX wordt opgehaald…</div>';
-  if(VXD==="err")return '<div class="m" style="padding:12px 2px;">De VIX kon niet worden opgehaald. Controleer je koersen-doorgever bij Instellingen en probeer opnieuw via ↻.</div>';
+  if(VXD==="err")return '<div class="m" style="padding:12px 2px;">De VIX kon niet worden opgehaald. Controleer je koersen-doorgever en toegangssleutel bij Instellingen en probeer opnieuw via ↻.</div>';
   const VR=[[7,"1 week"],[30,"1 maand"],[182,"6 maand"],[365,"1 jaar"]],mo=VR.some(r=>r[0]===U.vp)?U.vp:30,mlab=VR.find(r=>r[0]===mo)[1],cut=new Date(Date.now()-mo*864e5).toLocaleDateString("sv-SE");let bs=VXD.bars.filter(b=>b[0]>=cut);if(bs.length<2)bs=VXD.bars.slice(-2);const d=bs.map(b=>b[1]);
   const cur=VXD.c,ch=cur-VXD.prev,chp=VXD.prev?ch/VXD.prev*100:0,band=VB.find(b=>cur>=b.lo&&cur<b.hi)||VB[VB.length-1];
   const seg='<div class="seg" style="margin-bottom:6px">'+VR.map(r=>`<button data-a="vp" data-v="${r[0]}" class="${r[0]===mo?"on":""}">${r[1]}</button>`).join("")+"</div>";
@@ -400,8 +402,8 @@ async function loadHist(){
 }
 const IDX=[{k:"msci",n:"MSCI World",s:"IWDA.AS",c:"#898781",da:"6 3",usd:false},{k:"ndx",n:"Nasdaq-100",s:"^NDX",c:"#eb6834",da:"2 3",usd:true},{k:"spx",n:"S&P 500",s:"^GSPC",c:"#1baf7a",da:"8 3 2 3",usd:true}];
 async function iq(sym){
-  const r=await fetch(S.proxy.replace(/\/+$/,"")+"/?s="+encodeURIComponent(sym)+"&r=3mo");
-  if(!r.ok)throw new Error("Fout "+r.status);
+  const r=await pfetch("/?s="+encodeURIComponent(sym)+"&r=3mo");
+  if(!r.ok)throw new Error(r.status===401?"Toegangssleutel ongeldig":"Fout "+r.status);
   const j=await r.json(),res=j.chart&&j.chart.result&&j.chart.result[0];
   if(!res)throw new Error("Geen gegevens");
   const off=(res.meta.gmtoffset||0),ts=res.timestamp||[],cl=((res.indicators.quote||[])[0]||{}).close||[];
@@ -476,7 +478,7 @@ function items(){
     return it;
   });
 }
-const VER="2.2.1 · 10 nov 2026";
+const VER="2.3.1 · 10 nov 2026";
 const MON=["jan","feb","mrt","apr","mei","jun","jul","aug","sep","okt","nov","dec"];
 function optInfo(s){const m=/^([A-Z][A-Z.\-]{0,5})(\d{2})(\d{2})(\d{2})([CP])(\d{8})$/.exec(String(s||"").trim().toUpperCase());return m?{root:m[1],y:2000+ +m[2],mo:+m[3],d:+m[4],cp:m[5],strike:+m[6]/1000}:null}
 function optName(p){const o=optInfo(p.sym);if(!o)return "";const w=String(S.un[o.root]||o.root).split(/[\s,]+/)[0]||o.root;return w+" "+(o.cp==="C"?"call":"put")+" $"+nm(o.strike,o.strike%1?2:0)+" "+MON[o.mo-1]+" "+o.y}
@@ -891,7 +893,7 @@ function lockH(title,setup){
 function settingsH(){
   const f=S.file,lk=S.lock;
   return `<div class="hd"><span class="ib" data-a="back" aria-label="Terug">←</span><div class="t">Instellingen</div></div><div class="body">`+
-  `<div class="sec" style="margin-top:4px;">Koersen</div><div class="m" style="font-size:12px;margin-bottom:6px;">Adres van je eigen koersen-doorgever (Cloudflare Worker)</div><input type="url" id="proxy" placeholder="https://…workers.dev" value="${esc(S.proxy)}" style="width:100%"><div style="margin-top:8px;"><button class="sm" data-a="sp">Opslaan</button> <small>${esc(U.cfgMsg)}</small></div>`+
+  `<div class="sec" style="margin-top:4px;">Koersen</div><div class="m" style="font-size:12px;margin-bottom:6px;">Adres van je eigen koersen-doorgever (Cloudflare Worker)</div><input type="url" id="proxy" placeholder="https://…workers.dev" value="${esc(S.proxy)}" style="width:100%"><div class="m" style="font-size:12px;margin:8px 0 6px;">Toegangssleutel (alleen invullen als je Worker er een vraagt)</div><input type="password" id="pkey" autocomplete="off" placeholder="sleutel" value="${esc(S.pkey||"")}" style="width:100%"><div style="margin-top:8px;"><button class="sm" data-a="sp">Opslaan</button> <small>${esc(U.cfgMsg)}</small></div>`+
   `<div class="sec">Excel in OneDrive</div>`+
   `<div class="stg"><div>Microsoft-account<br><span class="lbl">${account?esc(account.username||"Ingelogd"):"Niet ingelogd"}</span></div>${account?"":'<button class="sm" data-a="login">Inloggen</button>'}</div>`+
   `<div class="stg"><div>Bestand<br><span class="lbl">${f?esc(f.name):"Nog niet gekozen"}</span></div><button class="sm" data-a="pf">Kies</button></div>`+
@@ -901,7 +903,7 @@ function settingsH(){
   `<div class="stg"><div>Automatisch verversen<br><span class="lbl">Koersen opnieuw ophalen zolang de app open staat</span></div><select data-a="rate">${[[0,"Uit"],[30,"30 seconden"],[60,"1 minuut"],[120,"2 minuten"],[300,"5 minuten"],[900,"15 minuten"]].map(o=>`<option value="${o[0]}"${(S.rate==null?60:S.rate)==o[0]?" selected":""}>${o[1]}</option>`).join("")}</select></div>`+
   `<div class="sec">Beveiliging</div><div class="stg"><div>Code (9 cijfers)<br><span class="lbl">${lk?"Ingesteld":"Uit"}</span></div><button class="sm" data-a="cs">${lk?"Wijzigen":"Instellen"}</button></div>`+
   (lk?`<div class="stg"><div>Ontgrendelen met<br><span class="lbl">${esc(U.secMsg||(bioOK?"Vingerafdruk of code":"Vingerafdruk niet beschikbaar op dit toestel"))}</span></div><select data-a="meth"><option value="code"${S.bio?"":" selected"}>Code</option><option value="bio"${S.bio?" selected":""}${bioOK?"":" disabled"}>Vingerafdruk</option></select></div><div class="stg"><div>Vergrendel na</div><select data-a="la"><option value="0"${lk.after==0?" selected":""}>Direct</option><option value="60"${lk.after==60?" selected":""}>1 minuut</option><option value="300"${lk.after==300?" selected":""}>5 minuten</option><option value="900"${lk.after==900?" selected":""}>15 minuten</option></select></div><div class="stg"><div>Code uitzetten</div><button class="sm ghost" data-a="cx">Uitzetten</button></div>`:"")+
-  `<div class="sec">Gegevens</div><div class="stg"><div>Alle bewaarde gegevens wissen<br><span class="lbl">Instellingen, code en waardeverloop verdwijnen</span></div><button class="sm ghost" data-a="wipe">Wissen</button></div><div class="sec">Over</div><div class="stg"><div>Versie<br><span class="lbl">Noteer dit nummer bij vragen of problemen</span></div><div style="font-variant-numeric:tabular-nums">${VER}</div></div></div>`;
+  `<div class="sec">Gegevens</div><div class="stg"><div>Alle bewaarde gegevens wissen<br><span class="lbl">Instellingen, code en waardeverloop verdwijnen</span></div><button class="sm ghost" data-a="wipe">Wissen</button></div><div class="sec">Over</div><div class="stg"><div>Versie<br><span class="lbl">Noteer dit nummer bij vragen of problemen</span></div><div style="font-variant-numeric:tabular-nums">${VER}</div></div><div class="m" style="font-size:11px;margin:8px 2px 0">© 2026 Wouter Janssens · alle rechten voorbehouden. Niet kopiëren, aanpassen of verspreiden zonder toestemming.</div></div>`;
 }
 function pickerH(){
   const ps=U.ps;
@@ -1010,7 +1012,7 @@ root.addEventListener("click",e=>{
   else if(a==="sync"){syncExcel(true).then(ok=>{if(ok)refresh()});return}
   else if(a==="cfg")U.scr="settings";
   else if(a==="back"){U.scr="app";render();refresh();return}
-  else if(a==="sp"){S.proxy=$("proxy").value.trim();save();UQ={};VXD=undefined;Q={};FXQ={};HIST={};IXD={};U.cfgMsg="Opgeslagen.";render();return}
+  else if(a==="sp"){S.proxy=$("proxy").value.trim();S.pkey=$("pkey").value.trim();save();UQ={};VXD=undefined;Q={};FXQ={};HIST={};IXD={};U.cfgMsg="Opgeslagen.";render();return}
   else if(a==="login"){doLogin();return}
   else if(a==="pf"){pStart();return}
   else if(a==="pts"){pSheets("aandelen",false);return}
@@ -1047,6 +1049,20 @@ root.addEventListener("change",e=>{
   }
   else if(a==="rate"){S.rate=+e.target.value;save();setRate()}
 });
+/* ---------- terugknop: een niveau terug, de app sluit nooit af ---------- */
+let hbuf=0;
+const harm=()=>{try{while(hbuf<3){history.pushState({b:1},"");hbuf++}}catch(e){}};
+function goBack(){
+  if(U.scr==="lock")return;
+  if(U.scr==="setup"){U.scr="settings";U.step=0;U.tmp="";U.code=[];U.msg="";render();return}
+  if(U.scr==="picker"){if(U.ps&&U.ps.mode==="file"&&U.ps.stack.length){U.ps.stack.pop();pFolder();return}U.scr="settings";render();return}
+  if(U.scr==="settings"){if(S.proxy&&S.file&&S.file.sheet){U.scr="app";render();refresh()}return}
+  if(U.tab!==0){U.tab=0;U.view=0;render();return}
+  if(U.view!==0){U.view=0;render();return}
+}
+addEventListener("popstate",()=>{hbuf=Math.max(0,hbuf-1);goBack();if(hbuf===0)harm()});
+addEventListener("pointerdown",harm,{capture:true,passive:true});
+harm();
 const stamp=()=>{try{if(S.lock&&U.scr!=="lock"&&U.scr!=="setup")sessionStorage.setItem("aandAct",String(Date.now()));else sessionStorage.removeItem("aandAct")}catch(e){}};
 addEventListener("pagehide",stamp);
 setInterval(()=>{if(!document.hidden)stamp()},5000);

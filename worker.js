@@ -1,13 +1,20 @@
+// © 2026 Wouter Janssens. Alle rechten voorbehouden. Niet kopiëren of verspreiden zonder toestemming.
 // Cloudflare Worker: geeft koersen van Yahoo Finance door aan je eigen app.
-// Vervang JOUWNAAM door je GitHub-gebruikersnaam (kleine letters, zonder spaties).
+// Toegangssleutels: voeg in Cloudflare (Settings > Variables and Secrets) een secret "KEYS" toe met een of meer
+// sleutels, gescheiden door een komma (bv. "sleutel1,sleutel2"). Staat KEYS niet ingesteld, dan is er geen controle.
+// Een sleutel intrekken = hem uit KEYS verwijderen.
 const ALLOWED = "https://wj63448.github.io";
 const RANGES = ["5d", "1mo", "3mo", "1y"];
 
 export default {
-  async fetch(req) {
+  async fetch(req, env) {
     const cors = { "Access-Control-Allow-Origin": ALLOWED, "Vary": "Origin" };
     if (req.method === "OPTIONS") {
-      return new Response(null, { headers: { ...cors, "Access-Control-Allow-Methods": "GET", "Access-Control-Allow-Headers": "*" } });
+      return new Response(null, { headers: { ...cors, "Access-Control-Allow-Methods": "GET", "Access-Control-Allow-Headers": "X-Key", "Access-Control-Max-Age": "7200" } });
+    }
+    const keys = String((env && env.KEYS) || "").split(",").map(x => x.trim()).filter(Boolean);
+    if (keys.length && !keys.includes(req.headers.get("X-Key") || "")) {
+      return new Response("toegang geweigerd", { status: 401, headers: cors });
     }
     const u = new URL(req.url);
     const sym = u.searchParams.get("s");
