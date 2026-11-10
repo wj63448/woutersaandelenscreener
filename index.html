@@ -478,7 +478,7 @@ function items(){
     return it;
   });
 }
-const VER="2.3.2 · 10 nov 2026";
+const VER="2.3.3 · 10 nov 2026";
 const MON=["jan","feb","mrt","apr","mei","jun","jul","aug","sep","okt","nov","dec"];
 function optInfo(s){const m=/^([A-Z][A-Z.\-]{0,5})(\d{2})(\d{2})(\d{2})([CP])(\d{8})$/.exec(String(s||"").trim().toUpperCase());return m?{root:m[1],y:2000+ +m[2],mo:+m[3],d:+m[4],cp:m[5],strike:+m[6]/1000}:null}
 function optName(p){const o=optInfo(p.sym);if(!o)return "";const w=String(S.un[o.root]||o.root).split(/[\s,]+/)[0]||o.root;return w+" "+(o.cp==="C"?"call":"put")+" $"+nm(o.strike,o.strike%1?2:0)+" "+MON[o.mo-1]+" "+o.y}
@@ -1062,7 +1062,6 @@ function goBack(){
 }
 addEventListener("popstate",e=>{hbuf=(e.state&&e.state.b)||0;goBack();if(hbuf<2)harm()});
 ["click","pointerup","touchend"].forEach(n=>addEventListener(n,harm,{capture:true,passive:true}));
-harm();
 const stamp=()=>{try{if(S.lock&&U.scr!=="lock"&&U.scr!=="setup")sessionStorage.setItem("aandAct",String(Date.now()));else sessionStorage.removeItem("aandAct")}catch(e){}};
 addEventListener("pagehide",stamp);
 setInterval(()=>{if(!document.hidden)stamp()},5000);
