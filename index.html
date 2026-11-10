@@ -5,8 +5,8 @@
 <link rel="manifest" href="manifest.json">
 <title>Wouter's aandelenscreener</title>
 <style>
-:root{color-scheme:light dark;--bg:#fff;--bg2:#f1f3f5;--tx:#111827;--mut:#6b7280;--b:#e5e7eb;--b2:#cbd5e1;--p:#0b5ed7;--up:#15803d;--dn:#dc2626}
-@media (prefers-color-scheme:dark){:root{--bg:#101318;--bg2:#1c2128;--tx:#e5e7eb;--mut:#9ca3af;--b:#2a2f38;--b2:#3b424d;--p:#2f6fdc;--up:#4ade80;--dn:#f87171}}
+:root{color-scheme:light dark;--or:#d97706;--bg:#fff;--bg2:#f1f3f5;--tx:#111827;--mut:#6b7280;--b:#e5e7eb;--b2:#cbd5e1;--p:#0b5ed7;--up:#15803d;--dn:#dc2626}
+@media (prefers-color-scheme:dark){:root{--or:#fbbf24;--bg:#101318;--bg2:#1c2128;--tx:#e5e7eb;--mut:#9ca3af;--b:#2a2f38;--b2:#3b424d;--p:#2f6fdc;--up:#4ade80;--dn:#f87171}}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--tx);font:15px system-ui,sans-serif}
 #ph{max-width:560px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column}
@@ -119,6 +119,14 @@ input[type=text],input[type=url],select{font:inherit;padding:9px;border:1px soli
 .g4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px 6px;font-size:11.5px;margin-top:7px;font-variant-numeric:tabular-nums}
 .g4 small{display:block;font-size:10px;color:var(--mut);text-transform:uppercase;letter-spacing:.03em;margin-bottom:1px}
 .d30{color:#ea580c}.d60{color:#ca8a04}
+.tag{display:inline-block;font-size:10px;font-weight:600;padding:1px 6px;border-radius:9px;border:1px solid;margin-left:6px;vertical-align:1px;white-space:nowrap}
+.k-g{color:var(--up);border-color:var(--up)}.k-o{color:var(--or);border-color:var(--or)}.k-r{color:var(--dn);border-color:var(--dn)}
+.s-g,.s-o,.s-r,.s-p{padding-left:6px}.s-g{border-left:5px solid var(--up)}.s-o{border-left:5px solid var(--or)}.s-r{border-left:5px solid var(--dn)}.s-p{border-left:5px solid var(--mut)}
+.pb{margin:6px 0 2px;padding:6px 8px;background:var(--bg2);border-radius:8px}.sub .pb{background:var(--bg)}
+.op.sub{background:var(--bg2);border-radius:6px;margin-top:8px;padding-left:6px;padding-right:6px;font-weight:600}
+.op.tb{border:3px solid var(--p);border-radius:10px;padding:8px 10px;margin:4px 0 10px}
+.dline{font-size:11px;margin:5px 0 2px;font-weight:600}.arr{display:inline-block;padding:4px 8px 4px 0}
+.r.cl{cursor:pointer}
 </style></head><body>
 <div id="ph"></div>
 <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@2.39.0/lib/msal-browser.min.js"></script>
@@ -236,7 +244,8 @@ let S={rate:60,proxy:"",pos:[],file:null,tgt:null,showVal:true,collapsed:{},hist
 try{Object.assign(S,JSON.parse(localStorage.getItem("aand")||"{}"))}catch(e){}
 S.un=S.un||{};S.collapsed=S.collapsed||{};S.hist=S.hist||{};if(S.totMode!=="p")S.totMode="e";if(!Array.isArray(S.idxOn))S.idxOn=["msci","spx"];if(S.showVal===undefined)S.showVal=true;
 const save=()=>{try{localStorage.setItem("aand",JSON.stringify(S))}catch(e){}};
-const U={scr:S.lock?"lock":(S.proxy&&S.file&&S.file.sheet?"app":"settings"),tab:0,view:0,sc:-1,dm:"a",gm:"e",per:1,wp:1,code:[],step:0,tmp:"",msg:"",ps:null,syMsg:"",stMsg:"",cfgMsg:"",ip:1,vm:"s",sall:false};
+function keepOpen(){try{const t=+sessionStorage.getItem("aandAct");return !!(S.lock&&t&&Date.now()>=t&&Date.now()-t<S.lock.after*1000)}catch(e){return false}}
+const U={scr:S.lock&&!keepOpen()?"lock":(S.proxy&&S.file&&S.file.sheet?"app":"settings"),tab:0,view:0,sc:-1,dm:"a",gm:"e",per:1,wp:1,code:[],step:0,tmp:"",msg:"",ps:null,syMsg:"",stMsg:"",cfgMsg:"",ip:1,vm:"s",sall:false};
 let IXD={};
 let UQ={},VXD,Q={},FXQ={},HIST={},busy=false,fxMiss=false,account=null,hiddenAt=0;
 const app=new msal.PublicClientApplication({auth:{clientId:CLIENT_ID,authority:"https://login.microsoftonline.com/consumers",redirectUri:location.origin+location.pathname},cache:{cacheLocation:"localStorage",storeAuthStateInCookie:true}});
@@ -370,14 +379,14 @@ async function loadVix(){
 function vixH(){
   if(VXD===undefined)return '<div class="m" style="padding:12px 2px;">VIX wordt opgehaald…</div>';
   if(VXD==="err")return '<div class="m" style="padding:12px 2px;">De VIX kon niet worden opgehaald. Controleer je koersen-doorgever bij Instellingen en probeer opnieuw via ↻.</div>';
-  const mo=[1,3,6].includes(U.vp)?U.vp:3,cut=new Date(Date.now()-mo*30.4*864e5).toLocaleDateString("sv-SE"),d=VXD.bars.filter(b=>b[0]>=cut).map(b=>b[1]);
+  const VR=[[7,"1 week"],[30,"1 maand"],[182,"6 maand"],[365,"1 jaar"]],mo=VR.some(r=>r[0]===U.vp)?U.vp:30,mlab=VR.find(r=>r[0]===mo)[1],cut=new Date(Date.now()-mo*864e5).toLocaleDateString("sv-SE");let bs=VXD.bars.filter(b=>b[0]>=cut);if(bs.length<2)bs=VXD.bars.slice(-2);const d=bs.map(b=>b[1]);
   const cur=VXD.c,ch=cur-VXD.prev,chp=VXD.prev?ch/VXD.prev*100:0,band=VB.find(b=>cur>=b.lo&&cur<b.hi)||VB[VB.length-1];
-  const seg='<div class="seg" style="margin-bottom:6px">'+[1,3,6].map(m=>`<button data-a="vp" data-v="${m}" class="${m===mo?"on":""}">${m} mnd</button>`).join("")+"</div>";
+  const seg='<div class="seg" style="margin-bottom:6px">'+VR.map(r=>`<button data-a="vp" data-v="${r[0]}" class="${r[0]===mo?"on":""}">${r[1]}</button>`).join("")+"</div>";
   let chart="";
   if(d.length>1){
     const W=320,H=140,pl=6,pt=8,pb=8,mn=Math.min(10,...d)-1,mx=Math.max(32,...d)+1,yv=v=>pt+(1-(v-mn)/(mx-mn))*(H-pt-pb),xv=i=>pl+i/(d.length-1)*(W-2*pl);
     const ln=[20,25,30].map((v,i)=>`<line x1="${pl}" x2="${W-pl}" y1="${yv(v).toFixed(1)}" y2="${yv(v).toFixed(1)}" stroke="${["#4f8ef7","#eb6834","#d03b3b"][i]}" stroke-width="1" stroke-dasharray="3 3" opacity=".7"/><text x="${W-pl}" y="${(yv(v)-2).toFixed(1)}" text-anchor="end" font-size="8" fill="var(--mut)">${v}</text>`).join("");
-    chart=`<svg width="100%" viewBox="0 0 ${W} ${H}" role="img" aria-label="VIX over ${mo} maand"><g>${ln}</g><polyline points="${d.map((v,i)=>xv(i).toFixed(1)+","+yv(v).toFixed(1)).join(" ")}" fill="none" stroke="var(--p)" stroke-width="2" stroke-linejoin="round"/><circle cx="${xv(d.length-1).toFixed(1)}" cy="${yv(d[d.length-1]).toFixed(1)}" r="3.5" fill="${band.c}"/></svg><div style="display:flex;justify-content:space-between;font-size:11px;color:var(--mut)"><span>${mo} mnd geleden</span><span>gestippeld: 20 · 25 · 30</span><span>nu</span></div>`;
+    chart=`<svg width="100%" viewBox="0 0 ${W} ${H}" role="img" aria-label="VIX over ${mlab}"><g>${ln}</g><polyline points="${d.map((v,i)=>xv(i).toFixed(1)+","+yv(v).toFixed(1)).join(" ")}" fill="none" stroke="var(--p)" stroke-width="2" stroke-linejoin="round"/><circle cx="${xv(d.length-1).toFixed(1)}" cy="${yv(d[d.length-1]).toFixed(1)}" r="3.5" fill="${band.c}"/></svg><div style="display:flex;justify-content:space-between;font-size:11px;color:var(--mut)"><span>${mlab} geleden</span><span>gestippeld: 20 · 25 · 30</span><span>nu</span></div>`;
   }
   const blocks=VB.map(b=>`<div class="vb${b===band?" now":""}" style="border-left:4px solid ${b.c}"><div class="vbh"><b>VIX ${b.k}</b> ${b.t}${b===band?' <span class="nowt">nu</span>':""}</div><ul>${b.l.map(x=>`<li>${x}</li>`).join("")}</ul></div>`).join("");
   const gen='<div class="vb" style="border-left:4px solid var(--b2)"><div class="vbh"><b>Algemeen</b></div><ul><li>Onder 20: markten zijn "gezond".</li><li>20–25: volatiliteit neemt toe, kansen voor swingtraders.</li><li>25–30: correctiezone, voorzichtig.</li><li>30+: capitulatie, vaak de beste koopmomenten (kwaliteit of brede ETF) en dus zeker niet paniekverkopen!</li></ul></div>';
@@ -467,12 +476,25 @@ function items(){
     return it;
   });
 }
-const VER="2.1.0 · 9 nov 2026";
+const VER="2.2.0 · 10 nov 2026";
 const MON=["jan","feb","mrt","apr","mei","jun","jul","aug","sep","okt","nov","dec"];
 function optInfo(s){const m=/^([A-Z][A-Z.\-]{0,5})(\d{2})(\d{2})(\d{2})([CP])(\d{8})$/.exec(String(s||"").trim().toUpperCase());return m?{root:m[1],y:2000+ +m[2],mo:+m[3],d:+m[4],cp:m[5],strike:+m[6]/1000}:null}
 function optName(p){const o=optInfo(p.sym);if(!o)return "";const w=String(S.un[o.root]||o.root).split(/[\s,]+/)[0]||o.root;return w+" "+(o.cp==="C"?"call":"put")+" $"+nm(o.strike,o.strike%1?2:0)+" "+MON[o.mo-1]+" "+o.y}
 function daysLeft(o){const n=new Date();return Math.round((Date.UTC(o.y,o.mo-1,o.d)-Date.UTC(n.getFullYear(),n.getMonth(),n.getDate()))/864e5)}
 const stockItems=()=>items().filter(i=>!i.p.opt),optItems=()=>items().filter(i=>i.p.opt);
+function covOf(i){
+  const o=optInfo(i.k),p=i.p;if(!o||p.qty>=0)return null;
+  if(o.cp!=="C")return{k:"p"};
+  const n=-p.qty*100,stk=S.pos.find(x=>!x.opt&&(x.sym===o.root||String(x.sym).split(".")[0]===o.root)),own=stk?Math.max(stk.qty,0):0;
+  if(own>=n)return{k:"g",own,n,stk};
+  if(own>0)return{k:"o",own,n,stk,pct:Math.round(own/n*100)};
+  return{k:"r",own:0,n,stk:null};
+}
+const covK=i=>(covOf(i)||{k:"p"}).k;
+const covTag=cv=>!cv||cv.k==="p"?"":`<span class="tag k-${cv.k}">${cv.k==="g"?"gedekt":cv.k==="o"?"deels · "+cv.pct+"%":"niet gedekt"}</span>`;
+const oagg=l=>{const a=agg(l),tv=sum(a.ok.filter(i=>i.tr),i=>i.v);a.sp=(tv-a.sd)?a.sd/Math.abs(tv-a.sd)*100:0;return a};
+const optEx=o=>o?Date.UTC(o.y,o.mo-1,o.d):9e15;
+const optSort=r=>r.sort((a,b)=>optEx(a.o)-optEx(b.o)||String(a.i.nm).localeCompare(String(b.i.nm),"nl"));
 function agg(l){
   const ok=l.filter(i=>i.v!=null),td=ok.filter(i=>i.tr),sd=sum(td,i=>i.d),sv=sum(ok,i=>i.v),gg=ok.filter(i=>i.g!=null),tv=sum(td,i=>i.v),sk=sum(td,i=>i.dk),sf=sum(td,i=>i.dv);
   return{ok,sd,sv,stt:sum(gg,i=>i.g),cost:sum(gg,i=>i.p.paid),hasG:gg.length>0,sp:(tv-sd)?sd/(tv-sd)*100:0,nt:ok.filter(i=>!i.tr&&!i.man).length,sk,sf};
@@ -522,9 +544,9 @@ function top3H(gs){
 }
 function cells(p,d,t,v,hasG,tp,pre){
   const pm=S.totMode==="p"&&tp!=null;
-  return `${pre!=null?`<div class="pdv"><span class="pre ${cl(pre)}">${pc(pre)}</span><span class="pt">pre</span></div>`:`<div class="${cl(p)}">${pc(p)}</div>`}<div class="${cl(d)}">${ec(d,2)}</div>${hasG?`<div class="${cl(t)}">${pm?pc(tp):ec(t,0)}</div>`:'<div class="m">–</div>'}<div class="wv">${ev(v)}</div>`;
+  return `${pre!=null?`<div class="pdv"><span class="pre ${cl(pre)}">${pc(pre)}</span><span class="pt">pre</span></div>`:`<div class="${cl(p)}">${pc(p)}</div>`}<div class="${cl(d)}">${ec(d,2)}</div>${hasG?`<div class="${cl(t)}">${pm?pc(tp):ec(t,0)}</div>`:'<div class="m">–</div>'}<div class="wv">${v<0?"−":""}${ev(v)}</div>`;
 }
-function tableH(gs,ta){
+function tableH(gs,ta,oi,tn){
   let h=`<div class="${S.showVal?"":"nv"}"><div class="r sth" style="font-size:11px;color:var(--mut);border-bottom:1px solid var(--b2);padding:6px 2px;"><div>Bedrijf</div><div>Dag %</div><div>Dag €</div><div><button class="tg" data-a="tm">Totaal ${S.totMode==="p"?"%":"€"} ⇄</button></div><div class="wv">Waarde</div></div>`;
   let cnt=0;
   gs.forEach(x=>{
@@ -536,16 +558,35 @@ function tableH(gs,ta){
       h+=`<div class="r${i.tr===false?" off":""}"><div class="n">${i.k==="CASH"?cn(i.nm):`<a href="https://finance.yahoo.com/quote/${encodeURIComponent(i.k)}" target="_blank" rel="noopener">${cn(i.nm)}</a>`}${i.sub?`<br><small class="dn">${esc(i.sub)}</small>`:""}</div>${i.k==="CASH"&&i.v!=null?`<div></div><div></div><div></div><div class="wv">${ev(i.v)}</div>`:i.v!=null?cells(i.pct,i.d,i.g||0,i.v,i.g!=null,i.gp,i.pre&&i.tr===false?i.pre.pct:null):"<div></div><div></div><div></div><div class='wv'></div>"}</div>`;
     });
   });
-  h+=`<div class="r" style="font-weight:600;border-top:1px solid var(--b2);border-bottom:none;margin-top:6px;"><div>Totaal</div>${cells(ta.sp,ta.sd,ta.stt,ta.sv,ta.hasG,ta.cost?ta.stt/ta.cost*100:null)}</div></div>`;
-  return h;
+  const tot=(lab,x,top)=>`<div class="r" style="font-weight:600;border-top:${top};border-bottom:none;margin-top:6px;"><div>${lab}</div>${cells(x.sp,x.sd,x.stt,x.sv,x.hasG,x.cost?x.stt/x.cost*100:null)}</div>`;
+  if(!oi.length)h+=tot("Totaal",ta,"1px solid var(--b2)");
+  else{
+    h+=tot("Totaal aandelen",ta,"1px solid var(--b2)");
+    const OG=[],sd=oi.filter(i=>i.p.qty<0),bg=oi.filter(i=>i.p.qty>0),GL={g:"Calls gedekt",o:"Calls deels",r:"Calls niet gedekt",p:"Puts verkocht"};
+    ["g","o","r","p"].forEach(k=>{const l=sd.filter(i=>covK(i)===k);if(l.length)OG.push({key:"o"+k,lab:GL[k],l,os:"v",sold:true})});
+    if(bg.length)OG.push({key:"ob",lab:"Opties gekocht",l:bg,os:"g",sold:false});
+    h+='<div style="height:8px"></div>';
+    OG.forEach(g=>{
+      const o=!S.collapsed[g.key],x=oagg(g.l);
+      h+=`<div class="r gh" data-a="optjump" data-v="${g.os}"><div><span class="arr" data-a="grp" data-v="${g.key}">${o?"▾":"▸"}</span>${esc(g.lab)} <small>(${g.l.length})</small></div>${x.ok.length?cells(x.sp,x.sd,x.stt,x.sv,x.hasG,x.cost?x.stt/x.cost*100:null):"<div></div><div></div><div></div><div class='wv'></div>"}</div>`;
+      if(o)optSort(g.l.map(i=>({i,o:optInfo(i.k)}))).forEach(({i})=>{
+        const cv=g.sold?covOf(i):null,pp=g.sold?-i.pct:i.pct;
+        h+=`<div class="r${cv?" s-"+cv.k:""}${i.tr===false?" off":""}" data-a="optjump" data-v="${g.os}" style="cursor:pointer"><div class="n" style="white-space:normal">${esc(i.nm)}${covTag(cv)}${i.sub?`<br><small class="dn">${esc(i.sub)}</small>`:""}</div>${i.v!=null?cells(pp,i.d,i.g||0,i.v,i.g!=null,i.gp,null):"<div></div><div></div><div></div><div class='wv'></div>"}</div>`;
+      });
+    });
+    h+=tot("Totaal netto",tn,"2px solid var(--b2)");
+  }
+  return h+"</div>";
 }
 function portOverH(){
-  const its=stockItems(),gs=groups(its),ta=agg(its);
+  const A=items(),its=A.filter(i=>!i.p.opt),oi=A.filter(i=>i.p.opt),gs=groups(its),ta=agg(its),tn=agg(A);
+  tn.cost=sum(tn.ok.filter(i=>i.g!=null&&i.p.qty>0),i=>i.p.paid);
+  const tb=oi.length?tn:ta;
   let h=`<div class="sec" style="margin-top:6px;"><span>Dagwinnaars en -verliezers per valuta</span></div>${top3H(gs)}`;
-  h+=`<div class="big"><div class="lbl">Winst/verlies vandaag (in euro en %)</div><div style="display:flex;justify-content:center;align-items:baseline;flex-wrap:wrap;gap:2px 40px;"><div class="x ${cl(ta.sd)}">${its.length?es(ta.sd,2):"–"}</div>${ta.ok.some(i=>i.tr)?`<div class="x ${cl(ta.sd)}">${pc(ta.sv-ta.sd?ta.sd/(ta.sv-ta.sd)*100:0)}</div>`:""}</div>${ta.ok.some(i=>i.tr)?`<div class="lbl">Koers ${es(ta.sk,2)} · Valuta ${es(ta.sf,2)}</div>`:""}${S.showVal&&ta.sv?`<div class="lbl">Waarde portefeuille: ${eur(ta.sv)}</div>`:""}${ta.nt?`<div class="lbl">${ta.nt} ${ta.nt===1?"aandeel":"aandelen"} zonder handel vandaag niet meegeteld</div>`:""}${ta.hasG&&ta.cost?`<div class="lbl">Sinds aankoop: ${es(ta.stt,0)} (${sg(ta.stt/ta.cost*100,1)}%)</div>`:""}${fxMiss?'<div class="warn">Wisselkoers ontbreekt bij sommige aandelen</div>':""}</div>`;
+  h+=`<div class="big"><div class="lbl">Winst/verlies vandaag (in euro en %)</div><div style="display:flex;justify-content:center;align-items:baseline;flex-wrap:wrap;gap:2px 40px;"><div class="x ${cl(tb.sd)}">${A.length?es(tb.sd,2):"–"}</div>${tb.ok.some(i=>i.tr)?`<div class="x ${cl(tb.sd)}">${pc(tb.sv-tb.sd?tb.sd/(tb.sv-tb.sd)*100:0)}</div>`:""}</div>${tb.ok.some(i=>i.tr)?`<div class="lbl">Koers ${es(tb.sk,2)} · Valuta ${es(tb.sf,2)}</div>`:""}${S.showVal&&tb.sv?`<div class="lbl">Waarde portefeuille: ${eur(tb.sv)}</div>`:""}${tb.nt?`<div class="lbl">${tb.nt} ${tb.nt===1?"aandeel":"aandelen"} zonder handel vandaag niet meegeteld</div>`:""}${tb.hasG&&tb.cost?`<div class="lbl">Sinds aankoop: ${es(tb.stt,0)} (${sg(tb.stt/tb.cost*100,1)}%)</div>`:""}${fxMiss?'<div class="warn">Wisselkoers ontbreekt bij sommige aandelen</div>':""}</div>`;
   h+=`<div style="margin:0 2px 8px;"><button data-a="sync" class="sm">⇄ Lijst bijwerken uit Excel</button> <small>${esc(U.syMsg)}</small></div>`;
   h+=`<label style="display:flex;align-items:center;gap:8px;margin:0 2px 10px;font-size:14px;cursor:pointer;"><input type="checkbox" data-a="sv"${S.showVal?" checked":""}> Toon waarde</label>`;
-  h+=its.length?tableH(gs,ta):'<div class="m" style="padding:12px 2px;">Nog geen aandelen. Kies bij Instellingen je Excel-bestand en tik op "Lijst bijwerken uit Excel".</div>';
+  h+=A.length?tableH(gs,ta,oi,tn):'<div class="m" style="padding:12px 2px;">Nog geen aandelen. Kies bij Instellingen je Excel-bestand en tik op "Lijst bijwerken uit Excel".</div>';
   return h+`<div class="foot">${esc(U.stMsg)} · tik op een valuta om in of uit te klappen</div>`;
 }
 const COL=["#3B82F6","#F59E0B","#10B981","#8B5CF6","#EF4444","#06B6D4","#9CA3AF"];
@@ -672,38 +713,65 @@ function optScen(i,o){
       return `<div class="g4" style="margin-top:6px">${ce(esc(lab),c+nm(K,2))}${ce("Optie waard",sv?ev(val):"–")}${ce("W/V",ec(wv,0),cl(wv))}${ce("Rendement",sg(rd,0)+"%",cl(wv))}</div>`}).join("");
     return `<div class="sx2"><div class="sxh">${when}</div><div class="g4">${ce("Premie/aand.",c+nm(prem,2))}${ce("Break-even",c+nm(be,2))}${ce("Aandeel nu",u!=null?c+nm(u,2):"–")}${ce("Nog nodig",need!=null?sg(need,1)+"%":"–",nc)}</div>${rows}${hint}</div>`;
   }
-  const stk=call?S.pos.find(x=>!x.opt&&(x.sym===o.root||String(x.sym).split(".")[0]===o.root)):null,cov=!!stk&&stk.qty>=n,pc2=cov&&stk.paid>0?stk.paid*n/stk.qty:null,withS=cov&&pc2!=null;
-  const tt=u!=null&&u>0?(o.strike/u-1)*100:null,mx=withS?p.paid+o.strike*n/fx-pc2:null,closeNow=-i.v;
-  const head=call?(cov?"Covered call · "+nm(stk.qty,0)+" aandelen "+esc(o.root)+" ✓":stk?"Call · slechts "+nm(stk.qty,0)+" aandelen "+esc(o.root)+" (niet volledig gedekt)":"Verkochte call · aandelen niet in portefeuille"):"Verkochte put";
+  const cv=call?covOf(i):null,cov=!!cv&&cv.k==="g",part=!!cv&&cv.k==="o",nak=!!cv&&cv.k==="r",stk=cv?cv.stk:null;
+  const scs=cov?n:part?cv.own:0,pc2=(cov||part)&&stk&&stk.paid>0?stk.paid*scs/stk.qty:null,withS=pc2!=null;
+  const tt=u!=null&&u>0?(o.strike/u-1)*100:null,mx=withS?p.paid+o.strike*scs/fx-pc2:null,closeNow=-i.v;
+  const ncon=cv&&cv.n?(cv.n-cv.own)/100:0,tcon=cv&&cv.n?cv.n/100:0,m=cv?cv.n-cv.own:0;
+  const head=call?(cov?"Covered call · "+nm(stk.qty,0)+" aandelen "+esc(o.root)+" ✓":part?"Deels gedekt · "+nm(cv.own,0)+" van "+nm(cv.n,0)+" aandelen "+esc(o.root):"Niet gedekt · 0 aandelen "+esc(o.root)):"Verkochte put";
+  const dl=cov?(pc2!=null?`<div class="dline" style="color:var(--up)">Gedekt door ${nm(scs,0)} aandelen ${esc(o.root)} (aankoopwaarde ${ev(pc2)})</div>`:""):part?`<div class="dline" style="color:var(--or)">Deels gedekt: ${nm(cv.own,0)} van ${nm(cv.n,0)} aandelen. De berekening geldt voor het gedekte deel; ${nm(ncon,0)} ${ncon===1?"contract is":"contracten zijn"} niet gedekt.</div>`:nak?`<div class="dline" style="color:var(--dn)">NIET gedekt: je bezit 0 aandelen ${esc(o.root)}. Verlies bij stijging is onbeperkt.</div>`:"";
   const row=(lab,callR,aand)=>{
     if(withS&&aand!=null){const tot=callR+aand;return `<div class="g4" style="margin-top:8px">${ce(lab,"")}${ce("Call",ec(callR,0),cl(callR))}${ce("Aandelen",ec(aand,0),cl(aand))}${ce("Totaal",ec(tot,0),cl(tot))}</div>`}
+    if(nak)return `<div class="g4" style="margin-top:8px">${ce(lab,"")}${ce("Call",ec(callR,0),cl(callR))}${ce("Aandelen","–")}${ce("Totaal",ec(callR,0),cl(callR))}</div>`;
     return `<div class="g4" style="margin-top:8px">${ce(lab,"")}${ce("W/V call",ec(callR,0),cl(callR))}${ce("Rendement",sg(callR/p.paid*100,0)+"%",cl(callR))}${ce("","")}</div>`;
   };
-  let sc=`<div class="sxh" style="margin-top:10px">Sinds aankoop</div>`;
-  if(u!=null&&u>0)sc+=row("Vandaag "+c+nm(u,2),p.paid-closeNow,withS?u*n/fx-pc2:null);
-  sc+=row("Strike "+c+nm(o.strike,2),p.paid,withS?o.strike*n/fx-pc2:null);
-  if(withS&&u!=null&&u>0){const cN=closeNow,aN=(o.strike-u)*n/fx;sc+=`<div class="sxh" style="margin-top:10px">Op strike t.o.v. vandaag</div><div class="g4" style="margin-top:4px">${ce("Winst erbij","")}${ce("Call",ec(cN,0),cl(cN))}${ce("Aandelen",ec(aN,0),cl(aN))}${ce("Totaal",ec(cN+aN,0),cl(cN+aN))}</div>`}
-  return `<div class="sx2"><div class="sxh">${head} · ontvangen premie ${ev(p.paid)}</div><div class="g4" style="margin-top:4px">${ce("Premie/aand.",c+nm(prem,2))}${ce("Aandeel nu",u!=null?c+nm(u,2):"–")}${ce("Tot strike",tt!=null?sg(tt,1)+"%":"–")}${mx!=null?ce("Max winst",ec(mx,0),cl(mx)):ce("","")}</div>${sc}${withS?'<div class="m" style="font-size:10.5px;margin-top:6px">Op en boven de strike worden je aandelen aan de strike weggeroepen: de winst is begrensd.</div>':""}</div>`;
+  let sc=`<div class="sxh" style="margin-top:10px">${part?"Sinds aankoop · call ("+tcon+" contracten) en je "+nm(cv.own,0)+" aandelen":nak?"Sinds aankoop · alleen de call, je hebt geen aandelen":"Sinds aankoop"}</div>`;
+  if(u!=null&&u>0)sc+=row("Vandaag "+c+nm(u,2),p.paid-closeNow,withS?u*scs/fx-pc2:null);
+  sc+=row("Strike "+c+nm(o.strike,2),p.paid,withS?o.strike*scs/fx-pc2:null);
+  if((withS||nak)&&u!=null&&u>0){const cN=closeNow,aN=withS?(o.strike-u)*scs/fx:null;sc+=`<div class="sxh" style="margin-top:10px">Op strike t.o.v. vandaag</div><div class="g4" style="margin-top:4px">${ce("Winst erbij","")}${ce("Call",ec(cN,0),cl(cN))}${ce("Aandelen",aN!=null?ec(aN,0):"–",aN!=null?cl(aN):"")}${ce("Totaal",ec(cN+(aN||0),0),cl(cN+(aN||0)))}</div>`}
+  const K1=o.strike*1.25,K2=o.strike*1.5,kf=K=>c+nm(K,K%1?2:0);
+  let rk="",note="";
+  if(part){
+    rk=`<div class="sxh" style="margin-top:10px;color:var(--or)">Niet gedekt deel · ${nm(ncon,0)} ${ncon===1?"contract":"contracten"} = ${nm(m,0)} aandelen</div><div class="g4" style="margin-top:4px">${ce("Per "+c+"1 boven strike",ec(-m/fx,0),"dn")}${ce("Aandeel op "+kf(K1),ec(-(K1-o.strike)*m/fx,0),"dn")}${ce("Aandeel op "+kf(K2),ec(-(K2-o.strike)*m/fx,0),"dn")}${ce("Max verlies","onbeperkt","dn")}</div>`;
+    note=`De ${nm(cv.own,0)} aandelen worden bij de strike weggeroepen (winst begrensd). Voor de overige ${nm(ncon,0)} ${ncon===1?"contract":"contracten"} heb je geen aandelen: stijgt het aandeel boven ${c}${nm(o.strike,o.strike%1?2:0)}, dan loopt het verlies op.`;
+  }else if(nak){
+    const ls=K=>-(K-o.strike)*n/fx+p.paid;
+    rk=`<div class="sxh" style="margin-top:10px;color:var(--dn)">Als het aandeel stijgt (verlies op de call)</div><div class="g4" style="margin-top:4px">${ce("Break-even",c+nm(be,2))}${ce("Op "+kf(K1),ec(ls(K1),0),cl(ls(K1)))}${ce("Op "+kf(K2),ec(ls(K2),0),cl(ls(K2)))}${ce("Max verlies","onbeperkt","dn")}</div>`;
+    note=`Zonder aandelen is de break-even wel nuttig: boven strike + premie (${c}${nm(o.strike,o.strike%1?2:0)} + ${c}${nm(prem,2)}) verlies je geld. Max winst is de ontvangen premie (${ev(p.paid)}).`;
+  }else if(cov)note="Op en boven de strike worden je aandelen aan de strike weggeroepen: de winst is begrensd.";
+  const c4=cov&&mx!=null?ce("Max winst",ec(mx,0),cl(mx)):part?ce("Risico",nm(ncon,0)+"/"+nm(tcon,0)+" niet gedekt","or"):nak?ce("Risico","onbeperkt","dn"):ce("","");
+  return `<div class="sx2"><div class="sxh">${head} · ontvangen premie ${ev(p.paid)}</div>${dl}<div class="g4" style="margin-top:4px">${ce("Premie/aand.",c+nm(prem,2))}${ce("Aandeel nu",u!=null?c+nm(u,2):"–")}${ce("Tot strike",tt!=null?sg(tt,1)+"%":"–")}${c4}</div>${sc}${rk}${note?`<div class="m" style="font-size:10.5px;margin-top:6px">${note}</div>`:""}</div>`;
 }
 function optH(){
-  const sold=U.os==="v",its=optItems().filter(i=>sold?i.p.qty<0:i.p.qty>0),evs=v=>(v<0?"−":"")+ev(v);
+  const sold=U.os==="v",its=optItems().filter(i=>sold?i.p.qty<0:i.p.qty>0),evs=v=>(v<0?"−":"")+ev(v),cell=(lab,val,cls)=>`<div><small>${lab}</small><span class="${cls||""}">${val}</span></div>`;
   let h=`<div class="seg" style="margin:6px 0 8px;"><button data-a="os" data-v="g" class="${U.os==="v"?"":"on"}">Gekocht</button><button data-a="os" data-v="v" class="${U.os==="v"?"on":""}">Verkocht</button></div>`;
   if(sold&&!its.length)return h+`<div class="m" style="padding:12px 2px;">Nog geen verkochte (covered) calls. Zet het optiesymbool in de kolom Ticker, een negatief aantal bij Aantal, de ontvangen premie in euro bij Aankoopwaarde (en de premie per aandeel bij Aankoopkoers) en "optie" bij Sector.</div>`;
   if(!its.length)return h+`<div class="m" style="padding:12px 2px;">Nog geen opties. Zet het optiesymbool (bv. NB280121C00005000) in de kolom Ticker en "optie" in de kolom Sector, en tik bij Aandelen op "Lijst bijwerken uit Excel".</div>`;
-  const ex=o=>o?Date.UTC(o.y,o.mo-1,o.d):9e15;
-  const rows=its.map(i=>({i,o:optInfo(i.k)})).sort((a,b)=>ex(a.o)-ex(b.o)||String(a.i.nm).localeCompare(String(b.i.nm),"nl"));
-  const cell=(lab,val,cls)=>`<div><small>${lab}</small><span class="${cls||""}">${val}</span></div>`;
-  rows.forEach(({i,o})=>{
-    const q=Q[i.k],c=cs(i.cur),dl=o?daysLeft(o):null;
+  const rows=optSort(its.map(i=>({i,o:optInfo(i.k)})));
+  const pbH=l=>{
+    const ok=l.filter(i=>i.v!=null&&i.g!=null);if(!ok.length)return "";
+    const pd=sum(ok,i=>i.p.paid),bk=sum(ok,i=>Math.abs(i.v)),nw=sum(ok,i=>i.g),k=cl(nw);
+    return `<div class="pb g4">${cell(sold?"Ontvangen premie":"Betaalde premie",ev(pd))}${cell(sold?"Terugkopen nu":"Waard nu",ev(bk))}${cell("Netto winst nu",ec(nw,0),k)}${cell("Netto winst %",pd?sg(nw/pd*100,1)+"%":"–",k)}</div>`;
+  };
+  const totRow=l=>{const x=oagg(l),an=x.ok.some(i=>i.tr);return `<div class="g4">${cell("Dag %",an?pc(x.sp):"–",an?cl(x.sp):"m")}${cell("Dag €",an?ec(x.sd,2):"–",an?cl(x.sd):"m")}${cell("Totaal €",x.hasG?ec(x.stt,0):"–",x.hasG?cl(x.stt):"m")}${cell("Totaal %",x.hasG&&x.cost?sg(x.stt/x.cost*100,1)+"%":"–",x.hasG&&x.cost?cl(x.stt):"m")}</div>`};
+  const card=({i,o})=>{
+    const q=Q[i.k],c=cs(i.cur),dl=o?daysLeft(o):null,s=i.p.qty<0,cv=s?covOf(i):null;
     const dc=dl==null?"":dl<7?"dn":dl<30?"d30":dl<60?"d60":"";
     const nog=dl==null?"–":dl<0?"verlopen":dl===0?"vandaag":dl===1?"1 dag":dl+" dagen";
-    const td=i.v!=null&&i.tr!==false;
-    h+=`<div class="op"><div class="t1"><div class="n"><a href="https://finance.yahoo.com/quote/${encodeURIComponent(i.k)}" target="_blank" rel="noopener">${esc(i.nm)}</a>${i.sub?`<br><small class="dn">${esc(i.sub)}</small>`:""}</div>${S.showVal&&i.v!=null?`<div>${evs(i.v)}</div>`:""}</div>`+
-      `<div class="g4">${cell("Vervalt",o?o.d+" "+MON[o.mo-1]+" "+o.y:"–")}${cell("Nog",nog,dc)}${cell("Strike",o?c+nm(o.strike,o.strike%1?2:0):"–")}${cell("Aantal",(i.p.qty<0?"−":"")+nm(i.p.qty,i.p.qty%1?2:0))}`+
-      `${cell("Koers",q&&!q.err&&q.c!=null?c+nm(q.c,2):"–")}${cell("Dag %",td?pc(i.pct):"–",td?cl(i.p.qty<0?-i.pct:i.pct):"m")}${cell("Dag €",td?ec(i.d,2):"–",td?cl(i.d):"m")}${cell("Totaal",i.g!=null?ec(i.g,0)+`<span style="display:block;font-size:10.5px">${sg(i.gp,1)}%</span>`:"–",i.g!=null?cl(i.g):"m")}</div>${optScen(i,o)}</div>`;
-  });
-  const ta=agg(its),any=ta.ok.some(i=>i.tr),tvv=sum(ta.ok.filter(i=>i.tr),i=>i.v),spp=(tvv-ta.sd)?ta.sd/Math.abs(tvv-ta.sd)*100:0;
-  h+=`<div class="op" style="border-top:1px solid var(--b2);border-bottom:none;margin-top:6px;"><div class="t1"><div>Totaal opties</div>${S.showVal&&ta.ok.length?`<div>${evs(ta.sv)}</div>`:""}</div><div class="g4">${cell("Dag %",any?pc(sold?-spp:spp):"–",any?cl(spp):"m")}${cell("Dag €",any?ec(ta.sd,2):"–",any?cl(ta.sd):"m")}${cell("Totaal €",ta.hasG?ec(ta.stt,0):"–",ta.hasG?cl(ta.stt):"m")}${cell("Totaal %",ta.hasG&&ta.cost?sg(ta.stt/ta.cost*100,1)+"%":"–",ta.hasG&&ta.cost?cl(ta.stt):"m")}</div></div>`;
+    const td=i.v!=null&&i.tr!==false,pp=s?-i.pct:i.pct;
+    return `<div class="op${cv&&cv.k?" s-"+cv.k:""}"><div class="t1"><div class="n"><a href="https://finance.yahoo.com/quote/${encodeURIComponent(i.k)}" target="_blank" rel="noopener">${esc(i.nm)}</a>${covTag(cv)}${i.sub?`<br><small class="dn">${esc(i.sub)}</small>`:""}</div>${S.showVal&&i.v!=null?`<div>${evs(i.v)}</div>`:""}</div>${pbH([i])}`+
+      `<div class="g4">${cell("Vervalt",o?o.d+" "+MON[o.mo-1]+" "+o.y:"–")}${cell("Nog",nog,dc)}${cell("Strike",o?c+nm(o.strike,o.strike%1?2:0):"–")}${cell("Aantal",(s?"−":"")+nm(i.p.qty,i.p.qty%1?2:0))}`+
+      `${cell("Koers",q&&!q.err&&q.c!=null?c+nm(q.c,2):"–")}${cell("Dag %",td?pc(pp):"–",td?cl(pp):"m")}${cell("Dag €",td?ec(i.d,2):"–",td?cl(i.d):"m")}${cell("Totaal",i.g!=null?ec(i.g,0)+`<span style="display:block;font-size:10.5px">${sg(i.gp,1)}%</span>`:"–",i.g!=null?cl(i.g):"m")}</div>${optScen(i,o)}</div>`;
+  };
+  const allC=its.every(i=>(optInfo(i.k)||{}).cp==="C"),ta=oagg(its);
+  h+=`<div class="op tb"><div class="t1"><div>Totaal ${sold?"verkochte":"gekochte"} ${allC?"calls":"opties"}</div>${S.showVal&&ta.ok.length?`<div>${evs(ta.sv)}</div>`:""}</div>${totRow(its)}${pbH(its)}</div>`;
+  if(sold){
+    const GN={g:"Gedekt (covered)",o:"Deels gedekt",r:"Niet gedekt",p:"Verkochte puts"};
+    ["g","o","r","p"].forEach(k=>{
+      const l=rows.filter(r=>covK(r.i)===k);if(!l.length)return;
+      const li=l.map(r=>r.i),x=oagg(li);
+      h+=`<div class="op sub s-${k}"><div class="t1"><div>${GN[k]} (${l.length})</div>${S.showVal&&x.ok.length?`<div>${evs(x.sv)}</div>`:""}</div>${totRow(li)}${l.length>1?pbH(li):""}</div>`+l.map(card).join("");
+    });
+  }else h+=rows.map(card).join("");
   return h+`<div class="foot">${esc(U.stMsg)} · Waarde = koers × 100 × aantal contracten (verkocht: wat terugkopen kost, negatief) · Nog: geel onder 60 dagen, oranje onder 30, rood onder 7 · tik op een naam voor Yahoo Finance</div>`;
 }
 function curH(its){
@@ -930,6 +998,7 @@ root.addEventListener("click",e=>{
   else if(a==="vm")U.vm=v;
   else if(a==="sall")U.sall=!U.sall;
   else if(a==="optgo")U.tab=3;
+  else if(a==="optjump"){U.tab=3;U.os=v;U.view=0;setTimeout(()=>window.scrollTo(0,0),0)}
   else if(a==="os")U.os=v;
   else if(a==="vp")U.vp=+v;
   else if(a==="t3"){U.t3o=U.t3o||{};U.t3o[v]=!U.t3o[v]}
@@ -978,8 +1047,11 @@ root.addEventListener("change",e=>{
   }
   else if(a==="rate"){S.rate=+e.target.value;save();setRate()}
 });
+const stamp=()=>{try{if(S.lock&&U.scr!=="lock"&&U.scr!=="setup")sessionStorage.setItem("aandAct",String(Date.now()));else sessionStorage.removeItem("aandAct")}catch(e){}};
+addEventListener("pagehide",stamp);
+setInterval(()=>{if(!document.hidden)stamp()},5000);
 document.addEventListener("visibilitychange",()=>{
-  if(document.hidden){hiddenAt=Date.now();return}
+  if(document.hidden){hiddenAt=Date.now();stamp();return}
   if(S.lock&&U.scr!=="lock"&&U.scr!=="setup"&&(Date.now()-hiddenAt)/1000>=S.lock.after){U.scr="lock";U.code=[];U.msg="";U.bt=false;render();return}
   if(U.scr==="app")refresh();
 });
