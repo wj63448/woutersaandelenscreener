@@ -19,6 +19,10 @@ button{font:inherit;padding:8px 12px;border:0;border-radius:8px;background:var(-
 button.sm{font-size:12.5px;padding:5px 10px}
 button.ghost{background:transparent;color:var(--tx);border:1px solid var(--b2)}
 input[type=text],input[type=url],select{font:inherit;padding:9px;border:1px solid var(--b2);border-radius:8px;background:transparent;color:var(--tx);min-width:0}
+.ogr{display:flex;gap:8px;margin:6px 0 8px}.og{flex:1;min-width:0}.ogf{width:52px}.gh2{text-align:center;font-size:13px;font-weight:600;padding:6px 0;border:1px solid var(--b2);border-radius:8px;margin-bottom:4px;color:var(--mut);cursor:pointer}.gh2.on{border:2px solid var(--p);color:var(--p)}.seg.w{display:flex;gap:3px}.seg.w button{flex:1;font-size:11.5px;padding:5px 2px}
+.hs{display:grid;grid-template-columns:44px 1fr 1fr;gap:4px;margin:8px 0}.hs>div{font-size:11.5px;line-height:1.3}.hh2{font-weight:700;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.2;font-size:12.5px}.hh2 span{font-size:11px;font-weight:600}.hc{border:1px solid var(--b2);border-left:4px solid;border-radius:8px;padding:6px;background:var(--card,var(--bg))}.hc b{display:block;font-size:12.5px;margin-bottom:2px}.hc .rp{font-size:11px}
+.hx{border:1px solid var(--b2);border-left:5px solid;border-radius:8px;padding:8px 10px;margin:8px 0;font-size:12.5px;line-height:1.4;background:var(--card,var(--bg))}.hx h4{margin:0 0 4px;font-size:13.5px}.hx p{margin:3px 0}.hx .rk{color:var(--dn)}.hx .wn{color:var(--up)}.hx small{color:var(--mut)}.hb{display:inline-block;font-size:10.5px;font-weight:700;padding:1px 6px;border-radius:6px;border:1px solid var(--up);color:var(--up);margin-left:6px;vertical-align:1px}.hb.no{border-color:var(--dn);color:var(--dn)}
+.cg{border:1px solid var(--b2);border-left:5px solid;border-radius:8px;margin:8px 0;overflow:hidden}.cg .ch,.cg .cr{display:grid;grid-template-columns:minmax(0,1fr) 52px 78px;gap:4px;align-items:center;padding:7px 10px;font-size:12px}.cg .ch{font-weight:700;font-size:13px;cursor:pointer}.cg .cr{border-top:1px solid var(--b)}.cg .ch>span:nth-child(n+2),.cg .cr>span:nth-child(n+2){text-align:right;font-variant-numeric:tabular-nums}.cg .cr .bar{grid-column:1/-1;height:4px;border-radius:2px;background:var(--b)}.cg .cr .bar i{display:block;height:4px;border-radius:2px}.cg .arr{font-weight:400;color:var(--mut);margin-right:4px}.cgh{display:grid;grid-template-columns:minmax(0,1fr) 52px 78px;gap:4px;padding:0 10px 2px;font-size:10.5px;color:var(--mut);margin-top:8px}.cgh span:nth-child(n+2){text-align:right}
 .seg{display:flex;gap:4px}
 .seg button{font-size:12px;padding:4px 9px;background:transparent;color:var(--tx);border:1px solid var(--b2)}
 .seg button.on,.top button.on{background:var(--p);color:#fff;border-color:var(--p)}
@@ -478,7 +482,7 @@ function items(){
     return it;
   });
 }
-const VER="2.3.5 · 10 nov 2026";
+const VER="2.4.0 · 12 nov 2026";
 const MON=["jan","feb","mrt","apr","mei","jun","jul","aug","sep","okt","nov","dec"];
 function optInfo(s){const m=/^([A-Z][A-Z.\-]{0,5})(\d{2})(\d{2})(\d{2})([CP])(\d{8})$/.exec(String(s||"").trim().toUpperCase());return m?{root:m[1],y:2000+ +m[2],mo:+m[3],d:+m[4],cp:m[5],strike:+m[6]/1000}:null}
 function optName(p){const o=optInfo(p.sym);if(!o)return "";const w=String(S.un[o.root]||o.root).split(/[\s,]+/)[0]||o.root;return w+" "+(o.cp==="C"?"call":"put")+" $"+nm(o.strike,o.strike%1?2:0)+" "+MON[o.mo-1]+" "+o.y}
@@ -565,15 +569,15 @@ function tableH(gs,ta,oi,tn){
   else{
     h+=tot("Totaal aandelen",ta,"1px solid var(--b2)");
     const OG=[],sd=oi.filter(i=>i.p.qty<0),bg=oi.filter(i=>i.p.qty>0),GL={g:"Calls gedekt",o:"Calls deels",r:"Calls niet gedekt",p:"Puts verkocht"};
-    ["g","o","r","p"].forEach(k=>{const l=sd.filter(i=>covK(i)===k);if(l.length)OG.push({key:"o"+k,lab:GL[k],l,os:"v",sold:true})});
-    if(bg.length)OG.push({key:"ob",lab:"Opties gekocht",l:bg,os:"g",sold:false});
+    ["g","o","r","p"].forEach(k=>{const l=sd.filter(i=>(k==="p"?cpOf(i)==="P":cpOf(i)==="C"&&covK(i)===k));if(l.length)OG.push({key:"o"+k,lab:GL[k],l,os:"v",oc:k==="p"?"P":"C",sold:true})});
+    [["C","Calls gekocht","obc"],["P","Puts gekocht","obp"]].forEach(([c,lab,key])=>{const l=bg.filter(i=>cpOf(i)===c);if(l.length)OG.push({key,lab,l,os:"g",oc:c,sold:false})});
     h+='<div style="height:8px"></div>';
     OG.forEach(g=>{
       const o=!S.collapsed[g.key],x=oagg(g.l);
-      h+=`<div class="r gh" data-a="optjump" data-v="${g.os}"><div><span class="arr" data-a="grp" data-v="${g.key}">${o?"▾":"▸"}</span>${esc(g.lab)} <small>(${g.l.length})</small></div>${x.ok.length?cells(x.sp,x.sd,x.stt,x.sv,x.hasG,x.cost?x.stt/x.cost*100:null):"<div></div><div></div><div></div><div class='wv'></div>"}</div>`;
+      h+=`<div class="r gh" data-a="optjump" data-v="${g.os}" data-c="${g.oc}"><div><span class="arr" data-a="grp" data-v="${g.key}">${o?"▾":"▸"}</span>${esc(g.lab)} <small>(${g.l.length})</small></div>${x.ok.length?cells(x.sp,x.sd,x.stt,x.sv,x.hasG,x.cost?x.stt/x.cost*100:null):"<div></div><div></div><div></div><div class='wv'></div>"}</div>`;
       if(o)optSort(g.l.map(i=>({i,o:optInfo(i.k)}))).forEach(({i})=>{
         const cv=g.sold?covOf(i):null,pp=g.sold?-i.pct:i.pct;
-        h+=`<div class="r${cv?" s-"+cv.k:""}${i.tr===false?" off":""}" data-a="optjump" data-v="${g.os}" style="cursor:pointer"><div class="n" style="white-space:normal">${esc(i.nm)}${covTag(cv)}${i.sub?`<br><small class="dn">${esc(i.sub)}</small>`:""}</div>${i.v!=null?cells(pp,i.d,i.g||0,i.v,i.g!=null,i.gp,null):"<div></div><div></div><div></div><div class='wv'></div>"}</div>`;
+        h+=`<div class="r${cv?" s-"+cv.k:""}${i.tr===false?" off":""}" data-a="optjump" data-v="${g.os}" data-c="${g.oc}" style="cursor:pointer"><div class="n" style="white-space:normal">${esc(i.nm)}${covTag(cv)}${i.sub?`<br><small class="dn">${esc(i.sub)}</small>`:""}</div>${i.v!=null?cells(pp,i.d,i.g||0,i.v,i.g!=null,i.gp,null):"<div></div><div></div><div></div><div class='wv'></div>"}</div>`;
       });
     });
     h+=tot("Totaal netto",tn,"2px solid var(--b2)");
@@ -644,9 +648,20 @@ function lineH(){
   const ch=(a[a.length-1]/a[0]-1)*100;
   return `<svg width="100%" viewBox="0 0 ${W} ${H}" role="img" aria-label="Waardeverloop van de portefeuille"><path d="${area}" fill="var(--p)" opacity="0.12"></path><polyline points="${p}" fill="none" stroke="var(--p)" stroke-width="2"/></svg><div style="display:flex;justify-content:space-between;font-size:11.5px;color:var(--mut);margin-top:2px;"><span>${S.showVal?"Laag "+eur(mn):""}</span><span class="${cl(ch)}">${sg(ch,1)}% sinds ${esc(ks[0])}</span><span>${S.showVal?"Hoog "+eur(mx):""}</span></div>`;
 }
+function curGroupsH(its){
+  const ok=its.filter(i=>i.v!=null),tot=sum(ok,i=>i.v);if(!tot)return "";
+  const m={};ok.forEach(i=>{const c=i.cur||"?";(m[c]=m[c]||[]).push(i)});
+  const keys=Object.keys(m).sort(),colr={};keys.forEach((k,j)=>colr[k]=COL[j%6]);
+  const e=S.showVal,P=v=>nm(v/tot*100,1)+"%";
+  const gs=keys.map(k=>({k,l:m[k].slice().sort((a,b)=>b.v-a.v),v:sum(m[k],i=>i.v)})).sort((a,b)=>b.v-a.v);
+  return `<div class="cgh"><span>Aandeel</span><span>% totaal</span><span>${e?"Waarde":""}</span></div>`+gs.map(g=>{
+    const o=!!(U.vgo||{})[g.k];
+    return `<div class="cg" style="border-left-color:${colr[g.k]}"><div class="ch" data-a="vg" data-v="${esc(g.k)}" role="button"><span><span class="arr">${o?"▾":"▸"}</span>${esc(g.k)} <span style="font-weight:400;color:var(--mut)">· ${g.l.length} ${g.l.length===1?"aandeel":"aandelen"}</span></span><span>${P(g.v)}</span><span>${e?ev(g.v):""}</span></div>`+(o?g.l.map(i=>`<div class="cr"><span>${cn(i.nm)}</span><span>${P(i.v)}</span><span>${e?ev(i.v):""}</span><div class="bar"><i style="width:${(i.v/g.v*100).toFixed(0)}%;background:${colr[g.k]}"></i></div></div>`).join(""):"")+`</div>`;
+  }).join("");
+}
 function portGrafH(){
   const its=stockItems();
-  return `<div class="sec" style="margin-top:6px;"><span>Verdeling</span>${seg("dm",[["a","Aandeel"],["v","Valuta"]],U.dm)}</div>${donutH(its)}`+
+  return `<div class="sec" style="margin-top:6px;"><span>Verdeling</span>${seg("dm",[["a","Aandeel"],["v","Valuta"]],U.dm)}</div>${donutH(its)}${U.dm==="v"?curGroupsH(its):""}`+
   `<div class="sec"><span>Winst/verlies sinds aankoop</span>${S.showVal?seg("gm",[["e","€"],["p","%"]],U.gm):""}</div>${gainH(its)}`+
   `<div class="sec"><span>Koersverloop</span>${seg("per",[[0,"5 d"],[1,"1 m"],[2,"1 j"]],U.per)}</div>${sparkH(its)}`+
   `<div class="sec"><span>Waardeverloop</span>${seg("wp",[[0,"1 m"],[1,"3 m"],[2,"Alles"]],U.wp)}</div>${lineH()}`+
@@ -715,6 +730,12 @@ function optScen(i,o){
       return `<div class="g4" style="margin-top:6px">${ce(esc(lab),c+nm(K,2))}${ce("Optie waard",sv?ev(val):"–")}${ce("W/V",ec(wv,0),cl(wv))}${ce("Rendement",sg(rd,0)+"%",cl(wv))}</div>`}).join("");
     return `<div class="sx2"><div class="sxh">${when}</div><div class="g4">${ce("Premie/aand.",c+nm(prem,2))}${ce("Break-even",c+nm(be,2))}${ce("Aandeel nu",u!=null?c+nm(u,2):"–")}${ce("Nog nodig",need!=null?sg(need,1)+"%":"–",nc)}</div>${rows}${hint}</div>`;
   }
+  if(!call){
+    const cost=o.strike*n/fx,tt=u!=null&&u>0?(o.strike/u-1)*100:null,kf=K=>c+nm(K,K%1?2:0),K1=o.strike*0.85,K2=o.strike*0.7;
+    const ls=K=>-(o.strike-K)*n/fx,mxl=p.paid-cost;
+    const r3=(lab,a,b2)=>`<div class="g4" style="margin-top:8px">${ce(lab,"")}${ce("Premie",ec(p.paid,0),"up")}${ce("Aandelen",b2==null?"–":ec(b2,0),b2==null?"":cl(b2))}${ce("Totaal",ec(p.paid+(b2||0),0),cl(p.paid+(b2||0)))}</div>`;
+    return `<div class="sx2"><div class="sxh">Verkochte put · ontvangen premie ${ev(p.paid)}</div><div class="dline" style="color:var(--or)">Bij uitoefening koop je ${nm(n,0)} aandelen ${esc(o.root)} voor ${c}${nm(o.strike*n,0)}${i.cur==="EUR"?"":" ("+ev(cost)+")"}</div><div class="g4" style="margin-top:4px">${ce("Premie/aand.",c+nm(prem,2))}${ce("Aandeel nu",u!=null?c+nm(u,2):"–")}${ce("Tot strike",tt!=null?sg(tt,1)+"%":"–")}${ce("Break-even",c+nm(be,2))}</div><div class="sxh" style="margin-top:10px">Op vervaldag (resultaat op de put)</div>${r3("Koers "+kf(o.strike)+" of hoger",0,null)}${r3("Koers "+kf(K1),0,ls(K1))}${r3("Koers "+kf(K2),0,ls(K2))}<div class="m" style="font-size:10.5px;margin-top:6px">Max winst is de premie (${ev(p.paid)}). Max verlies als het aandeel naar ${c}0 zakt: ${ec(mxl,0)}. Break-even = strike min premie per aandeel.</div></div>`;
+  }
   const cv=call?covOf(i):null,cov=!!cv&&cv.k==="g",part=!!cv&&cv.k==="o",nak=!!cv&&cv.k==="r",stk=cv?cv.stk:null;
   const scs=cov?n:part?cv.own:0,pc2=(cov||part)&&stk&&stk.paid>0?stk.paid*scs/stk.qty:null,withS=pc2!=null;
   const tt=u!=null&&u>0?(o.strike/u-1)*100:null,mx=withS?p.paid+o.strike*scs/fx-pc2:null,closeNow=-i.v;
@@ -743,11 +764,35 @@ function optScen(i,o){
   const c4=cov&&mx!=null?ce("Max winst",ec(mx,0),cl(mx)):part?ce("Risico",nm(ncon,0)+"/"+nm(tcon,0)+" niet gedekt","or"):nak?ce("Risico","onbeperkt","dn"):ce("","");
   return `<div class="sx2"><div class="sxh">${head} · ontvangen premie ${ev(p.paid)}</div>${dl}<div class="g4" style="margin-top:4px">${ce("Premie/aand.",c+nm(prem,2))}${ce("Aandeel nu",u!=null?c+nm(u,2):"–")}${ce("Tot strike",tt!=null?sg(tt,1)+"%":"–")}${c4}</div>${sc}${rk}${note?`<div class="m" style="font-size:10.5px;margin-top:6px">${note}</div>`:""}</div>`;
 }
+const cpOf=i=>(optInfo(i.k)||{}).cp==="P"?"P":"C";
+function optSel(){
+  const all=optItems(),has=(c,sd)=>all.some(i=>cpOf(i)===c&&(sd?i.p.qty<0:i.p.qty>0)),H={C:{g:has("C",0),v:has("C",1)},P:{g:has("P",0),v:has("P",1)}};
+  const any=c=>H[c].g||H[c].v;
+  if(!U.oc||!any(U.oc))U.oc=any("C")?"C":"P";
+  if(!H[U.oc][U.os==="v"?"v":"g"])U.os=H[U.oc].g?"g":"v";
+  const grp=(c,lab)=>{if(!any(c))return "";const act=U.oc===c&&!U.of,g=H[c];
+    return `<div class="og"><div class="gh2${act?" on":""}" data-a="oc" data-v="${c}" role="button">${lab}</div><div class="seg w">${[["g","Gekocht"],["v","Verkocht"]].filter(b=>g[b[0]]).map(([k,t])=>`<button data-a="os" data-c="${c}" data-v="${k}" class="${act&&U.os===k?"on":""}">${t}</button>`).join("")}</div></div>`};
+  return `<div class="ogr">${grp("C","Calls")}${grp("P","Puts")}<div class="ogf"><div class="gh2${U.of?" on":""}" data-a="of" role="button">F1</div></div></div>`;
+}
+function optHelpH(){
+  const cell=(c,t,sub,rp,rk)=>`<div class="hc" style="border-left-color:var(--${c})"><b>${t}</b>${sub}<br><span class="rp">${rp}</span><br><small>${rk}</small></div>`;
+  const ex=(c,t,tag,body)=>`<div class="hx" style="border-left-color:var(--${c})"><h4>${t}<span class="hb">${tag}</span></h4>${body}</div>`;
+  return `<div class="m" style="font-size:12px;margin:2px 2px 6px"><b>Uitleg opties</b> · 1 contract = 100 aandelen. Voorbeeld met een aandeel Quark dat nu $68 kost.</div>
+<div class="hs"><div></div><div class="hh2">Kopen<span style="color:var(--up)">= je hebt het RECHT</span></div><div class="hh2">Verkopen<span style="color:var(--or)">= je hebt de PLICHT</span></div>
+<div class="hh2">Call</div>${cell("up","Call kopen","Je wedt op stijging","Recht om aandelen te <u>kopen</u> aan de strike. Je mag, je moet niet.","Risico: klein (inleg)")}${cell("or","Call verkopen","Je verkoopt je recht op extra stijging","Plicht om aandelen te <u>leveren</u> aan de strike als de koper dat vraagt.","Risico: klein tot onbeperkt")}
+<div class="hh2">Put</div>${cell("up","Put kopen","Je verzekert tegen daling","Recht om aandelen te <u>verkopen</u> aan de strike. Je mag, je moet niet.","Risico: klein (inleg)")}${cell("or","Put verkopen","Je belooft aandelen te kopen","Plicht om aandelen te <u>kopen</u> aan de strike als de koper dat vraagt.","Risico: groot")}</div>
+<div class="hx" style="border-left-color:var(--p)"><h4>Recht of plicht?</h4><p><b style="color:var(--up)">Koper = recht.</b> Hij betaalt een premie en <b>kiest zelf</b> of hij gebruikmaakt van zijn optie. Loont het niet, dan laat hij ze verlopen en verliest hij alleen de premie.</p><p><b style="color:var(--or)">Verkoper = plicht.</b> Hij ontvangt de premie, maar <b>de koper beslist</b>. Vraagt de koper erom, dan moet jij leveren of kopen, ook als dat voor jou nadelig is.</p><p><small>Daarom is het risico bij kopen beperkt tot de premie, en bij verkopen niet.</small></p></div>
+${ex("up","Call gekocht","je wedt op stijging",`<p><b>Wat is het?</b> Je betaalt een premie voor het recht om 100 aandelen te kopen aan de strike, wat er ook gebeurt met de koers.</p><p><small>Voorbeeld: strike $70, premie $3 = $300 betaald.</small></p><p class="wn"><b>Winst:</b> als Quark ver boven $73 stijgt (strike + premie). Hoe hoger, hoe meer winst, zonder grens.</p><p class="rk"><b>Risico:</b> beperkt tot je inleg. Blijft de koers onder $70, dan is de optie waardeloos en verlies je de $300 volledig.</p>`)}
+${ex("or","Call verkocht","je verwacht geen sterke stijging",`<p><b>Wat is het?</b> Je ontvangt een premie en belooft 100 aandelen te leveren aan de strike als de koper dat wil.</p><p><small>Voorbeeld: strike $70, premie $3 = $300 ontvangen.</small></p><p class="wn"><b>Winst:</b> maximaal de premie die je kreeg, als de koers onder $70 blijft.</p><p><b>Gedekt</b> <span class="hb ok">100 aandelen in bezit</span>: je levert gewoon je eigen aandelen aan $70. Je mist dan de stijging boven $70, maar verliest geen geld.</p><p class="rk"><b>Niet gedekt</b> <span class="hb no">geen aandelen</span>: je moet aandelen aankopen tegen de dagprijs en leveren aan $70. Stijgt Quark naar $100, dan verlies je $2.700 (na premie). Dit verlies is theoretisch onbeperkt, en ook je broker kan extra onderpand (marge) vragen.</p>`)}
+${ex("up","Put gekocht","je verzekert tegen daling",`<p><b>Wat is het?</b> Je betaalt een premie voor het recht om 100 aandelen te verkopen aan de strike, ook als de koers veel lager staat. Als een verzekering voor aandelen die je bezit.</p><p><small>Voorbeeld: strike $60, premie $2 = $200 betaald.</small></p><p class="wn"><b>Winst:</b> als Quark onder $58 zakt (strike − premie). Hoe lager, hoe meer winst, tot de koers op $0 staat.</p><p class="rk"><b>Risico:</b> beperkt tot je inleg. Blijft de koers boven $60, dan verlies je de $200 (de prijs van de verzekering).</p>`)}
+${ex("or","Put verkocht","je wilt kopen bij daling",`<p><b>Wat is het?</b> Je ontvangt een premie en belooft 100 aandelen te kopen aan de strike als de koper dat wil. Je zegt in feite: "ik wil Quark wel kopen als hij zakt tot $60".</p><p><small>Voorbeeld: strike $60, premie $2 = $200 ontvangen.</small></p><p class="wn"><b>Winst:</b> maximaal de premie, als Quark boven $60 blijft.</p><p class="rk"><b>Risico:</b> zakt Quark naar $40, dan koop je voor $6.000 aandelen die nog $4.000 waard zijn: −$1.800 na premie. In het ergste geval (koers naar $0) verlies je $5.800. Je moet ook het geld klaar hebben, of marge kunnen stellen.</p>`)}
+<div class="foot">Voorbeeldbedragen in dollar, zonder kosten en belasting.</div>`;
+}
 function optH(){
-  const sold=U.os==="v",its=optItems().filter(i=>sold?i.p.qty<0:i.p.qty>0),evs=v=>(v<0?"−":"")+ev(v),cell=(lab,val,cls)=>`<div><small>${lab}</small><span class="${cls||""}">${val}</span></div>`;
-  let h=`<div class="seg" style="margin:6px 0 8px;"><button data-a="os" data-v="g" class="${U.os==="v"?"":"on"}">Gekocht</button><button data-a="os" data-v="v" class="${U.os==="v"?"on":""}">Verkocht</button></div>`;
-  if(sold&&!its.length)return h+`<div class="m" style="padding:12px 2px;">Nog geen verkochte (covered) calls. Zet het optiesymbool in de kolom Ticker, een negatief aantal bij Aantal, de ontvangen premie in euro bij Aankoopwaarde (en de premie per aandeel bij Aankoopkoers) en "optie" bij Sector.</div>`;
-  if(!its.length)return h+`<div class="m" style="padding:12px 2px;">Nog geen opties. Zet het optiesymbool (bv. NB280121C00005000) in de kolom Ticker en "optie" in de kolom Sector, en tik bij Aandelen op "Lijst bijwerken uit Excel".</div>`;
+  const sel=optSel(),sold=U.os==="v",P=U.oc==="P",its=optItems().filter(i=>cpOf(i)===U.oc&&(sold?i.p.qty<0:i.p.qty>0)),evs=v=>(v<0?"−":"")+ev(v),cell=(lab,val,cls)=>`<div><small>${lab}</small><span class="${cls||""}">${val}</span></div>`;
+  let h=sel;
+  if(U.of)return h+optHelpH();
+  if(!optItems().length)return h+`<div class="m" style="padding:12px 2px;">Nog geen opties. Zet het optiesymbool (bv. NB280121C00005000) in de kolom Ticker en "optie" in de kolom Sector, en tik bij Aandelen op "Lijst bijwerken uit Excel".</div>`;
   const rows=optSort(its.map(i=>({i,o:optInfo(i.k)})));
   const pbH=l=>{
     const ok=l.filter(i=>i.v!=null&&i.g!=null);if(!ok.length)return "";
@@ -764,9 +809,9 @@ function optH(){
       `<div class="g4">${cell("Vervalt",o?o.d+" "+MON[o.mo-1]+" "+o.y:"–")}${cell("Nog",nog,dc)}${cell("Strike",o?c+nm(o.strike,o.strike%1?2:0):"–")}${cell("Aantal",(s?"−":"")+nm(i.p.qty,i.p.qty%1?2:0))}`+
       `${cell("Koers",q&&!q.err&&q.c!=null?c+nm(q.c,2):"–")}${cell("Dag %",td?pc(pp):"–",td?cl(pp):"m")}${cell("Dag €",td?ec(i.d,2):"–",td?cl(i.d):"m")}${cell("Totaal",i.g!=null?ec(i.g,0)+`<span style="display:block;font-size:10.5px">${sg(i.gp,1)}%</span>`:"–",i.g!=null?cl(i.g):"m")}</div>${optScen(i,o)}</div>`;
   };
-  const allC=its.every(i=>(optInfo(i.k)||{}).cp==="C"),ta=oagg(its);
-  h+=`<div class="op tb"><div class="t1"><div>Totaal ${sold?"verkochte":"gekochte"} ${allC?"calls":"opties"}</div>${S.showVal&&ta.ok.length?`<div>${evs(ta.sv)}</div>`:""}</div>${totRow(its)}${pbH(its)}</div>`;
-  if(sold){
+  const ta=oagg(its);
+  h+=`<div class="op tb"><div class="t1"><div>Totaal ${sold?"verkochte":"gekochte"} ${P?"puts":"calls"}</div>${S.showVal&&ta.ok.length?`<div>${evs(ta.sv)}</div>`:""}</div>${totRow(its)}${pbH(its)}</div>`;
+  if(sold&&!P){
     const GN={g:"Gedekt (covered)",o:"Deels gedekt",r:"Niet gedekt",p:"Verkochte puts"};
     ["g","o","r","p"].forEach(k=>{
       const l=rows.filter(r=>covK(r.i)===k);if(!l.length)return;
@@ -1002,8 +1047,11 @@ root.addEventListener("click",e=>{
   else if(a==="sall")U.sall=!U.sall;
   else if(a==="optgo")U.tab=3;
   else if(a==="vtap"){U.vt=(U.vt||0)+1;if(U.vt>=5){U.vt=0;U.dbg=!U.dbg;showDbg()}}
-  else if(a==="optjump"){U.tab=3;U.os=v;U.view=0;setTimeout(()=>window.scrollTo(0,0),0)}
-  else if(a==="os")U.os=v;
+  else if(a==="optjump"){U.tab=3;U.os=v;U.oc=t.getAttribute("data-c")||"C";U.of=false;U.view=0;setTimeout(()=>window.scrollTo(0,0),0)}
+  else if(a==="os"){U.os=v;U.oc=t.getAttribute("data-c")||U.oc;U.of=false}
+  else if(a==="oc"){U.oc=v;U.of=false}
+  else if(a==="of")U.of=!U.of;
+  else if(a==="vg"){U.vgo=U.vgo||{};U.vgo[v]=!U.vgo[v]}
   else if(a==="vp")U.vp=+v;
   else if(a==="t3"){U.t3o=U.t3o||{};U.t3o[v]=!U.t3o[v]}
   else if(a==="sg"){S.sopen=S.sopen||{};S.sopen[v]=!S.sopen[v];save()}
