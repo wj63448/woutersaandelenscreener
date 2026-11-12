@@ -33,7 +33,7 @@ input[type=text],input[type=url],select{font:inherit;padding:9px;border:1px soli
 .r>div+div{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 .nv .wv{display:none}
 .n{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px}
-.n a,.t3 .nm a{color:var(--tx);text-decoration:none;border-bottom:1px dotted var(--b2)}
+.n a,.t3 .nm a,.cg .cr a{color:var(--tx);text-decoration:none;border-bottom:1px dotted var(--b2)}
 .gh{background:var(--bg2);font-weight:600;cursor:pointer;border-radius:6px;padding-left:6px;padding-right:6px;margin-top:4px}
 .gh small{font-weight:400;color:var(--mut)}
 .r.off>div:nth-child(2),.r.off>div:nth-child(3){opacity:.4}
@@ -482,7 +482,7 @@ function items(){
     return it;
   });
 }
-const VER="2.4.0 · 12 nov 2026";
+const VER="2.4.1 · 12 nov 2026";
 const MON=["jan","feb","mrt","apr","mei","jun","jul","aug","sep","okt","nov","dec"];
 function optInfo(s){const m=/^([A-Z][A-Z.\-]{0,5})(\d{2})(\d{2})(\d{2})([CP])(\d{8})$/.exec(String(s||"").trim().toUpperCase());return m?{root:m[1],y:2000+ +m[2],mo:+m[3],d:+m[4],cp:m[5],strike:+m[6]/1000}:null}
 function optName(p){const o=optInfo(p.sym);if(!o)return "";const w=String(S.un[o.root]||o.root).split(/[\s,]+/)[0]||o.root;return w+" "+(o.cp==="C"?"call":"put")+" $"+nm(o.strike,o.strike%1?2:0)+" "+MON[o.mo-1]+" "+o.y}
@@ -656,12 +656,14 @@ function curGroupsH(its){
   const gs=keys.map(k=>({k,l:m[k].slice().sort((a,b)=>b.v-a.v),v:sum(m[k],i=>i.v)})).sort((a,b)=>b.v-a.v);
   return `<div class="cgh"><span>Aandeel</span><span>% totaal</span><span>${e?"Waarde":""}</span></div>`+gs.map(g=>{
     const o=!!(U.vgo||{})[g.k];
-    return `<div class="cg" style="border-left-color:${colr[g.k]}"><div class="ch" data-a="vg" data-v="${esc(g.k)}" role="button"><span><span class="arr">${o?"▾":"▸"}</span>${esc(g.k)} <span style="font-weight:400;color:var(--mut)">· ${g.l.length} ${g.l.length===1?"aandeel":"aandelen"}</span></span><span>${P(g.v)}</span><span>${e?ev(g.v):""}</span></div>`+(o?g.l.map(i=>`<div class="cr"><span>${cn(i.nm)}</span><span>${P(i.v)}</span><span>${e?ev(i.v):""}</span><div class="bar"><i style="width:${(i.v/g.v*100).toFixed(0)}%;background:${colr[g.k]}"></i></div></div>`).join(""):"")+`</div>`;
+    return `<div class="cg" style="border-left-color:${colr[g.k]}"><div class="ch" data-a="vg" data-v="${esc(g.k)}" role="button"><span><span class="arr">${o?"▾":"▸"}</span>${esc(g.k)} <span style="font-weight:400;color:var(--mut)">· ${g.l.length} ${g.l.length===1?"aandeel":"aandelen"}</span></span><span>${P(g.v)}</span><span>${e?ev(g.v):""}</span></div>`+(o?g.l.map(i=>`<div class="cr"><span>${i.k==="CASH"?cn(i.nm):`<a href="https://finance.yahoo.com/quote/${encodeURIComponent(i.k)}" target="_blank" rel="noopener">${cn(i.nm)}</a>`}</span><span>${P(i.v)}</span><span>${e?ev(i.v):""}</span><div class="bar"><i style="width:${(i.v/g.v*100).toFixed(0)}%;background:${colr[g.k]}"></i></div></div>`).join(""):"")+`</div>`;
   }).join("");
 }
 function portGrafH(){
   const its=stockItems();
-  return `<div class="sec" style="margin-top:6px;"><span>Verdeling</span>${seg("dm",[["a","Aandeel"],["v","Valuta"]],U.dm)}</div>${donutH(its)}${U.dm==="v"?curGroupsH(its):""}`+
+  const hd=`<div class="sec" style="margin-top:6px;"><span>Verdeling</span>${seg("dm",[["a","Aandeel"],["v","Valuta"]],U.dm)}</div>`;
+  if(U.dm==="v")return hd+`<label style="display:flex;align-items:center;gap:8px;margin:0 2px 10px;font-size:14px;cursor:pointer;"><input type="checkbox" data-a="sv"${S.showVal?" checked":""}> Toon waarde</label>`+donutH(its)+curGroupsH(its);
+  return hd+donutH(its)+
   `<div class="sec"><span>Winst/verlies sinds aankoop</span>${S.showVal?seg("gm",[["e","€"],["p","%"]],U.gm):""}</div>${gainH(its)}`+
   `<div class="sec"><span>Koersverloop</span>${seg("per",[[0,"5 d"],[1,"1 m"],[2,"1 j"]],U.per)}</div>${sparkH(its)}`+
   `<div class="sec"><span>Waardeverloop</span>${seg("wp",[[0,"1 m"],[1,"3 m"],[2,"Alles"]],U.wp)}</div>${lineH()}`+
