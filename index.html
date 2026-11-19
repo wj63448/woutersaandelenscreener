@@ -132,6 +132,55 @@ input[type=text],input[type=url],select{font:inherit;padding:9px;border:1px soli
 .op.tb{border:3px solid var(--p);border-radius:10px;padding:8px 10px;margin:4px 0 10px}
 .dline{font-size:11px;margin:5px 0 2px;font-weight:600}.arr{display:inline-block;padding:4px 8px 4px 0}
 .r.cl{cursor:pointer}
+
+/* ---------- Uiterlijk (thema's) ---------- */
+html[data-th]{--sh:0 6px 18px rgba(30,40,100,.08)}
+html[data-th] .op:not(.tb):not(.sub),html[data-th] .cb,html[data-th] .tbl,html[data-th] .cg,html[data-th] .vb{background:var(--cd);border-radius:16px;box-shadow:var(--sh)}
+html[data-th] .op:not(.tb):not(.sub){padding:12px;margin-bottom:10px;border-bottom:0}
+html[data-th] .tbl{padding:4px 10px 8px;margin-bottom:10px}
+html[data-th] .cb{padding:10px 12px}
+html[data-th] .cg{border-top-color:var(--b);border-right-color:var(--b);border-bottom-color:var(--b)}
+html[data-th] .top button,html[data-th] .seg button{border-radius:99px}
+html[data-th] .gh{border-radius:10px}
+html[data-th] .big{border-radius:22px;padding:18px 14px;margin-bottom:12px;color:#fff}
+html[data-th] .big .lbl{color:rgba(255,255,255,.78)}
+html[data-th] .big .x{font-size:34px;font-weight:700;letter-spacing:-.5px}
+html[data-th] .big .up{color:#4ade80}html[data-th] .big .dn{color:#fda4af}
+html[data-th] .tabs{border-top:0}
+html[data-th] .tabs div b{font-size:19px}
+/* A · donker glas */
+html[data-th="a"]{color-scheme:dark;--or:#fbbf24;--bg:#0b1020;--bg2:rgba(255,255,255,.07);--tx:#e8ecf8;--mut:#9aa3bd;--b:rgba(255,255,255,.09);--b2:rgba(255,255,255,.2);--p:#6d5dfc;--up:#4ade80;--dn:#fb7185;--cd:rgba(255,255,255,.05);--sh:none}
+html[data-th="a"] body{background:radial-gradient(120% 45% at 80% -8%,#3b2a8c 0,#0b1020 58%) fixed,#0b1020}
+html[data-th="a"] .hd{background:rgba(11,16,32,.8);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+html[data-th="a"] .op:not(.tb):not(.sub),html[data-th="a"] .cb,html[data-th="a"] .tbl,html[data-th="a"] .cg,html[data-th="a"] .vb{border:1px solid rgba(255,255,255,.09)}
+html[data-th="a"] .op.tb{border-color:#6d5dfc;background:rgba(109,93,252,.12)}
+html[data-th="a"] .seg button.on,html[data-th="a"] .top button.on{background:linear-gradient(135deg,#6d5dfc,#3ea0ff);border-color:transparent;box-shadow:0 4px 14px rgba(80,110,255,.4)}
+html[data-th="a"] .big{background:linear-gradient(135deg,rgba(109,93,252,.55),rgba(62,160,255,.25));border:1px solid rgba(255,255,255,.14)}
+html[data-th="a"] .tabs{background:rgba(15,20,40,.9);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid rgba(255,255,255,.08)}
+html[data-th="a"] .tabs div.on{color:#8ab4ff}
+html[data-th="a"] .sth{background:#0b1020}
+html[data-th="a"] .cash{color:#111827}
+/* B · zacht licht */
+html[data-th="b"]{color-scheme:light;--or:#d97706;--bg:#f3f5fb;--bg2:#eef0f8;--tx:#1b2140;--mut:#7a82a3;--b:#eceef6;--b2:#d5d9ea;--p:#4f46e5;--up:#10b981;--dn:#ef4444;--cd:#fff}
+html[data-th="b"] .hd{background:rgba(243,245,251,.92);color:#1b2140;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+html[data-th="b"] .top button,html[data-th="b"] .seg button{background:#fff;box-shadow:0 1px 4px rgba(30,40,100,.08)}
+html[data-th="b"] .top button.on,html[data-th="b"] .seg button.on{background:#1b2140;border-color:#1b2140;color:#fff}
+html[data-th="b"] .big{background:linear-gradient(135deg,#4f46e5,#7c3aed 60%,#db2777);box-shadow:0 14px 28px rgba(99,70,230,.3)}
+html[data-th="b"] .big .x,html[data-th="b"] .big .up,html[data-th="b"] .big .dn{color:#fff}
+html[data-th="b"] .tabs{background:#fff;box-shadow:0 -6px 20px rgba(30,40,100,.08);border-radius:22px 22px 0 0}
+html[data-th="b"] .op.tb{border-color:#4f46e5}
+html[data-th="b"] .sth{background:#f3f5fb}
+/* C · strak fintech */
+html[data-th="c"]{color-scheme:light;--or:#d97706;--bg:#f6f7f9;--bg2:#eef1f5;--tx:#12161f;--mut:#64748b;--b:#e8ebf0;--b2:#cbd5e1;--p:#0891b2;--up:#059669;--dn:#e11d48;--cd:#fff;--sh:0 2px 8px rgba(15,23,42,.06)}
+html[data-th="c"] .hd{background:#0f172a;color:#fff;border-radius:0 0 22px 22px}
+html[data-th="c"] .top button.on,html[data-th="c"] .seg button.on{background:#0f172a;border-color:#0f172a}
+html[data-th="c"] .big{background:#0f172a}
+html[data-th="c"] .big .up{color:#34d399}
+html[data-th="c"] .tabs{background:#0f172a;border-top:0}
+html[data-th="c"] .tabs div{color:#64748b}html[data-th="c"] .tabs div.on{color:#22d3ee}
+html[data-th="c"] .op:not(.tb):not(.sub),html[data-th="c"] .tbl{border-left:4px solid #0891b2}
+html[data-th="c"] .op.tb{border-color:#0891b2}
+html[data-th="c"] .sth{background:#f6f7f9}
 </style></head><body>
 <div id="ph"></div>
 <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@2.39.0/lib/msal-browser.min.js"></script>
@@ -482,7 +531,7 @@ function items(){
     return it;
   });
 }
-const VER="2.5.0 · 16 nov 2026";
+const VER="2.6.0 · 19 nov 2026";
 const MON=["jan","feb","mrt","apr","mei","jun","jul","aug","sep","okt","nov","dec"];
 function optInfo(s){const m=/^([A-Z][A-Z.\-]{0,5})(\d{2})(\d{2})(\d{2})([CP])(\d{8})$/.exec(String(s||"").trim().toUpperCase());return m?{root:m[1],y:2000+ +m[2],mo:+m[3],d:+m[4],cp:m[5],strike:+m[6]/1000}:null}
 function optName(p){const o=optInfo(p.sym);if(!o)return "";const w=String(S.un[o.root]||o.root).split(/[\s,]+/)[0]||o.root;return w+" "+(o.cp==="C"?"call":"put")+" $"+nm(o.strike,o.strike%1?2:0)+" "+MON[o.mo-1]+" "+o.y}
@@ -553,7 +602,7 @@ function cells(p,d,t,v,hasG,tp,pre){
   return `${pre!=null?`<div class="pdv"><span class="pre ${cl(pre)}">${pc(pre)}</span><span class="pt">pre</span></div>`:`<div class="${cl(p)}">${pc(p)}</div>`}<div class="${cl(d)}">${ec(d,2)}</div>${hasG?`<div class="${cl(t)}">${pm?pc(tp):ec(t,0)}</div>`:'<div class="m">–</div>'}<div class="wv">${v<0?"−":""}${ev(v)}</div>`;
 }
 function tableH(gs,ta,oi,tn){
-  let h=`<div class="${S.showVal?"":"nv"}"><div class="r sth" style="font-size:11px;color:var(--mut);border-bottom:1px solid var(--b2);padding:6px 2px;"><div>Bedrijf</div><div>Dag %</div><div>Dag €</div><div><button class="tg" data-a="tm">Totaal ${S.totMode==="p"?"%":"€"} ⇄</button></div><div class="wv">Waarde</div></div>`;
+  let h=`<div class="tbl ${S.showVal?"":"nv"}"><div class="r sth" style="font-size:11px;color:var(--mut);border-bottom:1px solid var(--b2);padding:6px 2px;"><div>Bedrijf</div><div>Dag %</div><div>Dag €</div><div><button class="tg" data-a="tm">Totaal ${S.totMode==="p"?"%":"€"} ⇄</button></div><div class="wv">Waarde</div></div>`;
   let cnt=0;
   gs.forEach(x=>{
     const key=x.k||"?",o=!S.collapsed[key];
@@ -963,7 +1012,7 @@ function settingsH(){
   `<div class="stg"><div>Bestand<br><span class="lbl">${f?esc(f.name):"Nog niet gekozen"}</span></div><button class="sm" data-a="pf">Kies</button></div>`+
   `<div class="stg"><div>Tabblad met aandelen<br><span class="lbl">${f&&f.sheet?esc(f.sheet):"Nog niet gekozen"}</span></div><button class="sm" data-a="pts"${f?"":" disabled"}>Kies</button></div>`+
   `<div class="stg"><div>Tabblad met targets<br><span class="lbl">${f&&f.tsheet?esc(f.tsheet):"Geen"}</span></div><button class="sm" data-a="ptt"${f?"":" disabled"}>Kies</button></div>`+
-  `<div class="sec">Weergave</div><div class="stg"><label style="display:flex;align-items:center;gap:8px;cursor:pointer;"><input type="checkbox" data-a="sv"${S.showVal?" checked":""}> Toon waarde</label></div>`+
+  `<div class="sec">Weergave</div><div class="stg"><div>Uiterlijk<br><span class="lbl">Kies de stijl van de app</span></div><select data-a="th">${[["","Origineel"],["a","A · Donker glas"],["b","B · Zacht licht"],["c","C · Strak fintech"]].map(o=>`<option value="${o[0]}"${(S.theme||"")===o[0]?" selected":""}>${o[1]}</option>`).join("")}</select></div><div class="stg"><label style="display:flex;align-items:center;gap:8px;cursor:pointer;"><input type="checkbox" data-a="sv"${S.showVal?" checked":""}> Toon waarde</label></div>`+
   `<div class="stg"><div>Automatisch verversen<br><span class="lbl">Koersen opnieuw ophalen zolang de app open staat</span></div><select data-a="rate">${[[0,"Uit"],[30,"30 seconden"],[60,"1 minuut"],[120,"2 minuten"],[300,"5 minuten"],[900,"15 minuten"]].map(o=>`<option value="${o[0]}"${(S.rate==null?60:S.rate)==o[0]?" selected":""}>${o[1]}</option>`).join("")}</select></div>`+
   `<div class="sec">Beveiliging</div><div class="stg"><div>Code (9 cijfers)<br><span class="lbl">${lk?"Ingesteld":"Uit"}</span></div><button class="sm" data-a="cs">${lk?"Wijzigen":"Instellen"}</button></div>`+
   (lk?`<div class="stg"><div>Ontgrendelen met<br><span class="lbl">${esc(U.secMsg||(bioOK?"Vingerafdruk of code":"Vingerafdruk niet beschikbaar op dit toestel"))}</span></div><select data-a="meth"><option value="code"${S.bio?"":" selected"}>Code</option><option value="bio"${S.bio?" selected":""}${bioOK?"":" disabled"}>Vingerafdruk</option></select></div><div class="stg"><div>Vergrendel na</div><select data-a="la"><option value="0"${lk.after==0?" selected":""}>Direct</option><option value="60"${lk.after==60?" selected":""}>1 minuut</option><option value="300"${lk.after==300?" selected":""}>5 minuten</option><option value="900"${lk.after==900?" selected":""}>15 minuten</option></select></div><div class="stg"><div>Code uitzetten</div><button class="sm ghost" data-a="cx">Uitzetten</button></div>`:"")+
@@ -981,8 +1030,10 @@ function pickerH(){
   }
   return h+"</div>";
 }
+const THC={"":"#0b5ed7",a:"#0b1020",b:"#f3f5fb",c:"#0f172a"};
+function applyTheme(){const t=S.theme||"";if(t)document.documentElement.setAttribute("data-th",t);else document.documentElement.removeAttribute("data-th");const m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute("content",THC[t]||THC[""])}
 function render(){
-  const y=window.scrollY;
+  const y=window.scrollY;applyTheme();
   $("ph").innerHTML=U.scr==="lock"?lockH(S.bio?"Vingerafdruk of code":"Voer je code in",false):U.scr==="setup"?lockH(U.step===0?"Kies een nieuwe code":"Herhaal de code",true):U.scr==="settings"?settingsH():U.scr==="picker"?pickerH():appH();
   const hd=document.querySelector(".hd");if(hd)document.documentElement.style.setProperty("--hh",hd.offsetHeight+"px");
   if(U.scr==="lock"&&S.bio&&!U.bt){U.bt=true;setTimeout(()=>bioUnlock(false),350)}
@@ -1048,7 +1099,7 @@ const root=$("ph");
 root.addEventListener("click",e=>{
   const t=e.target.closest("[data-a]");if(!t)return;
   const a=t.getAttribute("data-a"),v=t.getAttribute("data-v");
-  if(a==="sv"||a==="swp"||a==="la"||a==="rate"||a==="meth")return;
+  if(a==="sv"||a==="swp"||a==="la"||a==="rate"||a==="meth"||a==="th")return;
   if(a==="bio"){bioUnlock(true);return}
   if(a==="key"){key(v);return}
   if(a==="del"){U.code.pop();render();return}
@@ -1118,6 +1169,7 @@ root.addEventListener("change",e=>{
     else{S.bio=null;save();U.secMsg="Je ontgrendelt nu met je code.";render()}
   }
   else if(a==="rate"){S.rate=+e.target.value;save();setRate()}
+  else if(a==="th"){S.theme=e.target.value;save();applyTheme();render()}
 });
 /* ---------- terugknop: zelfde aanpak als de boodschappen-app ----------
    Browsers slaan geschiedenis over die zonder tik werd toegevoegd. Daarom komt er per scherm-niveau
