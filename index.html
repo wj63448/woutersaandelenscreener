@@ -19,7 +19,7 @@ button{font:inherit;padding:8px 12px;border:0;border-radius:8px;background:var(-
 button.sm{font-size:12.5px;padding:5px 10px}
 button.ghost{background:transparent;color:var(--tx);border:1px solid var(--b2)}
 input[type=text],input[type=url],select{font:inherit;padding:9px;border:1px solid var(--b2);border-radius:8px;background:transparent;color:var(--tx);min-width:0}
-.ogr{display:flex;gap:8px;margin:6px 0 8px}.og{flex:1;min-width:0}.ogf{width:38px;flex:none}.ogt{width:56px;flex:none}.ogr .seg.w button{font-size:11px;padding:5px 1px}.gh2{text-align:center;font-size:13px;font-weight:600;padding:6px 0;border:1px solid var(--b2);border-radius:8px;margin-bottom:4px;color:var(--mut);cursor:pointer}.gh2.on{border:2px solid var(--p);color:var(--p)}.seg.w{display:flex;gap:3px}.seg.w button{flex:1;font-size:11.5px;padding:5px 2px}
+.ogr{display:flex;gap:8px;margin:6px 0 8px}.ogr.w2{flex-wrap:wrap}.ogr.w2 .og{flex:1 1 calc(50% - 4px)}.ogr.w2 .ogt,.ogr.w2 .ogf{flex:1 1 calc(50% - 4px);width:auto}.tln{font-size:12px;font-weight:600;fill:var(--tx)}.tls{font-size:11px;fill:var(--mut)}.tlm{font-size:11px;fill:var(--mut)}.tlc{font-size:11px;font-weight:700;fill:var(--bg)}.tlz{position:fixed;z-index:80;background:var(--bg);color:var(--tx);display:flex;flex-direction:column;padding:8px 12px;box-sizing:border-box;overflow:hidden}.tzh{display:flex;align-items:center;gap:10px;font-size:14px}.tzh .tzs{flex:1;font-size:11px;color:var(--mut)}.tzb{flex:1;min-height:0;display:flex;align-items:center}.tzb svg{width:100%;height:100%}.og{flex:1;min-width:0}.ogf{width:38px;flex:none}.ogt{width:56px;flex:none}.ogr .seg.w button{font-size:11px;padding:5px 1px}.gh2{text-align:center;font-size:13px;font-weight:600;padding:6px 0;border:1px solid var(--b2);border-radius:8px;margin-bottom:4px;color:var(--mut);cursor:pointer}.gh2.on{border:2px solid var(--p);color:var(--p)}.seg.w{display:flex;gap:3px}.seg.w button{flex:1;font-size:11.5px;padding:5px 2px}
 .hs{display:grid;grid-template-columns:44px 1fr 1fr;gap:4px;margin:8px 0}.hs>div{font-size:11.5px;line-height:1.3}.hh2{font-weight:700;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.2;font-size:12.5px}.hh2 span{font-size:11px;font-weight:600}.hc{border:1px solid var(--b2);border-left:4px solid;border-radius:8px;padding:6px;background:var(--card,var(--bg))}.hc b{display:block;font-size:12.5px;margin-bottom:2px}.hc .rp{font-size:11px}
 .hx{border:1px solid var(--b2);border-left:5px solid;border-radius:8px;padding:8px 10px;margin:8px 0;font-size:12.5px;line-height:1.4;background:var(--card,var(--bg))}.hx h4{margin:0 0 4px;font-size:13.5px}.hx p{margin:3px 0}.hx .rk{color:var(--dn)}.hx .wn{color:var(--up)}.hx small{color:var(--mut)}.hb{display:inline-block;font-size:10.5px;font-weight:700;padding:1px 6px;border-radius:6px;border:1px solid var(--up);color:var(--up);margin-left:6px;vertical-align:1px}.hb.no{border-color:var(--dn);color:var(--dn)}
 .cg{border:1px solid var(--b2);border-left:5px solid;border-radius:8px;margin:8px 0;overflow:hidden}.cg .ch,.cg .cr{display:grid;grid-template-columns:minmax(0,1fr) 52px 78px;gap:4px;align-items:center;padding:7px 10px;font-size:12px}.cg .ch{font-weight:700;font-size:13px;cursor:pointer}.cg .cr{border-top:1px solid var(--b)}.cg .ch>span:nth-child(n+2),.cg .cr>span:nth-child(n+2){text-align:right;font-variant-numeric:tabular-nums}.cg .cr .bar{grid-column:1/-1;height:4px;border-radius:2px;background:var(--b)}.cg .cr .bar i{display:block;height:4px;border-radius:2px}.cg .arr{font-weight:400;color:var(--mut);margin-right:4px}.cgh{display:grid;grid-template-columns:minmax(0,1fr) 52px 78px;gap:4px;padding:0 10px 2px;font-size:10.5px;color:var(--mut);margin-top:8px}.cgh span:nth-child(n+2){text-align:right}
@@ -556,7 +556,7 @@ function items(){
     return it;
   });
 }
-const VER="2.7.0 · 24 nov 2026";
+const VER="2.8.0 · 24 nov 2026";
 const MON=["jan","feb","mrt","apr","mei","jun","jul","aug","sep","okt","nov","dec"];
 const BDM={jan:1,feb:2,mrt:3,maa:3,mar:3,apr:4,mei:5,jun:6,jul:7,aug:8,sep:9,okt:10,nov:11,dec:12},bdPar={};
 const bdClean=t=>{const x=String(t==null?"":t).trim().replace(/^https?:\/\/(www\.)?beursduivel\.be/i,""),m=/\/?(Optie-Koers\/\d{3,12}\/[A-Za-z0-9\-]{1,80}\.aspx)/i.exec(x);return m?"/"+m[1]:""};
@@ -855,10 +855,10 @@ function optSel(){
   const all=optItems(),has=(c,sd)=>all.some(i=>cpOf(i)===c&&(sd?i.p.qty<0:i.p.qty>0)),H={C:{g:has("C",0),v:has("C",1)},P:{g:has("P",0),v:has("P",1)}};
   const any=c=>H[c].g||H[c].v;
   if(!U.oc||!any(U.oc))U.oc=any("C")?"C":"P";
-  if(!H[U.oc][U.os==="v"?"v":"g"])U.os=H[U.oc].g?"g":"v";
+  if(U.os!=="t"&&!H[U.oc][U.os==="v"?"v":"g"])U.os=H[U.oc].g?"g":"v";
   const grp=(c,lab)=>{if(!any(c))return "";const act=U.oc===c&&!U.of&&!U.ot,g=H[c];
-    return `<div class="og"><div class="gh2${act?" on":""}" data-a="oc" data-v="${c}" role="button">${lab}</div><div class="seg w">${[["g","Gekocht"],["v","Verkocht"]].filter(b=>g[b[0]]).map(([k,t])=>`<button data-a="os" data-c="${c}" data-v="${k}" class="${act&&U.os===k?"on":""}">${t}</button>`).join("")}</div></div>`};
-  return `<div class="ogr">${grp("C","Calls")}${grp("P","Puts")}<div class="ogt"><div class="gh2${U.ot&&!U.of?" on":""}" data-a="ot" role="button">Totaal</div></div><div class="ogf"><div class="gh2${U.of?" on":""}" data-a="of" role="button">F1</div></div></div>`;
+    return `<div class="og"><div class="gh2${act?" on":""}" data-a="oc" data-v="${c}" role="button">${lab}</div><div class="seg w">${[["g","Gekocht"],["v","Verkocht"],["t","Tijdslijn"]].filter(b=>b[0]==="t"||g[b[0]]).map(([k,t])=>`<button data-a="os" data-c="${c}" data-v="${k}" class="${act&&U.os===k?"on":""}">${t}</button>`).join("")}</div></div>`};
+  return `<div class="ogr${any("C")&&any("P")?" w2":""}">${grp("C","Calls")}${grp("P","Puts")}<div class="ogt"><div class="gh2${U.ot&&!U.of?" on":""}" data-a="ot" role="button">Totaal</div></div><div class="ogf"><div class="gh2${U.of?" on":""}" data-a="of" role="button">F1</div></div></div>`;
 }
 function optHelpH(){
   const cell=(c,t,sub,rp,rk)=>`<div class="hc" style="border-left-color:var(--${c})"><b>${t}</b>${sub}<br><span class="rp">${rp}</span><br><small>${rk}</small></div>`;
@@ -873,6 +873,56 @@ ${ex("or","Call verkocht","je verwacht geen sterke stijging",`<p><b>Wat is het?<
 ${ex("up","Put gekocht","je verzekert tegen daling",`<p><b>Wat is het?</b> Je betaalt een premie voor het recht om 100 aandelen te verkopen aan de strike, ook als de koers veel lager staat. Als een verzekering voor aandelen die je bezit.</p><p><small>Voorbeeld: strike $60, premie $2 = $200 betaald.</small></p><p class="wn"><b>Winst:</b> als Quark onder $58 zakt (strike − premie). Hoe lager, hoe meer winst, tot de koers op $0 staat.</p><p class="rk"><b>Risico:</b> beperkt tot je inleg. Blijft de koers boven $60, dan verlies je de $200 (de prijs van de verzekering).</p>`)}
 ${ex("or","Put verkocht","je wilt kopen bij daling",`<p><b>Wat is het?</b> Je ontvangt een premie en belooft 100 aandelen te kopen aan de strike als de koper dat wil. Je zegt in feite: "ik wil Quark wel kopen als hij zakt tot $60".</p><p><small>Voorbeeld: strike $60, premie $2 = $200 ontvangen.</small></p><p class="wn"><b>Winst:</b> maximaal de premie, als Quark boven $60 blijft.</p><p class="rk"><b>Risico:</b> zakt Quark naar $40, dan koop je voor $6.000 aandelen die nog $4.000 waard zijn: −$1.800 na premie. In het ergste geval (koers naar $0) verlies je $5.800. Je moet ook het geld klaar hebben, of marge kunnen stellen.</p>`)}
 <div class="foot">Voorbeeldbedragen in dollar, zonder kosten en belasting.</div>`;
+}
+function tlLanes(c){
+  const all=optItems().filter(i=>cpOf(i)===c);let skip=0,maxD=30;
+  const lanes=[["Verkocht",all.filter(i=>i.p.qty<0)],["Gekocht",all.filter(i=>i.p.qty>0)]].filter(l=>l[1].length).map(([lab,l])=>{
+    const m={};
+    l.forEach(i=>{const o=optInfo(i.k);if(!o){skip++;return}const k=optEx(o);(m[k]=m[k]||{o,d:Math.max(daysLeft(o),0),its:[]}).its.push({o,q:Math.abs(i.p.qty)})});
+    const cl=Object.keys(m).map(Number).sort((a,b)=>a-b).map(k=>m[k]);
+    cl.forEach(g=>{if(g.d>maxD)maxD=g.d});
+    return{lab,cl};
+  }).filter(l=>l.cl.length);
+  return{lanes,skip,maxD};
+}
+function tlSvg(W,c){
+  const{lanes,skip,maxD}=tlLanes(c);if(!lanes.length)return{svg:"",skip};
+  const x0=68,x1=W-14,D=maxD,X=d=>x0+(x1-x0)*d/D,LH=13,yr=new Date().getFullYear(),f=v=>Math.round(v*10)/10;
+  let y=10,o="",cy1=null;
+  lanes.forEach(ln=>{
+    ln.cl.forEach((g,k)=>{g.up=k%2===0});
+    const lc=g=>g.its.length+1,mu=Math.max(0,...ln.cl.filter(g=>g.up).map(lc)),md=Math.max(0,...ln.cl.filter(g=>!g.up).map(lc));
+    const cy=y+(mu?mu*LH+19:16),last=ln.cl[ln.cl.length-1];if(cy1==null)cy1=cy;
+    o+=`<text x="0" y="${cy+4}" class="tln">${ln.lab}</text><line x1="${x0}" y1="${cy}" x2="${f(X(last.d))}" y2="${cy}" stroke="var(--b2)" stroke-width="1.5"/><circle cx="${x0}" cy="${cy}" r="3.5" fill="var(--tx)"/>`;
+    ln.cl.forEach(g=>{
+      const x=X(g.d),col=g.d<30?"var(--dn)":g.d<60?"var(--or)":"var(--tx)",cnt=g.its.length>1?g.its.length:g.its[0].q,r=cnt>1?8.5:5.5;
+      const lines=g.its.map(t=>[t.o.root+" "+nm(t.o.strike,t.o.strike%1?2:0)+(t.q>1?" ×"+t.q:""),"tln"]);
+      lines.push([daysLeft(g.o)<0?"verlopen":g.o.d+" "+MON[g.o.mo-1]+(g.o.y!==yr?" "+String(g.o.y).slice(2):"")+" · "+g.d+" d","tls"]);
+      const w=Math.max(...lines.map(l=>l[0].length))*6.6;let an="middle",tx=x;
+      if(x+w/2>W-4){an="end";tx=Math.min(x+10,W-2)}else if(x-w/2<2){an="start";tx=Math.max(x-8,2)}
+      const ys=g.up?lines.map((_,i)=>cy-18-LH*(lines.length-1)+LH*i):lines.map((_,i)=>cy+30+LH*i);
+      o+=`<line x1="${f(x)}" y1="${cy}" x2="${f(x)}" y2="${g.up?cy-14:cy+14}" stroke="${col}"/><circle cx="${f(x)}" cy="${cy}" r="${r}" fill="${col}"/>`;
+      if(cnt>1)o+=`<text x="${f(x)}" y="${cy+4}" text-anchor="middle" class="tlc">${cnt}</text>`;
+      lines.forEach((l,i)=>{o+=`<text x="${f(tx)}" y="${ys[i]}" text-anchor="${an}" class="${l[1]}">${esc(l[0])}</text>`});
+    });
+    y=cy+(md?md*LH+21:16)+8;
+  });
+  const ya=y+6;let gr="",ax=`<line x1="${x0}" y1="${ya}" x2="${x1}" y2="${ya}" stroke="var(--b2)"/><text x="${x0}" y="${ya+15}" text-anchor="middle" class="tlm">vandaag</text>`;
+  const now=new Date(),kk=D<120?1:D<300?2:3;let mm=now.getMonth()+1;if(kk>1)while(mm%kk)mm++;
+  for(;;mm+=kk){const dt=new Date(Date.UTC(now.getFullYear(),mm,1)),d=Math.round((dt.getTime()-Date.UTC(now.getFullYear(),now.getMonth(),now.getDate()))/864e5);if(d>D-14)break;if((x1-x0)*d/D<42)continue;
+    gr+=`<line x1="${f(X(d))}" y1="${cy1+16}" x2="${f(X(d))}" y2="${ya}" stroke="var(--b)" stroke-dasharray="2 3"/>`;
+    ax+=`<text x="${f(X(d))}" y="${ya+15}" text-anchor="middle" class="tlm">${MON[dt.getUTCMonth()]+(dt.getUTCMonth()===0?" "+String(dt.getUTCFullYear()).slice(2):"")}</text>`}
+  return{svg:`<svg viewBox="0 0 ${W} ${ya+22}" width="100%" role="img" aria-label="Tijdslijn met vervaldagen">${gr}${o}${ax}</svg>`,skip};
+}
+function optTimeH(){
+  const W=Math.max(300,Math.min(innerWidth-44,420)),r=tlSvg(W,U.oc);
+  if(!r.svg)return `<div class="m" style="padding:12px 2px;">Geen opties met een bekende vervaldag.</div>`;
+  return `<div class="op"><div class="t1"><div>Tijdslijn ${U.oc==="P"?"puts":"calls"}</div><button class="sm" data-a="tlz">⤢ Vergroot</button></div>${r.svg}${r.skip?`<div class="m" style="font-size:10.5px;margin-top:4px">${r.skip} ${r.skip===1?"optie":"opties"} niet herkend en niet getekend</div>`:""}</div><div class="foot">Kleur: rood onder 30 dagen, oranje onder 60 · cijfer in het bolletje = aantal opties of contracten</div>`;
+}
+function tlzH(){
+  const vw=innerWidth,vh=innerHeight,land=vw>vh,Lw=Math.max(vw,vh),r=tlSvg(Math.round(Lw-24),U.oc);
+  const st=land?`left:0;top:0;width:${vw}px;height:${vh}px`:`left:0;top:0;width:${vh}px;height:${vw}px;transform-origin:0 0;transform:translateX(${vw}px) rotate(90deg)`;
+  return `<div class="tlz" style="${st}"><div class="tzh"><b>Tijdslijn ${U.oc==="P"?"puts":"calls"}</b><span class="tzs">${land?"":"Kantel je telefoon naar links"}</span><button class="sm" data-a="tlz0">✕ Sluit</button></div><div class="tzb">${r.svg}</div></div>`;
 }
 function optTotH(){
   const all=optItems(),cell=(lab,val,cls)=>`<div><small>${lab}</small><span class="${cls||""}">${val}</span></div>`;
@@ -895,6 +945,7 @@ function optH(){
   let h=sel;
   if(U.of)return h+optHelpH();
   if(U.ot)return h+optTotH();
+  if(U.os==="t"&&optItems().length)return h+optTimeH();
   if(!optItems().length)return h+`<div class="m" style="padding:12px 2px;">Nog geen opties. Zet het optiesymbool (bv. NB280121C00005000) in de kolom Ticker en "optie" in de kolom Sector, en tik bij Aandelen op "Lijst bijwerken uit Excel".</div>`;
   const rows=optSort(its.map(i=>({i,o:optInfo(i.k)})));
   const pbH=l=>{
@@ -936,7 +987,7 @@ function appH(){
   const t=U.tab===0,v=U.tab===2,o=U.tab===3;
   let h=`<div class="hd"><div class="t">${t?esc(TITLE):o?"Optieportefeuille":v?"Verdeling":"Target"}</div><span class="ib" data-a="refresh" aria-label="Koersen verversen">↻</span><span class="ib" data-a="cfg" aria-label="Instellingen">⚙</span></div><div class="body">${o?"":optBanner()}${v?`<div class="top"><button data-a="vm" data-v="s" class="${U.vm==="s"?"on":""}">Sector</button><button data-a="vm" data-v="w" class="${U.vm==="w"?"on":""}">% Port</button><button data-a="vm" data-v="i" class="${U.vm==="i"?"on":""}">Input</button></div>`:o?"":`<div class="top"><button data-a="view" data-v="0" class="${U.view===0?"on":""}">Overzicht</button><button data-a="view" data-v="1" class="${U.view===1?"on":""}">Grafieken</button>${t?`<button data-a="view" data-v="2" class="${U.view===2?"on":""}">VIX</button>`:""}</div>`}`;
   h+=v?verdH():o?optH():t?(U.view===0?portOverH():U.view===2?vixH():portGrafH()):(U.view===0?tgtOverH():tgtGrafH());
-  return h+`</div><div class="tabs"><div data-a="tab" data-v="0" class="${t?"on":""}"><b>📈</b>Aandelen</div><div data-a="tab" data-v="3" class="${o?"on":""}"><b>📜</b>Opties</div><div data-a="tab" data-v="2" class="${v?"on":""}"><b>🥧</b>Verdeling</div><div data-a="tab" data-v="1" class="${U.tab===1?"on":""}"><b>🎯</b>Target</div></div>`;
+  return h+`</div><div class="tabs"><div data-a="tab" data-v="0" class="${t?"on":""}"><b>📈</b>Aandelen</div><div data-a="tab" data-v="3" class="${o?"on":""}"><b>📜</b>Opties</div><div data-a="tab" data-v="2" class="${v?"on":""}"><b>🥧</b>Verdeling</div><div data-a="tab" data-v="1" class="${U.tab===1?"on":""}"><b>🎯</b>Target</div></div>`+(U.tlz?tlzH():"");
 }
 /* ---------- verdeling ---------- */
 const INORD=["Walter","Marino","WJ","Trends","VectorVest","De Belegger","Kroff Invest","Tiny Titans","Cash"];
@@ -1068,7 +1119,7 @@ function pickerH(){
 const THC={"":"#0b5ed7",a:"#0b1020",b:"#f3f5fb",c:"#0f172a"};
 function applyTheme(){const t=S.theme||"";if(t)document.documentElement.setAttribute("data-th",t);else document.documentElement.removeAttribute("data-th");const m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute("content",THC[t]||THC[""])}
 function render(){
-  const y=window.scrollY;applyTheme();
+  const y=window.scrollY;if(U.scr!=="app")U.tlz=false;applyTheme();
   $("ph").innerHTML=U.scr==="lock"?lockH(S.bio?"Vingerafdruk of code":"Voer je code in",false):U.scr==="setup"?lockH(U.step===0?"Kies een nieuwe code":"Herhaal de code",true):U.scr==="settings"?settingsH():U.scr==="picker"?pickerH():appH();
   const hd=document.querySelector(".hd");if(hd)document.documentElement.style.setProperty("--hh",hd.offsetHeight+"px");
   if(U.scr==="lock"&&S.bio&&!U.bt){U.bt=true;setTimeout(()=>bioUnlock(false),350)}
@@ -1156,6 +1207,8 @@ root.addEventListener("click",e=>{
   else if(a==="os"){U.os=v;U.oc=t.getAttribute("data-c")||U.oc;U.of=false;U.ot=false}
   else if(a==="oc"){U.oc=v;U.of=false;U.ot=false}
   else if(a==="of"){U.of=!U.of;U.ot=false}
+  else if(a==="tlz"){U.tlz=true}
+  else if(a==="tlz0"){U.tlz=false}
   else if(a==="ot"){U.ot=!U.ot;U.of=false}
   else if(a==="vg"){U.vgo=U.vgo||{};U.vgo[v]=!U.vgo[v]}
   else if(a==="vp")U.vp=+v;
@@ -1223,7 +1276,7 @@ function toastMsg(t){let el=$("tst");if(!el){el=document.createElement("div");el
 function navLevel(){
   if(U.scr==="lock")return 0;
   const a=(U.tab!==0?1:0)+(U.tab===0&&U.view!==0?1:0);
-  if(U.scr==="app")return a;
+  if(U.scr==="app")return a+(U.tlz?1:0);
   const base=cfgOK()?a+1:0;
   if(U.scr==="settings")return base;
   if(U.scr==="setup")return base+1;
@@ -1244,6 +1297,7 @@ function syncHistory(){
   }catch(e){}
 }
 function stepBack(){
+  if(U.tlz){U.tlz=false;return}
   if(U.scr==="setup"){U.scr="settings";U.step=0;U.tmp="";U.code=[];U.msg="";return}
   if(U.scr==="picker"){if(U.ps&&U.ps.mode==="file"&&U.ps.stack.length){U.ps.stack.pop();pFolder();return}U.scr="settings";return}
   if(U.scr==="settings"){U.scr="app";setTimeout(refresh,0);return}
@@ -1256,6 +1310,7 @@ function ensureRootGuard(){
   try{history.pushState({app:"root"},"");rootGuard=true;dlog("wachtstap toegevoegd")}catch(e){dlog("fout "+e.message)}
 }
 ["click","touchend","keydown"].forEach(ev=>document.addEventListener(ev,ensureRootGuard,true));
+addEventListener("resize",()=>{if(U.tlz&&U.scr==="app")render()});
 addEventListener("popstate",()=>{
   dlog("TERUG ontvangen");
   if(ignorePops>0){ignorePops--;return}
