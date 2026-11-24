@@ -556,7 +556,7 @@ function items(){
     return it;
   });
 }
-const VER="2.8.2 · 24 nov 2026";
+const VER="2.8.3 · 24 nov 2026";
 const MON=["jan","feb","mrt","apr","mei","jun","jul","aug","sep","okt","nov","dec"];
 const BDM={jan:1,feb:2,mrt:3,maa:3,mar:3,apr:4,mei:5,jun:6,jul:7,aug:8,sep:9,okt:10,nov:11,dec:12},bdPar={};
 const bdClean=t=>{const x=String(t==null?"":t).trim().replace(/^https?:\/\/(www\.)?beursduivel\.be/i,""),m=/\/?(Optie-Koers\/\d{3,12}\/[A-Za-z0-9\-]{1,80}\.aspx)/i.exec(x);return m?"/"+m[1]:""};
@@ -989,10 +989,11 @@ const COL8=["#3B82F6","#F59E0B","#10B981","#8B5CF6","#EF4444","#06B6D4","#EC4899
 const kk=(n,sgn)=>{const a=Math.abs(n),s=sgn?(n>0.5?"+":n<-0.5?"−":""):(n<0?"−":""),b=a>=1000?nm(a/1000,a<10000?1:0)+"k":nm(a,0);return s+"€"+b};
 const canIn=x=>{x=String(x||"").trim();const c=INORD.find(k=>k.toLowerCase()===x.toLowerCase());return c||x};
 function soldH(tot){
-  const l=items().filter(i=>i.p.qty<0&&i.v!=null);
-  if(!l.length||!S.showVal)return "";
-  const sv=sum(l,i=>i.v);
-  return `<div class="vl" style="margin-top:8px;background:var(--b);border-radius:6px;padding:6px 8px"><span class="n">Verkochte calls (terugkoopwaarde)</span><span class="w dn">${(sv<0?"−":"")+ev(sv)}</span></div><div class="vl tot" style="border-top:2px solid var(--b2)"><span class="n">Netto totaal</span><span class="w">${ev(tot+sv)}</span></div>`;
+  const l=items().filter(i=>i.p.qty<0);
+  if(!l.length)return "";
+  const e=S.showVal,ok=l.filter(i=>i.v!=null),sv=sum(ok,i=>i.v),evs=v=>(v<0?"−":"")+ev(v);
+  const rows=l.slice().sort((a,b)=>(a.v==null)-(b.v==null)||(a.v||0)-(b.v||0)).map(i=>`<div class="vl" style="padding:2px 0 0 10px;font-size:13px"><span class="n">${cn(i.nm)}</span>${e?`<span class="w dn">${i.v!=null?evs(i.v):"–"}</span>`:""}</div>`).join("");
+  return `<div style="margin-top:8px;background:var(--b);border-radius:6px;padding:6px 8px"><div class="vl"><span class="n">Verkochte opties${e?" (terugkoopwaarde)":""} <small>(${l.length})</small></span>${e&&ok.length?`<span class="w dn">${evs(sv)}</span>`:""}</div>${rows}</div>`+(e&&ok.length?`<div class="vl tot" style="border-top:2px solid var(--b2)"><span class="n">Netto totaal</span><span class="w">${ev(tot+sv)}</span></div>`:"");
 }
 function vparts(){
   const out=[];
