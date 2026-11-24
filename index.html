@@ -556,7 +556,7 @@ function items(){
     return it;
   });
 }
-const VER="2.8.0 · 24 nov 2026";
+const VER="2.8.2 · 24 nov 2026";
 const MON=["jan","feb","mrt","apr","mei","jun","jul","aug","sep","okt","nov","dec"];
 const BDM={jan:1,feb:2,mrt:3,maa:3,mar:3,apr:4,mei:5,jun:6,jul:7,aug:8,sep:9,okt:10,nov:11,dec:12},bdPar={};
 const bdClean=t=>{const x=String(t==null?"":t).trim().replace(/^https?:\/\/(www\.)?beursduivel\.be/i,""),m=/\/?(Optie-Koers\/\d{3,12}\/[A-Za-z0-9\-]{1,80}\.aspx)/i.exec(x);return m?"/"+m[1]:""};
@@ -855,7 +855,7 @@ function optSel(){
   const all=optItems(),has=(c,sd)=>all.some(i=>cpOf(i)===c&&(sd?i.p.qty<0:i.p.qty>0)),H={C:{g:has("C",0),v:has("C",1)},P:{g:has("P",0),v:has("P",1)}};
   const any=c=>H[c].g||H[c].v;
   if(!U.oc||!any(U.oc))U.oc=any("C")?"C":"P";
-  if(U.os!=="t"&&!H[U.oc][U.os==="v"?"v":"g"])U.os=H[U.oc].g?"g":"v";
+  if(!H[U.oc][U.os==="v"?"v":"g"])U.os=H[U.oc].g?"g":"v";
   const grp=(c,lab)=>{if(!any(c))return "";const act=U.oc===c&&!U.of&&!U.ot,g=H[c];
     return `<div class="og"><div class="gh2${act?" on":""}" data-a="oc" data-v="${c}" role="button">${lab}</div><div class="seg w">${[["g","Gekocht"],["v","Verkocht"],["t","Tijdslijn"]].filter(b=>b[0]==="t"||g[b[0]]).map(([k,t])=>`<button data-a="os" data-c="${c}" data-v="${k}" class="${act&&U.os===k?"on":""}">${t}</button>`).join("")}</div></div>`};
   return `<div class="ogr${any("C")&&any("P")?" w2":""}">${grp("C","Calls")}${grp("P","Puts")}<div class="ogt"><div class="gh2${U.ot&&!U.of?" on":""}" data-a="ot" role="button">Totaal</div></div><div class="ogf"><div class="gh2${U.of?" on":""}" data-a="of" role="button">F1</div></div></div>`;
@@ -895,14 +895,14 @@ function tlSvg(W,c){
     const cy=y+(mu?mu*LH+19:16),last=ln.cl[ln.cl.length-1];if(cy1==null)cy1=cy;
     o+=`<text x="0" y="${cy+4}" class="tln">${ln.lab}</text><line x1="${x0}" y1="${cy}" x2="${f(X(last.d))}" y2="${cy}" stroke="var(--b2)" stroke-width="1.5"/><circle cx="${x0}" cy="${cy}" r="3.5" fill="var(--tx)"/>`;
     ln.cl.forEach(g=>{
-      const x=X(g.d),col=g.d<30?"var(--dn)":g.d<60?"var(--or)":"var(--tx)",cnt=g.its.length>1?g.its.length:g.its[0].q,r=cnt>1?8.5:5.5;
+      const x=X(g.d),col=g.d<30?"var(--dn)":g.d<60?"var(--or)":"var(--tx)",cnt=g.its.reduce((a,t)=>a+t.q,0),r=8.5;
       const lines=g.its.map(t=>[t.o.root+" "+nm(t.o.strike,t.o.strike%1?2:0)+(t.q>1?" ×"+t.q:""),"tln"]);
       lines.push([daysLeft(g.o)<0?"verlopen":g.o.d+" "+MON[g.o.mo-1]+(g.o.y!==yr?" "+String(g.o.y).slice(2):"")+" · "+g.d+" d","tls"]);
       const w=Math.max(...lines.map(l=>l[0].length))*6.6;let an="middle",tx=x;
       if(x+w/2>W-4){an="end";tx=Math.min(x+10,W-2)}else if(x-w/2<2){an="start";tx=Math.max(x-8,2)}
       const ys=g.up?lines.map((_,i)=>cy-18-LH*(lines.length-1)+LH*i):lines.map((_,i)=>cy+30+LH*i);
       o+=`<line x1="${f(x)}" y1="${cy}" x2="${f(x)}" y2="${g.up?cy-14:cy+14}" stroke="${col}"/><circle cx="${f(x)}" cy="${cy}" r="${r}" fill="${col}"/>`;
-      if(cnt>1)o+=`<text x="${f(x)}" y="${cy+4}" text-anchor="middle" class="tlc">${cnt}</text>`;
+      o+=`<text x="${f(x)}" y="${cy+4}" text-anchor="middle" class="tlc">${cnt}</text>`;
       lines.forEach((l,i)=>{o+=`<text x="${f(tx)}" y="${ys[i]}" text-anchor="${an}" class="${l[1]}">${esc(l[0])}</text>`});
     });
     y=cy+(md?md*LH+21:16)+8;
@@ -913,11 +913,6 @@ function tlSvg(W,c){
     gr+=`<line x1="${f(X(d))}" y1="${cy1+16}" x2="${f(X(d))}" y2="${ya}" stroke="var(--b)" stroke-dasharray="2 3"/>`;
     ax+=`<text x="${f(X(d))}" y="${ya+15}" text-anchor="middle" class="tlm">${MON[dt.getUTCMonth()]+(dt.getUTCMonth()===0?" "+String(dt.getUTCFullYear()).slice(2):"")}</text>`}
   return{svg:`<svg viewBox="0 0 ${W} ${ya+22}" width="100%" role="img" aria-label="Tijdslijn met vervaldagen">${gr}${o}${ax}</svg>`,skip};
-}
-function optTimeH(){
-  const W=Math.max(300,Math.min(innerWidth-44,420)),r=tlSvg(W,U.oc);
-  if(!r.svg)return `<div class="m" style="padding:12px 2px;">Geen opties met een bekende vervaldag.</div>`;
-  return `<div class="op"><div class="t1"><div>Tijdslijn ${U.oc==="P"?"puts":"calls"}</div><button class="sm" data-a="tlz">⤢ Vergroot</button></div>${r.svg}${r.skip?`<div class="m" style="font-size:10.5px;margin-top:4px">${r.skip} ${r.skip===1?"optie":"opties"} niet herkend en niet getekend</div>`:""}</div><div class="foot">Kleur: rood onder 30 dagen, oranje onder 60 · cijfer in het bolletje = aantal opties of contracten</div>`;
 }
 function tlzH(){
   const vw=innerWidth,vh=innerHeight,land=vw>vh,Lw=Math.max(vw,vh),r=tlSvg(Math.round(Lw-24),U.oc);
@@ -945,7 +940,6 @@ function optH(){
   let h=sel;
   if(U.of)return h+optHelpH();
   if(U.ot)return h+optTotH();
-  if(U.os==="t"&&optItems().length)return h+optTimeH();
   if(!optItems().length)return h+`<div class="m" style="padding:12px 2px;">Nog geen opties. Zet het optiesymbool (bv. NB280121C00005000) in de kolom Ticker en "optie" in de kolom Sector, en tik bij Aandelen op "Lijst bijwerken uit Excel".</div>`;
   const rows=optSort(its.map(i=>({i,o:optInfo(i.k)})));
   const pbH=l=>{
@@ -1204,7 +1198,7 @@ root.addEventListener("click",e=>{
   else if(a==="optgo")U.tab=3;
   else if(a==="vtap"){U.vt=(U.vt||0)+1;if(U.vt>=5){U.vt=0;U.dbg=!U.dbg;showDbg()}}
   else if(a==="optjump"){U.tab=3;U.os=v;U.oc=t.getAttribute("data-c")||"C";U.of=false;U.ot=false;U.view=0;setTimeout(()=>window.scrollTo(0,0),0)}
-  else if(a==="os"){U.os=v;U.oc=t.getAttribute("data-c")||U.oc;U.of=false;U.ot=false}
+  else if(a==="os"){U.oc=t.getAttribute("data-c")||U.oc;U.of=false;U.ot=false;if(v==="t")U.tlz=true;else U.os=v}
   else if(a==="oc"){U.oc=v;U.of=false;U.ot=false}
   else if(a==="of"){U.of=!U.of;U.ot=false}
   else if(a==="tlz"){U.tlz=true}
