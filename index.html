@@ -214,7 +214,7 @@ function parseList(v){
   const iP=find("totaal","betaald","aankoopwaarde");
   const iB=h.findIndex(x=>(x.includes("koers")||x.includes("prijs"))&&!x.includes("handmatig")&&!x.includes("totaal")&&!x.includes("waarde"));
   const iN=h.findIndex(x=>(x.includes("naam")||x.includes("name"))&&!x.includes("weergave")),iW=find("weergave"),iM=find("handmatig"),iC=find("valuta","munt");
-  const iIn=find("input"),iSe=find("sector"),iDv=find("dividend"),iD=find("aankoopdatum","datum"),iTs=h.map((x,i)=>x.includes("target")?i:-1).filter(i=>i>=0),tlab=ci=>{const t=String(v[0][ci]).replace(/optie|target|strike|price|prijs/ig," ").replace(/[-–_:]/g," ").replace(/\s+/g," ").trim();return t?t.charAt(0).toUpperCase()+t.slice(1):"Target"};
+  const iBd=find("beursduivel"),iIn=find("input"),iSe=find("sector"),iDv=find("dividend"),iD=find("aankoopdatum","datum"),iTs=h.map((x,i)=>x.includes("target")?i:-1).filter(i=>i>=0),tlab=ci=>{const t=String(v[0][ci]).replace(/optie|target|strike|price|prijs/ig," ").replace(/[-–_:]/g," ").replace(/\s+/g," ").trim();return t?t.charAt(0).toUpperCase()+t.slice(1):"Target"};
   if(iS<0||iQ<0)throw new Error("Kolommen 'Symbool' en 'Aantal' niet gevonden in de eerste rij van het tabblad met aandelen");
   const m={};
   v.slice(1).forEach(r=>{
@@ -225,12 +225,12 @@ function parseList(v){
     const dn=iW>=0?String(r[iW]==null?"":r[iW]).trim():"";
     let q=parseNum(r[iQ]);if(mk>0&&q<=0)q=1;const o=m[sym]||(m[sym]={sym,qty:0,paid:0,bq:0});if(dn)o.disp=dn;iTs.forEach(ci=>{const tg=parseNum(r[ci]);if(tg>0)(o.tg=o.tg||{})[ci]=tg});
     if(mk>0){o.man=mk;o.mname=nmx||sym;o.mcur=(iC>=0&&String(r[iC]||"").trim()?String(r[iC]).trim().toUpperCase():"EUR")}
-    const isOpt=iSe>=0&&/^opties?$/i.test(String(r[iSe]==null?"":r[iSe]).trim());let pd=iP>=0?parseNum(r[iP]):0;if(q<0&&isOpt)pd=Math.abs(pd);
+    const bdp=iBd>=0?bdClean(r[iBd]):"";if(bdp)o.bd=bdp;const isOpt=!!bdp||(iSe>=0&&/^opties?$/i.test(String(r[iSe]==null?"":r[iSe]).trim()));let pd=iP>=0?parseNum(r[iP]):0;if(q<0&&isOpt)pd=Math.abs(pd);
     o.qty+=q;o.paid+=pd;if(iB>=0)o.bq+=parseNum(r[iB])*q;
     if(isOpt)o.opt=true;
     if(q>0||(q<0&&isOpt))(o.parts=o.parts||[]).push({input:(iIn>=0?String(r[iIn]==null?"":r[iIn]).trim():"")||(sym==="CASH"?"Cash":""),sector:iSe>=0?String(r[iSe]==null?"":r[iSe]).trim():"",date:iD>=0?parseDate(r[iD]):"",qty:q,paid:pd,div:iDv>=0?parseNum(r[iDv]):0});
   });
-  return Object.values(m).filter(o=>o.qty>0||(o.opt&&o.qty<0)).map(o=>({sym:o.sym,qty:o.qty,paid:o.paid,buy:o.qty&&o.bq?o.bq/o.qty:0,parts:o.parts||[],opt:!!o.opt,tgts:iTs.filter(ci=>o.tg&&o.tg[ci]).map(ci=>({l:tlab(ci),v:o.tg[ci]})),disp:o.disp||"",man:o.man||0,mname:o.mname||"",mcur:o.mcur||"EUR",hasIn:iIn>=0,hasSe:iSe>=0,hasDv:iDv>=0}));
+  return Object.values(m).filter(o=>o.qty>0||(o.opt&&o.qty<0)).map(o=>({sym:o.sym,qty:o.qty,paid:o.paid,buy:o.qty&&o.bq?o.bq/o.qty:0,parts:o.parts||[],opt:!!o.opt,bd:o.bd||"",tgts:iTs.filter(ci=>o.tg&&o.tg[ci]).map(ci=>({l:tlab(ci),v:o.tg[ci]})),disp:o.disp||"",man:o.man||0,mname:o.mname||"",mcur:o.mcur||"EUR",hasIn:iIn>=0,hasSe:iSe>=0,hasDv:iDv>=0}));
 }
 function fmtT(raw,kind){
   const s=String(raw==null?"":raw).trim();
@@ -296,7 +296,7 @@ const $=id=>document.getElementById(id);
 const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 let S={rate:60,proxy:"",pos:[],file:null,tgt:null,showVal:true,collapsed:{},hist:{},lock:null,fails:0,until:0};
 try{Object.assign(S,JSON.parse(localStorage.getItem("aand")||"{}"))}catch(e){}
-S.un=S.un||{};S.collapsed=S.collapsed||{};S.hist=S.hist||{};if(S.totMode!=="p")S.totMode="e";if(!Array.isArray(S.idxOn))S.idxOn=["msci","spx"];if(S.showVal===undefined)S.showVal=true;
+S.un=S.un||{};S.bdc=S.bdc||{};S.collapsed=S.collapsed||{};S.hist=S.hist||{};if(S.totMode!=="p")S.totMode="e";if(!Array.isArray(S.idxOn))S.idxOn=["msci","spx"];if(S.showVal===undefined)S.showVal=true;
 const save=()=>{try{localStorage.setItem("aand",JSON.stringify(S))}catch(e){}};
 function keepOpen(){try{const t=+sessionStorage.getItem("aandAct");return !!(S.lock&&t&&Date.now()>=t&&Date.now()-t<S.lock.after*1000)}catch(e){return false}}
 const U={scr:S.lock&&!keepOpen()?"lock":(S.proxy&&S.file&&S.file.sheet?"app":"settings"),tab:0,view:0,sc:-1,dm:"a",gm:"e",per:1,wp:1,code:[],step:0,tmp:"",msg:"",ps:null,syMsg:"",stMsg:"",cfgMsg:"",ip:1,vm:"s",sall:false};
@@ -357,6 +357,29 @@ async function syncExcel(interactive){
 
 /* ---------- Koersen ---------- */
 const pfetch=p=>fetch(S.proxy.replace(/\/+$/,"")+p,{headers:S.pkey?{"X-Key":S.pkey}:{}});
+const bxl=t=>{const q=new Intl.DateTimeFormat("en-GB",{timeZone:"Europe/Brussels",weekday:"short",hour:"2-digit",minute:"2-digit",hour12:false}).formatToParts(new Date(t)),g=k=>(q.find(x=>x.type===k)||{}).value;return{wd:g("weekday"),m:(+g("hour")%24)*60+ +g("minute")}};
+const bdClosed=t=>{const x=bxl(t);return x.wd==="Sat"||x.wd==="Sun"||x.m<540||x.m>=1055};
+const bdFresh=(c,now)=>bdClosed(now)?!!c.cl&&now-c.t<108e5:now-c.t<9e5;
+function bdQ(p,c,stale){const s=p.qty<0,pr=s?(c.ask>0?c.ask:c.last>0?c.last:c.bid):(c.last>0?c.last:c.bid>0?c.bid:c.ask),bs=s?(c.ask>0?"laat":c.last>0?"laatste":"bied"):(c.last>0?"laatste":c.bid>0?"bied":"laat");return{c:pr,prev:pr,cur:"EUR",name:optName(p)||p.sym,tr:true,closes:[],src:"bd",bt:c.t,stale:!!stale,bs}}
+async function bdq(p){
+  const now=Date.now(),bc=S.bdc=S.bdc||{},c=bc[p.bd];
+  if(c&&bdFresh(c,now))return bdQ(p,c,false);
+  const man=()=>p.man>0?{c:p.man,prev:p.man,cur:p.mcur||"EUR",name:p.mname||p.sym,tr:false,closes:[],man:true}:null;
+  if(c&&c.f&&now-c.f<3e5){if(c.t)return bdQ(p,c,true);const m=man();if(m)return m;throw new Error("Beursduivel tijdelijk niet bereikbaar")}
+  try{
+    const r=await pfetch("/?bd="+encodeURIComponent(p.bd)+"&c="+encodeURIComponent(p.sym));
+    if(!r.ok)throw new Error(r.status===401?"Toegangssleutel ongeldig":r.status===404?"Beursduivel: pagina niet gevonden":"Beursduivel: fout "+r.status);
+    const d=await r.json();
+    if(!(d.last>0||d.ask>0||d.bid>0))throw new Error("Beursduivel: geen koers gevonden");
+    const t=d.ts>0?d.ts:now,n={t,last:d.last||0,bid:d.bid||0,ask:d.ask||0,cl:bdClosed(t)};
+    bc[p.bd]=n;save();return bdQ(p,n,!!d.stale);
+  }catch(e){
+    if(c&&c.t){c.f=now;save();return bdQ(p,c,true)}
+    bc[p.bd]={f:now};save();
+    const m=man();if(m)return m;
+    throw e;
+  }
+}
 async function yq(sym,range){
   const r=await pfetch("/?s="+encodeURIComponent(sym)+(range?"&r="+range:""));
   if(!r.ok)throw new Error(r.status===404?"Symbool niet gevonden":r.status===401?"Toegangssleutel ongeldig":"Fout "+r.status);
@@ -402,11 +425,13 @@ async function refresh(){
   if(!S.proxy){U.stMsg="Vul eerst het adres van je koersen-doorgever in bij Instellingen.";draw();return}
   if(!S.pos.length){draw();return}
   busy=true;U.stMsg="Bijwerken…";draw();
-  await Promise.all(S.pos.map(async p=>{if(p.man>0){Q[p.sym]={c:p.man,prev:p.man,cur:p.mcur||"EUR",name:p.mname||p.sym,tr:false,closes:[],man:true};HIST[p.sym+"|5d"]=[];return}try{const x=await yq(p.sym);Q[p.sym]=x;HIST[p.sym+"|5d"]=x.closes}catch(e){Q[p.sym]={err:e.message||"Geen verbinding"}}}));
+  await Promise.all(S.pos.map(async p=>{if(p.bd){try{Q[p.sym]=await bdq(p);HIST[p.sym+"|5d"]=[]}catch(e){Q[p.sym]={err:e.message||"Geen verbinding"}}return}if(p.man>0){Q[p.sym]={c:p.man,prev:p.man,cur:p.mcur||"EUR",name:p.mname||p.sym,tr:false,closes:[],man:true};HIST[p.sym+"|5d"]=[];return}try{const x=await yq(p.sym);Q[p.sym]=x;HIST[p.sym+"|5d"]=x.closes}catch(e){Q[p.sym]={err:e.message||"Geen verbinding"}}}));
   const pre=usPre();
   await Promise.all(S.pos.map(async p=>{const q=Q[p.sym];if(!q)return;delete q.pre;if(!pre||p.man||p.opt||q.err||q.cur!=="USD"||q.tr!==false)return;try{const x=await preq(p.sym,q.c);if(x)q.pre=x}catch(e){}}));
   const roots=[...new Set(S.pos.filter(p=>p.opt).map(p=>(optInfo(p.sym)||{}).root).filter(Boolean))];
-  await Promise.all(roots.map(async r=>{const q0=Q[r];if(q0&&!q0.err&&q0.c!=null){UQ[r]=q0.c;if(!S.un[r]&&q0.name)S.un[r]=q0.name;return}try{const x=await yq(r);UQ[r]=x.c;if(!S.un[r]){S.un[r]=x.name;save()}}catch(e){}}));
+  await Promise.all(roots.map(async r=>{const q0=Q[r];if(q0&&!q0.err&&q0.c!=null){UQ[r]=q0.c;if(!S.un[r]&&q0.name)S.un[r]=q0.name;return}const sp=S.pos.find(x=>!x.opt&&String(x.sym).split(".")[0]===r),q1=sp&&Q[sp.sym];if(q1&&!q1.err&&q1.c!=null){UQ[r]=q1.c;if(!S.un[r]&&q1.name){S.un[r]=q1.name;save()}return}
+    const tries=S.pos.some(x=>x.bd&&(optInfo(x.sym)||{}).root===r)?[r,r+".BR"]:[r];
+    for(const t of tries){try{const x=await yq(t);UQ[r]=x.c;if(!S.un[r]){S.un[r]=x.name;save()}return}catch(e){}}}));
   const curs=[...new Set(S.pos.map(p=>Q[p.sym]).filter(q=>q&&q.cur&&q.cur!=="EUR").map(q=>q.cur))];
   await Promise.all(curs.map(async c=>{try{const x=await yq("EUR"+c+"=X");FXQ[c]={now:x.c,prev:x.prev}}catch(e){}}));
   busy=false;U.stMsg="Koersen bijgewerkt om "+hhmm();
@@ -512,7 +537,7 @@ function items(){
     if(!q)it.sub="…";
     else if(q.err)it.sub=q.err;
     else{
-      it.cur=q.cur||"";it.tr=q.tr!==false;it.reg=q.reg||null;it.pre=q.pre||null;if(q.man){it.man=true;it.nm=(p.disp||q.name||p.sym)+" ✎"}
+      it.cur=q.cur||"";it.tr=q.tr!==false;it.bdi=q.src==="bd"?{t:q.bt,stale:q.stale,bs:q.bs}:null;it.reg=q.reg||null;it.pre=q.pre||null;if(q.man){it.man=true;it.nm=(p.disp||q.name||p.sym)+" ✎"}
       const fx=q.cur==="EUR"?{now:1,prev:1}:FXQ[q.cur];
       if(!fx){fxMiss=true;it.sub="wisselkoers niet beschikbaar"}
       else{
@@ -531,10 +556,16 @@ function items(){
     return it;
   });
 }
-const VER="2.6.0 · 19 nov 2026";
+const VER="2.7.0 · 24 nov 2026";
 const MON=["jan","feb","mrt","apr","mei","jun","jul","aug","sep","okt","nov","dec"];
-function optInfo(s){const m=/^([A-Z][A-Z.\-]{0,5})(\d{2})(\d{2})(\d{2})([CP])(\d{8})$/.exec(String(s||"").trim().toUpperCase());return m?{root:m[1],y:2000+ +m[2],mo:+m[3],d:+m[4],cp:m[5],strike:+m[6]/1000}:null}
-function optName(p){const o=optInfo(p.sym);if(!o)return "";const w=String(S.un[o.root]||o.root).split(/[\s,]+/)[0]||o.root;return w+" "+(o.cp==="C"?"call":"put")+" $"+nm(o.strike,o.strike%1?2:0)+" "+MON[o.mo-1]+" "+o.y}
+const BDM={jan:1,feb:2,mrt:3,maa:3,mar:3,apr:4,mei:5,jun:6,jul:7,aug:8,sep:9,okt:10,nov:11,dec:12},bdPar={};
+const bdClean=t=>{const x=String(t==null?"":t).trim().replace(/^https?:\/\/(www\.)?beursduivel\.be/i,""),m=/\/?(Optie-Koers\/\d{3,12}\/[A-Za-z0-9\-]{1,80}\.aspx)/i.exec(x);return m?"/"+m[1]:""};
+function bdParse(path){if(path in bdPar)return bdPar[path];let r=null;const m=/\/([A-Za-z0-9.]+)-(Call|Put)-optie-([A-Za-z]+)-(\d{4})-(\d+)\.aspx/i.exec(path||"");
+  if(m){const mo=BDM[m[3].slice(0,3).toLowerCase()],y=+m[4];if(mo){const f=new Date(Date.UTC(y,mo-1,1)).getUTCDay();r={root:m[1].toUpperCase(),y,mo,d:1+(5-f+7)%7+14,cp:m[2][0].toUpperCase(),strike:+m[5]/100}}}
+  return bdPar[path]=r}
+const bdInfo=k=>{const p=S.pos.find(x=>x.bd&&String(x.sym).toUpperCase()===k);return p?bdParse(p.bd):null};
+function optInfo(s){const k=String(s||"").trim().toUpperCase(),m=/^([A-Z][A-Z.\-]{0,5})(\d{2})(\d{2})(\d{2})([CP])(\d{8})$/.exec(k);return m?{root:m[1],y:2000+ +m[2],mo:+m[3],d:+m[4],cp:m[5],strike:+m[6]/1000}:bdInfo(k)}
+function optName(p){const o=optInfo(p.sym);if(!o)return "";const w=String(S.un[o.root]||o.root).split(/[\s,]+/)[0]||o.root;return w+" "+(o.cp==="C"?"call":"put")+" "+(p.bd?"€":"$")+nm(o.strike,o.strike%1?2:0)+" "+MON[o.mo-1]+" "+o.y}
 function daysLeft(o){const n=new Date();return Math.round((Date.UTC(o.y,o.mo-1,o.d)-Date.UTC(n.getFullYear(),n.getMonth(),n.getDate()))/864e5)}
 const stockItems=()=>items().filter(i=>!i.p.opt),optItems=()=>items().filter(i=>i.p.opt);
 function covOf(i){
@@ -617,9 +648,10 @@ function tableH(gs,ta,oi,tn){
   if(!oi.length)h+=tot("Totaal",ta,"1px solid var(--b2)");
   else{
     h+=tot("Totaal aandelen",ta,"1px solid var(--b2)");
-    const OG=[],sd=oi.filter(i=>i.p.qty<0),bg=oi.filter(i=>i.p.qty>0),GL={g:"Calls gedekt",o:"Calls deels",r:"Calls niet gedekt",p:"Puts verkocht"};
+    const OG=[],oa=oi.filter(i=>optInfo(i.k)),ou=oi.filter(i=>!optInfo(i.k)),sd=oa.filter(i=>i.p.qty<0),bg=oa.filter(i=>i.p.qty>0),GL={g:"Calls gedekt",o:"Calls deels",r:"Calls niet gedekt",p:"Puts verkocht"};
     ["g","o","r","p"].forEach(k=>{const l=sd.filter(i=>(k==="p"?cpOf(i)==="P":cpOf(i)==="C"&&covK(i)===k));if(l.length)OG.push({key:"o"+k,lab:GL[k],l,os:"v",oc:k==="p"?"P":"C",sold:true})});
     [["C","Calls gekocht","obc"],["P","Puts gekocht","obp"]].forEach(([c,lab,key])=>{const l=bg.filter(i=>cpOf(i)===c);if(l.length)OG.push({key,lab,l,os:"g",oc:c,sold:false})});
+    if(ou.length)OG.push({key:"oo",lab:"Overige opties",l:ou,os:ou.some(i=>i.p.qty<0)?"v":"g",oc:"C",sold:false});
     h+='<div style="height:8px"></div>';
     OG.forEach(g=>{
       const o=!S.collapsed[g.key],x=oagg(g.l);
@@ -815,6 +847,9 @@ function optScen(i,o){
   const c4=cov&&mx!=null?ce("Max winst",ec(mx,0),cl(mx)):part?ce("Risico",nm(ncon,0)+"/"+nm(tcon,0)+" niet gedekt","or"):nak?ce("Risico","onbeperkt","dn"):ce("","");
   return `<div class="sx2"><div class="sxh">${head} · ontvangen premie ${ev(p.paid)}</div>${dl}<div class="g4" style="margin-top:4px">${ce("Premie/aand.",c+nm(prem,2))}${ce("Aandeel nu",u!=null?c+nm(u,2):"–")}${ce("Tot strike",tt!=null?sg(tt,1)+"%":"–")}${c4}</div>${sc}${rk}${note?`<div class="m" style="font-size:10.5px;margin-top:6px">${note}</div>`:""}</div>`;
 }
+const bdLine=i=>{const b=i.bdi;if(!b)return i.p.bd&&i.man?`<div class="m" style="font-size:10.5px;margin:2px 0 4px">Koers uit Excel · Beursduivel niet bereikbaar</div>`:"";
+  const d=new Date(b.t),td=d.toDateString()===new Date().toDateString(),tm=d.toLocaleTimeString("nl-BE",{hour:"2-digit",minute:"2-digit"});
+  return `<div class="m" style="font-size:10.5px;margin:2px 0 4px">Beursduivel · ${b.bs}-koers · ${td?tm:d.toLocaleDateString("nl-BE",{day:"2-digit",month:"2-digit"})+" "+tm}${b.stale?' · <span class="dn">oude koers, Beursduivel niet bereikbaar</span>':""}</div>`};
 const cpOf=i=>(optInfo(i.k)||{}).cp==="P"?"P":"C";
 function optSel(){
   const all=optItems(),has=(c,sd)=>all.some(i=>cpOf(i)===c&&(sd?i.p.qty<0:i.p.qty>0)),H={C:{g:has("C",0),v:has("C",1)},P:{g:has("P",0),v:has("P",1)}};
@@ -873,14 +908,14 @@ function optH(){
     const dc=dl==null?"":dl<7?"dn":dl<30?"d30":dl<60?"d60":"";
     const nog=dl==null?"–":dl<0?"verlopen":dl===0?"vandaag":dl===1?"1 dag":dl+" dagen";
     const td=i.v!=null&&i.tr!==false,pp=s?-i.pct:i.pct;
-    return `<div class="op${cv&&cv.k?" s-"+cv.k:""}"><div class="t1"><div class="n"><a href="https://finance.yahoo.com/quote/${encodeURIComponent(i.k)}" target="_blank" rel="noopener">${esc(i.nm)}</a>${covTag(cv)}${i.sub?`<br><small class="dn">${esc(i.sub)}</small>`:""}</div>${S.showVal&&i.v!=null?`<div>${evs(i.v)}</div>`:""}</div>${pbH([i])}`+
+    return `<div class="op${cv&&cv.k?" s-"+cv.k:""}"><div class="t1"><div class="n"><a href="${i.p.bd?"https://www.beursduivel.be"+i.p.bd:"https://finance.yahoo.com/quote/"+encodeURIComponent(i.k)}" target="_blank" rel="noopener">${esc(i.nm)}</a>${covTag(cv)}${i.sub?`<br><small class="dn">${esc(i.sub)}</small>`:""}</div>${S.showVal&&i.v!=null?`<div>${evs(i.v)}</div>`:""}</div>${bdLine(i)}${pbH([i])}`+
       `<div class="g4">${cell("Vervalt",o?o.d+" "+MON[o.mo-1]+" "+o.y:"–")}${cell("Nog",nog,dc)}${cell("Strike",o?c+nm(o.strike,o.strike%1?2:0):"–")}${cell("Aantal",(s?"−":"")+nm(i.p.qty,i.p.qty%1?2:0))}`+
       `${cell("Koers",q&&!q.err&&q.c!=null?c+nm(q.c,2):"–")}${cell("Dag %",td?pc(pp):"–",td?cl(pp):"m")}${cell("Dag €",td?ec(i.d,2):"–",td?cl(i.d):"m")}${cell("Totaal",i.g!=null?ec(i.g,0)+`<span style="display:block;font-size:10.5px">${sg(i.gp,1)}%</span>`:"–",i.g!=null?cl(i.g):"m")}</div>${optScen(i,o)}</div>`;
   };
   const ta=oagg(its);
   h+=`<div class="op tb"><div class="t1"><div>Totaal ${sold?"verkochte":"gekochte"} ${P?"puts":"calls"}</div>${S.showVal&&ta.ok.length?`<div>${evs(ta.sv)}</div>`:""}</div>${totRow(its)}${pbH(its)}</div>`;
   if(sold&&!P){
-    const GN={g:"Gedekt (covered)",o:"Deels gedekt",r:"Niet gedekt",p:"Verkochte puts"};
+    const GN={g:"Gedekt (covered)",o:"Deels gedekt",r:"Niet gedekt",p:"Niet herkend"};
     ["g","o","r","p"].forEach(k=>{
       const l=rows.filter(r=>covK(r.i)===k);if(!l.length)return;
       const li=l.map(r=>r.i),x=oagg(li);
