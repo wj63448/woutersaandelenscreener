@@ -556,7 +556,7 @@ function items(){
     return it;
   });
 }
-const VER="2.8.6 · 25 nov 2026";
+const VER="2.8.7 · 26 nov 2026";
 const MON=["jan","feb","mrt","apr","mei","jun","jul","aug","sep","okt","nov","dec"];
 const BDM={jan:1,feb:2,mrt:3,maa:3,mar:3,apr:4,mei:5,jun:6,jul:7,aug:8,sep:9,okt:10,nov:11,dec:12},bdPar={};
 const bdClean=t=>{const x=String(t==null?"":t).trim().replace(/^https?:\/\/(www\.)?beursduivel\.be/i,""),m=/\/?(Optie-Koers\/\d{3,12}\/[A-Za-z0-9\-]{1,80}\.aspx)/i.exec(x);return m?"/"+m[1]:""};
@@ -983,11 +983,22 @@ function curH(its){
   const rows=Object.keys(m).sort((a,b)=>m[b]-m[a]).map(k=>[k,m[k],CC[k]||EX[(n++)%EX.length]]);
   return `<div class="sec" style="margin-top:2px;"><span>Verdeling per valuta</span></div>`+donutSvg(rows,tot,"Valuta")+`<div class="lg" style="justify-content:center;margin-bottom:12px;">${rows.map(r=>`<div><span class="sw" style="background:${r[2]}"></span>${esc(r[0])}<b>${nm(r[1]/tot*100,1)}%</b>${S.showVal?`<b>${ev(r[1])}</b>`:""}</div>`).join("")}</div>`;
 }
+function tabAv(){
+  const P=S.pos||[],f=P[0];
+  const opt=P.some(p=>p.opt||optInfo(p.sym));
+  const tg=!!(S.file&&S.file.tsheet&&S.tgt&&S.tgt.names&&S.tgt.names.length);
+  const known=!!(f&&f.parts!==undefined);
+  const col=k=>!known||P.some(p=>(p.parts||[]).some(pt=>String(pt[k]||"").trim()));
+  return{o:opt,t:tg,v:P.length>0,se:col("sector"),inp:col("input")};
+}
 function appH(){
+  const av=tabAv();
+  if((U.tab===3&&!av.o)||(U.tab===1&&!av.t)||(U.tab===2&&!av.v)){U.tab=0;U.view=0}
+  if(U.tab===2){const ok={s:av.se,i:av.inp,w:true};if(!ok[U.vm])U.vm="w";if(!av.se&&!av.inp)U.vm="w"}
   const t=U.tab===0,v=U.tab===2,o=U.tab===3;
-  let h=`<div class="hd"><div class="t">${t?esc(TITLE):o?"Optieportefeuille":v?"Verdeling":"Target"}</div><span class="ib" data-a="refresh" aria-label="Koersen verversen">↻</span><span class="ib" data-a="cfg" aria-label="Instellingen">⚙</span></div><div class="body">${o?"":optBanner()}${v?`<div class="top"><button data-a="vm" data-v="s" class="${U.vm==="s"?"on":""}">Sector</button><button data-a="vm" data-v="w" class="${U.vm==="w"?"on":""}">% Port</button><button data-a="vm" data-v="i" class="${U.vm==="i"?"on":""}">Input</button></div>`:o?"":`<div class="top"><button data-a="view" data-v="0" class="${U.view===0?"on":""}">Overzicht</button><button data-a="view" data-v="1" class="${U.view===1?"on":""}">Grafieken</button>${t?`<button data-a="view" data-v="2" class="${U.view===2?"on":""}">VIX</button>`:""}</div>`}`;
+  let h=`<div class="hd"><div class="t">${t?esc(TITLE):o?"Optieportefeuille":v?"Verdeling":"Target"}</div><span class="ib" data-a="refresh" aria-label="Koersen verversen">↻</span><span class="ib" data-a="cfg" aria-label="Instellingen">⚙</span></div><div class="body">${o?"":optBanner()}${v?(av.se||av.inp?`<div class="top">${av.se?`<button data-a="vm" data-v="s" class="${U.vm==="s"?"on":""}">Sector</button>`:""}<button data-a="vm" data-v="w" class="${U.vm==="w"?"on":""}">% Port</button>${av.inp?`<button data-a="vm" data-v="i" class="${U.vm==="i"?"on":""}">Input</button>`:""}</div>`:""):o?"":`<div class="top"><button data-a="view" data-v="0" class="${U.view===0?"on":""}">Overzicht</button><button data-a="view" data-v="1" class="${U.view===1?"on":""}">Grafieken</button>${t?`<button data-a="view" data-v="2" class="${U.view===2?"on":""}">VIX</button>`:""}</div>`}`;
   h+=v?verdH():o?optH():t?(U.view===0?portOverH():U.view===2?vixH():portGrafH()):(U.view===0?tgtOverH():tgtGrafH());
-  return h+`</div><div class="tabs"><div data-a="tab" data-v="0" class="${t?"on":""}"><b>📈</b>Aandelen</div><div data-a="tab" data-v="3" class="${o?"on":""}"><b>📜</b>Opties</div><div data-a="tab" data-v="2" class="${v?"on":""}"><b>🥧</b>Verdeling</div><div data-a="tab" data-v="1" class="${U.tab===1?"on":""}"><b>🎯</b>Target</div></div>`+(U.tlz?tlzH():"");
+  return h+`</div><div class="tabs"><div data-a="tab" data-v="0" class="${t?"on":""}"><b>📈</b>Aandelen</div>${av.o?`<div data-a="tab" data-v="3" class="${o?"on":""}"><b>📜</b>Opties</div>`:""}${av.v?`<div data-a="tab" data-v="2" class="${v?"on":""}"><b>🥧</b>Verdeling</div>`:""}${av.t?`<div data-a="tab" data-v="1" class="${U.tab===1?"on":""}"><b>🎯</b>Target</div>`:""}</div>`+(U.tlz?tlzH():"");
 }
 /* ---------- verdeling ---------- */
 const INORD=["Walter","Marino","WJ","Trends","VectorVest","De Belegger","Kroff Invest","Tiny Titans","Cash"];
