@@ -181,6 +181,22 @@ html[data-th="c"] .tabs div{color:#64748b}html[data-th="c"] .tabs div.on{color:#
 html[data-th="c"] .op:not(.tb):not(.sub),html[data-th="c"] .tbl{border-left:4px solid #0891b2}
 html[data-th="c"] .op.tb{border-color:#0891b2}
 html[data-th="c"] .sth{background:#f6f7f9}
+.stk{position:sticky;top:0;z-index:5}.stk .hd{position:static}
+.tabs.tt{position:static;border-top:0;border-bottom:1px solid var(--b2);justify-content:flex-start;gap:2px;padding:0 10px}
+.tabs.tt div{flex:none;padding:9px 18px;font-size:14px;border-bottom:3px solid transparent}
+.tabs.tt div b{display:inline;font-size:16px;margin:0 6px 0 0}
+.tabs.tt div.on{border-bottom-color:var(--p)}
+#ph.m1{max-width:820px}#ph.m2{max-width:none}
+.m2 .body.nar{max-width:820px;margin:0 auto;width:100%}
+.m2 .top{max-width:420px}
+.ov3{display:grid;grid-template-columns:minmax(250px,.75fr) minmax(0,1.5fr) minmax(0,1.4fr);gap:22px;align-items:start}
+.ov3.o2{grid-template-columns:minmax(250px,.75fr) minmax(0,1.5fr)}
+.tbl.wide .r{grid-template-columns:minmax(0,1fr) 62px 88px 64px 84px 88px}
+.tbl.wide.nv .r{grid-template-columns:minmax(0,1fr) 62px 88px 64px 84px}
+.tbl.wide .r>div{white-space:nowrap}.tbl.wide .r>div.n{white-space:normal}
+.ov3 .t3{grid-template-columns:minmax(0,1fr) 62px 96px}.ov3 .t3>div{white-space:nowrap}
+.m1 .t3,.m2 .t3{grid-template-columns:minmax(0,1fr) 62px 96px}.m1 .t3>div,.m2 .t3>div{white-space:nowrap}
+.m1 .tbl:not(.wide) .r{grid-template-columns:minmax(0,1fr) 58px 88px 76px 72px}.m1 .tbl.nv:not(.wide) .r{grid-template-columns:minmax(0,1fr) 58px 88px 76px}
 </style></head><body>
 <div id="ph"></div>
 <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@2.39.0/lib/msal-browser.min.js"></script>
@@ -195,6 +211,7 @@ const parseDate=t=>{
   if(m){const y=m[3].length===2?"20"+m[3]:m[3];return y+"-"+m[2].padStart(2,"0")+"-"+m[1].padStart(2,"0")}
   return "";
 };
+const LM=()=>innerWidth>=1500?2:innerWidth>=900?1:0,WD=()=>LM()===2;
 const parseNum=t=>{
   if(typeof t==="number")return t;
   if(t==null)return 0;
@@ -556,7 +573,7 @@ function items(){
     return it;
   });
 }
-const VER="2.8.7 · 26 nov 2026";
+const VER="2.9.0 · 27 nov 2026";
 const MON=["jan","feb","mrt","apr","mei","jun","jul","aug","sep","okt","nov","dec"];
 const BDM={jan:1,feb:2,mrt:3,maa:3,mar:3,apr:4,mei:5,jun:6,jul:7,aug:8,sep:9,okt:10,nov:11,dec:12},bdPar={};
 const bdClean=t=>{const x=String(t==null?"":t).trim().replace(/^https?:\/\/(www\.)?beursduivel\.be/i,""),m=/\/?(Optie-Koers\/\d{3,12}\/[A-Za-z0-9\-]{1,80}\.aspx)/i.exec(x);return m?"/"+m[1]:""};
@@ -630,24 +647,26 @@ function top3H(gs){
 }
 function cells(p,d,t,v,hasG,tp,pre){
   const pm=S.totMode==="p"&&tp!=null;
-  return `${pre!=null?`<div class="pdv"><span class="pre ${cl(pre)}">${pc(pre)}</span><span class="pt">pre</span></div>`:`<div class="${cl(p)}">${pc(p)}</div>`}<div class="${cl(d)}">${ec(d,2)}</div>${hasG?`<div class="${cl(t)}">${pm?pc(tp):ec(t,0)}</div>`:'<div class="m">–</div>'}<div class="wv">${v<0?"−":""}${ev(v)}</div>`;
+  return `${pre!=null?`<div class="pdv"><span class="pre ${cl(pre)}">${pc(pre)}</span><span class="pt">pre</span></div>`:`<div class="${cl(p)}">${pc(p)}</div>`}<div class="${cl(d)}">${ec(d,2)}</div>${hasG?(WD()?`<div class="${tp!=null?cl(tp):"m"}">${tp!=null?pc(tp):"–"}</div><div class="${cl(t)}">${ec(t,0)}</div>`:`<div class="${cl(t)}">${pm?pc(tp):ec(t,0)}</div>`):(WD()?'<div class="m">–</div><div class="m">–</div>':'<div class="m">–</div>')}<div class="wv">${v<0?"−":""}${ev(v)}</div>`;
 }
-function tableH(gs,ta,oi,tn){
-  let h=`<div class="tbl ${S.showVal?"":"nv"}"><div class="r sth" style="font-size:11px;color:var(--mut);border-bottom:1px solid var(--b2);padding:6px 2px;"><div>Bedrijf</div><div>Dag %</div><div>Dag €</div><div><button class="tg" data-a="tm">Totaal ${S.totMode==="p"?"%":"€"} ⇄</button></div><div class="wv">Waarde</div></div>`;
+function tableH(gs,ta,oi,tn,part){
+  const W3=WD();
+  let h=`<div class="tbl ${S.showVal?"":"nv"}${W3?" wide":""}"><div class="r sth" style="font-size:11px;color:var(--mut);border-bottom:1px solid var(--b2);padding:6px 2px;"><div>${part==="o"?"Optie":"Bedrijf"}</div><div>Dag %</div><div>Dag €</div>${W3?"<div>Totaal %</div><div>Totaal €</div>":`<div><button class="tg" data-a="tm">Totaal ${S.totMode==="p"?"%":"€"} ⇄</button></div>`}<div class="wv">Waarde</div></div>`;
   let cnt=0;
-  gs.forEach(x=>{
+  if(part!=="o")gs.forEach(x=>{
     const key=x.k||"?",o=!S.collapsed[key];
-    h+=`<div class="r gh" data-a="grp" data-v="${esc(key)}"><div>${o?"▾":"▸"} ${esc(x.k||"Niet geladen")}${mdot(x.k,x.open)} <small>(${x.l.length})</small></div>${x.k==="CASH"?`<div></div><div></div><div></div><div class="wv">${ev(x.sv)}</div>`:x.ok.length?cells(x.sp,x.sd,x.stt,x.sv,x.hasG,x.cost?x.stt/x.cost*100:null):"<div></div><div></div><div></div><div class='wv'></div>"}</div>`;
+    h+=`<div class="r gh" data-a="grp" data-v="${esc(key)}"><div>${o?"▾":"▸"} ${esc(x.k||"Niet geladen")}${mdot(x.k,x.open)} <small>(${x.l.length})</small></div>${x.k==="CASH"?`<div></div><div></div><div></div>${WD()?"<div></div>":""}<div class="wv">${ev(x.sv)}</div>`:x.ok.length?cells(x.sp,x.sd,x.stt,x.sv,x.hasG,x.cost?x.stt/x.cost*100:null):(WD()?"<div></div>":"")+"<div></div><div></div><div></div><div class='wv'></div>"}</div>`;
     if(!o)cnt+=x.l.length;
     if(o)x.l.forEach(i=>{
       cnt++;
-      h+=`<div class="r${i.tr===false?" off":""}"><div class="n">${i.k==="CASH"?cn(i.nm):`<a href="https://finance.yahoo.com/quote/${encodeURIComponent(i.k)}" target="_blank" rel="noopener">${cn(i.nm)}</a>`}${i.sub?`<br><small class="dn">${esc(i.sub)}</small>`:""}</div>${i.k==="CASH"&&i.v!=null?`<div></div><div></div><div></div><div class="wv">${ev(i.v)}</div>`:i.v!=null?cells(i.pct,i.d,i.g||0,i.v,i.g!=null,i.gp,i.pre&&i.tr===false?i.pre.pct:null):"<div></div><div></div><div></div><div class='wv'></div>"}</div>`;
+      h+=`<div class="r${i.tr===false?" off":""}"><div class="n">${i.k==="CASH"?cn(i.nm):`<a href="https://finance.yahoo.com/quote/${encodeURIComponent(i.k)}" target="_blank" rel="noopener">${cn(i.nm)}</a>`}${i.sub?`<br><small class="dn">${esc(i.sub)}</small>`:""}</div>${i.k==="CASH"&&i.v!=null?`<div></div><div></div><div></div>${WD()?"<div></div>":""}<div class="wv">${ev(i.v)}</div>`:i.v!=null?cells(i.pct,i.d,i.g||0,i.v,i.g!=null,i.gp,i.pre&&i.tr===false?i.pre.pct:null):(WD()?"<div></div>":"")+"<div></div><div></div><div></div><div class='wv'></div>"}</div>`;
     });
   });
   const tot=(lab,x,top)=>`<div class="r" style="font-weight:600;border-top:${top};border-bottom:none;margin-top:6px;"><div>${lab}</div>${cells(x.sp,x.sd,x.stt,x.sv,x.hasG,x.cost?x.stt/x.cost*100:null)}</div>`;
-  if(!oi.length)h+=tot("Totaal",ta,"1px solid var(--b2)");
+  if(part==="s")h+=tot(oi.length?"Totaal aandelen":"Totaal",ta,"1px solid var(--b2)");
+  else if(!oi.length)h+=tot("Totaal",ta,"1px solid var(--b2)");
   else{
-    h+=tot("Totaal aandelen",ta,"1px solid var(--b2)");
+    if(part!=="o")h+=tot("Totaal aandelen",ta,"1px solid var(--b2)");
     const OG=[],oa=oi.filter(i=>optInfo(i.k)),ou=oi.filter(i=>!optInfo(i.k)),sd=oa.filter(i=>i.p.qty<0),bg=oa.filter(i=>i.p.qty>0),GL={g:"Calls gedekt",o:"Calls deels",r:"Calls niet gedekt",p:"Puts verkocht"};
     ["g","o","r","p"].forEach(k=>{const l=sd.filter(i=>(k==="p"?cpOf(i)==="P":cpOf(i)==="C"&&covK(i)===k));if(l.length)OG.push({key:"o"+k,lab:GL[k],l,os:"v",oc:k==="p"?"P":"C",sold:true})});
     [["C","Calls gekocht","obc"],["P","Puts gekocht","obp"]].forEach(([c,lab,key])=>{const l=bg.filter(i=>cpOf(i)===c);if(l.length)OG.push({key,lab,l,os:"g",oc:c,sold:false})});
@@ -655,10 +674,10 @@ function tableH(gs,ta,oi,tn){
     h+='<div style="height:8px"></div>';
     OG.forEach(g=>{
       const o=!S.collapsed[g.key],x=oagg(g.l);
-      h+=`<div class="r gh" data-a="optjump" data-v="${g.os}" data-c="${g.oc}"><div><span class="arr" data-a="grp" data-v="${g.key}">${o?"▾":"▸"}</span>${esc(g.lab)} <small>(${g.l.length})</small></div>${x.ok.length?cells(x.sp,x.sd,x.stt,x.sv,x.hasG,x.cost?x.stt/x.cost*100:null):"<div></div><div></div><div></div><div class='wv'></div>"}</div>`;
+      h+=`<div class="r gh" data-a="optjump" data-v="${g.os}" data-c="${g.oc}"><div><span class="arr" data-a="grp" data-v="${g.key}">${o?"▾":"▸"}</span>${esc(g.lab)} <small>(${g.l.length})</small></div>${x.ok.length?cells(x.sp,x.sd,x.stt,x.sv,x.hasG,x.cost?x.stt/x.cost*100:null):(WD()?"<div></div>":"")+"<div></div><div></div><div></div><div class='wv'></div>"}</div>`;
       if(o)optSort(g.l.map(i=>({i,o:optInfo(i.k)}))).forEach(({i})=>{
         const cv=g.sold?covOf(i):null,pp=g.sold?-i.pct:i.pct;
-        h+=`<div class="r${cv?" s-"+cv.k:""}${i.tr===false?" off":""}" data-a="optjump" data-v="${g.os}" data-c="${g.oc}" style="cursor:pointer"><div class="n" style="white-space:normal">${esc(i.nm)}${covTag(cv)}${i.sub?`<br><small class="dn">${esc(i.sub)}</small>`:""}</div>${i.v!=null?cells(pp,i.d,i.g||0,i.v,i.g!=null,i.gp,null):"<div></div><div></div><div></div><div class='wv'></div>"}</div>`;
+        h+=`<div class="r${cv?" s-"+cv.k:""}${i.tr===false?" off":""}" data-a="optjump" data-v="${g.os}" data-c="${g.oc}" style="cursor:pointer"><div class="n" style="white-space:normal">${esc(i.nm)}${covTag(cv)}${i.sub?`<br><small class="dn">${esc(i.sub)}</small>`:""}</div>${i.v!=null?cells(pp,i.d,i.g||0,i.v,i.g!=null,i.gp,null):(WD()?"<div></div>":"")+"<div></div><div></div><div></div><div class='wv'></div>"}</div>`;
       });
     });
     h+=tot("Totaal netto",tn,"2px solid var(--b2)");
@@ -674,6 +693,7 @@ function portOverH(){
   h+=top;
   h+=`<div style="margin:0 2px 8px;"><button data-a="sync" class="sm">⇄ Lijst bijwerken uit Excel</button> <small>${esc(U.syMsg)}</small></div>`;
   h+=`<label style="display:flex;align-items:center;gap:8px;margin:0 2px 10px;font-size:14px;cursor:pointer;"><input type="checkbox" data-a="sv"${S.showVal?" checked":""}> Toon waarde</label>`;
+  if(WD()&&A.length)return `<div class="ov3${oi.length?"":" o2"}"><div>${h}<div class="foot">${esc(U.stMsg)} · tik op een valuta om in of uit te klappen</div></div><div>${tableH(gs,ta,oi,tn,"s")}</div>${oi.length?`<div>${tableH(gs,ta,oi,tn,"o")}</div>`:""}</div>`;
   h+=A.length?tableH(gs,ta,oi,tn):'<div class="m" style="padding:12px 2px;">Nog geen aandelen. Kies bij Instellingen je Excel-bestand en tik op "Lijst bijwerken uit Excel".</div>';
   return h+`<div class="foot">${esc(U.stMsg)} · tik op een valuta om in of uit te klappen</div>`;
 }
@@ -996,9 +1016,11 @@ function appH(){
   if((U.tab===3&&!av.o)||(U.tab===1&&!av.t)||(U.tab===2&&!av.v)){U.tab=0;U.view=0}
   if(U.tab===2){const ok={s:av.se,i:av.inp,w:true};if(!ok[U.vm])U.vm="w";if(!av.se&&!av.inp)U.vm="w"}
   const t=U.tab===0,v=U.tab===2,o=U.tab===3;
-  let h=`<div class="hd"><div class="t">${t?esc(TITLE):o?"Optieportefeuille":v?"Verdeling":"Target"}</div><span class="ib" data-a="refresh" aria-label="Koersen verversen">↻</span><span class="ib" data-a="cfg" aria-label="Instellingen">⚙</span></div><div class="body">${o?"":optBanner()}${v?(av.se||av.inp?`<div class="top">${av.se?`<button data-a="vm" data-v="s" class="${U.vm==="s"?"on":""}">Sector</button>`:""}<button data-a="vm" data-v="w" class="${U.vm==="w"?"on":""}">% Port</button>${av.inp?`<button data-a="vm" data-v="i" class="${U.vm==="i"?"on":""}">Input</button>`:""}</div>`:""):o?"":`<div class="top"><button data-a="view" data-v="0" class="${U.view===0?"on":""}">Overzicht</button><button data-a="view" data-v="1" class="${U.view===1?"on":""}">Grafieken</button>${t?`<button data-a="view" data-v="2" class="${U.view===2?"on":""}">VIX</button>`:""}</div>`}`;
+  const TT=LM()>=1,nar=LM()===2&&!(U.tab===0&&U.view===0)?" nar":"";
+  const tb=`<div class="tabs${TT?" tt":""}"><div data-a="tab" data-v="0" class="${t?"on":""}"><b>📈</b>Aandelen</div>${av.o?`<div data-a="tab" data-v="3" class="${o?"on":""}"><b>📜</b>Opties</div>`:""}${av.v?`<div data-a="tab" data-v="2" class="${v?"on":""}"><b>🥧</b>Verdeling</div>`:""}${av.t?`<div data-a="tab" data-v="1" class="${U.tab===1?"on":""}"><b>🎯</b>Target</div>`:""}</div>`;
+  let h=`${TT?'<div class="stk">':""}<div class="hd"><div class="t">${t?esc(TITLE):o?"Optieportefeuille":v?"Verdeling":"Target"}</div><span class="ib" data-a="refresh" aria-label="Koersen verversen">↻</span><span class="ib" data-a="cfg" aria-label="Instellingen">⚙</span></div>${TT?tb+"</div>":""}<div class="body${nar}">${o?"":optBanner()}${v?(av.se||av.inp?`<div class="top">${av.se?`<button data-a="vm" data-v="s" class="${U.vm==="s"?"on":""}">Sector</button>`:""}<button data-a="vm" data-v="w" class="${U.vm==="w"?"on":""}">% Port</button>${av.inp?`<button data-a="vm" data-v="i" class="${U.vm==="i"?"on":""}">Input</button>`:""}</div>`:""):o?"":`<div class="top"><button data-a="view" data-v="0" class="${U.view===0?"on":""}">Overzicht</button><button data-a="view" data-v="1" class="${U.view===1?"on":""}">Grafieken</button>${t?`<button data-a="view" data-v="2" class="${U.view===2?"on":""}">VIX</button>`:""}</div>`}`;
   h+=v?verdH():o?optH():t?(U.view===0?portOverH():U.view===2?vixH():portGrafH()):(U.view===0?tgtOverH():tgtGrafH());
-  return h+`</div><div class="tabs"><div data-a="tab" data-v="0" class="${t?"on":""}"><b>📈</b>Aandelen</div>${av.o?`<div data-a="tab" data-v="3" class="${o?"on":""}"><b>📜</b>Opties</div>`:""}${av.v?`<div data-a="tab" data-v="2" class="${v?"on":""}"><b>🥧</b>Verdeling</div>`:""}${av.t?`<div data-a="tab" data-v="1" class="${U.tab===1?"on":""}"><b>🎯</b>Target</div>`:""}</div>`+(U.tlz?tlzH():"");
+  return h+`</div>${TT?"":tb}`+(U.tlz?tlzH():"");
 }
 /* ---------- verdeling ---------- */
 const INORD=["Walter","Marino","WJ","Trends","VectorVest","De Belegger","Kroff Invest","Tiny Titans","Cash"];
@@ -1131,9 +1153,9 @@ function pickerH(){
 const THC={"":"#0b5ed7",a:"#0b1020",b:"#f3f5fb",c:"#0f172a"};
 function applyTheme(){const t=S.theme||"";if(t)document.documentElement.setAttribute("data-th",t);else document.documentElement.removeAttribute("data-th");const m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute("content",THC[t]||THC[""])}
 function render(){
-  const y=window.scrollY;if(U.scr!=="app")U.tlz=false;applyTheme();
+  const y=window.scrollY;if(U.scr!=="app")U.tlz=false;applyTheme();$("ph").className=U.scr==="app"?"m"+LM():"";
   $("ph").innerHTML=U.scr==="lock"?lockH(S.bio?"Vingerafdruk of code":"Voer je code in",false):U.scr==="setup"?lockH(U.step===0?"Kies een nieuwe code":"Herhaal de code",true):U.scr==="settings"?settingsH():U.scr==="picker"?pickerH():appH();
-  const hd=document.querySelector(".hd");if(hd)document.documentElement.style.setProperty("--hh",hd.offsetHeight+"px");
+  const hd=document.querySelector(".stk")||document.querySelector(".hd");if(hd)document.documentElement.style.setProperty("--hh",hd.offsetHeight+"px");
   if(U.scr==="lock"&&S.bio&&!U.bt){U.bt=true;setTimeout(()=>bioUnlock(false),350)}
   window.scrollTo(0,y);
   syncHistory();
@@ -1324,7 +1346,7 @@ function ensureRootGuard(){
   try{history.pushState({app:"root"},"");rootGuard=true;dlog("wachtstap toegevoegd")}catch(e){dlog("fout "+e.message)}
 }
 ["click","touchend","keydown"].forEach(ev=>document.addEventListener(ev,ensureRootGuard,true));
-addEventListener("resize",()=>{if(U.tlz&&U.scr==="app")render()});
+let lmPrev=LM();addEventListener("resize",()=>{const m=LM();if(U.scr==="app"&&(U.tlz||m!==lmPrev))render();lmPrev=m});
 addEventListener("popstate",()=>{
   dlog("TERUG ontvangen");
   if(ignorePops>0){ignorePops--;return}
