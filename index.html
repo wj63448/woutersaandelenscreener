@@ -7,7 +7,7 @@
 <title>Wouter's aandelenscreener</title>
 <style>
 :root{color-scheme:light dark;--or:#d97706;--bg:#fff;--bg2:#f1f3f5;--tx:#111827;--mut:#6b7280;--b:#e5e7eb;--b2:#cbd5e1;--p:#0b5ed7;--up:#15803d;--dn:#dc2626}
-@media (prefers-color-scheme:dark){:root{--or:#fbbf24;--bg:#101318;--bg2:#1c2128;--tx:#e5e7eb;--mut:#9ca3af;--b:#2a2f38;--b2:#3b424d;--p:#2f6fdc;--up:#4ade80;--dn:#f87171}}
+@media (prefers-color-scheme:dark){:root{--or:#fbbf24;--bg:#101318;--bg2:#1c2128;--tx:#e5e7eb;--mut:#9ca3af;--b:#2a2f38;--b2:#3b424d;--p:#2f6fdc;--up:#4ade80;--dn:#ef4444}}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--tx);font:15px system-ui,sans-serif}
 #ph{max-width:560px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column}
@@ -149,7 +149,7 @@ html[data-th] .big .up{color:#4ade80}html[data-th] .big .dn{color:var(--dn)}
 html[data-th] .tabs{border-top:0}
 html[data-th] .tabs div b{font-size:19px}
 /* A · donker glas */
-html[data-th="a"]{color-scheme:dark;--or:#fbbf24;--bg:#0b1020;--bg2:rgba(255,255,255,.07);--tx:#e8ecf8;--mut:#9aa3bd;--b:rgba(255,255,255,.09);--b2:rgba(255,255,255,.2);--p:#6d5dfc;--up:#4ade80;--dn:#fb7185;--cd:rgba(255,255,255,.05);--sh:none}
+html[data-th="a"]{color-scheme:dark;--or:#fbbf24;--bg:#0b1020;--bg2:rgba(255,255,255,.07);--tx:#e8ecf8;--mut:#9aa3bd;--b:rgba(255,255,255,.09);--b2:rgba(255,255,255,.2);--p:#6d5dfc;--up:#4ade80;--dn:#ef4444;--cd:rgba(255,255,255,.05);--sh:none}
 html[data-th="a"] body{background:radial-gradient(120% 45% at 80% -8%,#3b2a8c 0,#0b1020 58%) fixed,#0b1020}
 html[data-th="a"] .hd{background:rgba(11,16,32,.8);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
 html[data-th="a"] .op:not(.tb):not(.sub),html[data-th="a"] .cb,html[data-th="a"] .tbl,html[data-th="a"] .cg,html[data-th="a"] .vb{border:1px solid rgba(255,255,255,.09)}
@@ -186,11 +186,12 @@ html[data-th="c"] .sth{background:#f6f7f9}
 .tabs.tt div{flex:none;padding:9px 18px;font-size:14px;border-bottom:3px solid transparent}
 .tabs.tt div b{display:inline;font-size:16px;margin:0 6px 0 0}
 .tabs.tt div.on{border-bottom-color:var(--p)}
-#ph.m1{max-width:820px}#ph.m2{max-width:none}
-.m2 .body.nar{max-width:820px;margin:0 auto;width:100%}
+#ph.m1{max-width:820px;margin:0}#ph.m2{max-width:none}
+.m2 .body.nar{max-width:820px;margin:0;width:100%}.m2 .body.nar.vix{max-width:1200px}
+.vix svg[aria-label^="VIX"]{max-width:720px}.vbg{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 18px;align-items:start}
 .m2 .top{max-width:420px}
-.ov3{display:grid;grid-template-columns:minmax(250px,.75fr) minmax(0,1.5fr) minmax(0,1.4fr);gap:22px;align-items:start}
-.ov3.o2{grid-template-columns:minmax(250px,.75fr) minmax(0,1.5fr)}
+.ov3{display:grid;grid-template-columns:minmax(280px,400px) minmax(0,660px) minmax(0,660px);justify-content:space-between;gap:24px;align-items:start}
+.ov3.o2{grid-template-columns:minmax(280px,400px) minmax(0,660px)}
 .tbl.wide .r{grid-template-columns:minmax(0,1fr) 62px 88px 64px 84px 88px}
 .tbl.wide.nv .r{grid-template-columns:minmax(0,1fr) 62px 88px 64px 84px}
 .tbl.wide .r>div{white-space:nowrap}.tbl.wide .r>div.n{white-space:normal}
@@ -485,9 +486,9 @@ function vixH(){
     const ln=[20,25,30].map((v,i)=>`<line x1="${pl}" x2="${W-pl}" y1="${yv(v).toFixed(1)}" y2="${yv(v).toFixed(1)}" stroke="${["#4f8ef7","#eb6834","#d03b3b"][i]}" stroke-width="1" stroke-dasharray="3 3" opacity=".7"/><text x="${W-pl}" y="${(yv(v)-2).toFixed(1)}" text-anchor="end" font-size="8" fill="var(--mut)">${v}</text>`).join("");
     chart=`<svg width="100%" viewBox="0 0 ${W} ${H}" role="img" aria-label="VIX over ${mlab}"><g>${ln}</g><polyline points="${d.map((v,i)=>xv(i).toFixed(1)+","+yv(v).toFixed(1)).join(" ")}" fill="none" stroke="var(--p)" stroke-width="2" stroke-linejoin="round"/><circle cx="${xv(d.length-1).toFixed(1)}" cy="${yv(d[d.length-1]).toFixed(1)}" r="3.5" fill="${band.c}"/></svg><div style="display:flex;justify-content:space-between;font-size:11px;color:var(--mut)"><span>${mlab} geleden</span><span>gestippeld: 20 · 25 · 30</span><span>nu</span></div>`;
   }
-  const blocks=VB.map(b=>`<div class="vb${b===band?" now":""}" style="border-left:4px solid ${b.c}"><div class="vbh"><b>VIX ${b.k}</b> ${b.t}${b===band?' <span class="nowt">nu</span>':""}</div><ul>${b.l.map(x=>`<li>${x}</li>`).join("")}</ul></div>`).join("");
+  const bl=VB.map(b=>`<div class="vb${b===band?" now":""}" style="border-left:4px solid ${b.c}"><div class="vbh"><b>VIX ${b.k}</b> ${b.t}${b===band?' <span class="nowt">nu</span>':""}</div><ul>${b.l.map(x=>`<li>${x}</li>`).join("")}</ul></div>`);
   const gen='<div class="vb" style="border-left:4px solid var(--b2)"><div class="vbh"><b>Algemeen</b></div><ul><li>Onder 20: markten zijn "gezond".</li><li>20–25: volatiliteit neemt toe, kansen voor swingtraders.</li><li>25–30: correctiezone, voorzichtig.</li><li>30+: capitulatie, vaak de beste koopmomenten (kwaliteit of brede ETF) en dus zeker niet paniekverkopen!</li></ul></div>';
-  return `<div style="display:flex;align-items:baseline;gap:10px;margin:8px 2px"><div style="font-size:36px;font-weight:700;color:${band.c}">${nm(cur,2)}</div><div class="${ch>0?"dn":"up"}">${sg(ch,2)} (${sg(chp,1)}%)</div><div class="m" style="margin-left:auto;font-size:12px">${band.t}</div></div>${seg}${chart}<div style="margin-top:12px">${blocks}${gen}</div>`;
+  return `<div style="display:flex;align-items:baseline;gap:10px;margin:8px 2px"><div style="font-size:36px;font-weight:700;color:${band.c}">${nm(cur,2)}</div><div class="${ch>0?"dn":"up"}">${sg(ch,2)} (${sg(chp,1)}%)</div><div class="m" style="margin-left:auto;font-size:12px">${band.t}</div></div>${seg}${chart}<div style="margin-top:12px">${LM()>=1?`<div class="vbg"><div>${bl.concat([gen]).slice(0,3).join("")}</div><div>${bl.concat([gen]).slice(3).join("")}</div></div>`:bl.join("")+gen}</div>`;
 }
 const RG=["5d","1mo","1y"];
 async function loadHist(){
@@ -573,7 +574,7 @@ function items(){
     return it;
   });
 }
-const VER="2.9.0 · 27 nov 2026";
+const VER="2.9.1 · 27 nov 2026";
 const MON=["jan","feb","mrt","apr","mei","jun","jul","aug","sep","okt","nov","dec"];
 const BDM={jan:1,feb:2,mrt:3,maa:3,mar:3,apr:4,mei:5,jun:6,jul:7,aug:8,sep:9,okt:10,nov:11,dec:12},bdPar={};
 const bdClean=t=>{const x=String(t==null?"":t).trim().replace(/^https?:\/\/(www\.)?beursduivel\.be/i,""),m=/\/?(Optie-Koers\/\d{3,12}\/[A-Za-z0-9\-]{1,80}\.aspx)/i.exec(x);return m?"/"+m[1]:""};
@@ -1016,9 +1017,9 @@ function appH(){
   if((U.tab===3&&!av.o)||(U.tab===1&&!av.t)||(U.tab===2&&!av.v)){U.tab=0;U.view=0}
   if(U.tab===2){const ok={s:av.se,i:av.inp,w:true};if(!ok[U.vm])U.vm="w";if(!av.se&&!av.inp)U.vm="w"}
   const t=U.tab===0,v=U.tab===2,o=U.tab===3;
-  const TT=LM()>=1,nar=LM()===2&&!(U.tab===0&&U.view===0)?" nar":"";
+  const TT=LM()>=1,nar=LM()===2&&!(U.tab===0&&U.view===0)?" nar":"",vx=U.tab===0&&U.view===2?" vix":"";
   const tb=`<div class="tabs${TT?" tt":""}"><div data-a="tab" data-v="0" class="${t?"on":""}"><b>📈</b>Aandelen</div>${av.o?`<div data-a="tab" data-v="3" class="${o?"on":""}"><b>📜</b>Opties</div>`:""}${av.v?`<div data-a="tab" data-v="2" class="${v?"on":""}"><b>🥧</b>Verdeling</div>`:""}${av.t?`<div data-a="tab" data-v="1" class="${U.tab===1?"on":""}"><b>🎯</b>Target</div>`:""}</div>`;
-  let h=`${TT?'<div class="stk">':""}<div class="hd"><div class="t">${t?esc(TITLE):o?"Optieportefeuille":v?"Verdeling":"Target"}</div><span class="ib" data-a="refresh" aria-label="Koersen verversen">↻</span><span class="ib" data-a="cfg" aria-label="Instellingen">⚙</span></div>${TT?tb+"</div>":""}<div class="body${nar}">${o?"":optBanner()}${v?(av.se||av.inp?`<div class="top">${av.se?`<button data-a="vm" data-v="s" class="${U.vm==="s"?"on":""}">Sector</button>`:""}<button data-a="vm" data-v="w" class="${U.vm==="w"?"on":""}">% Port</button>${av.inp?`<button data-a="vm" data-v="i" class="${U.vm==="i"?"on":""}">Input</button>`:""}</div>`:""):o?"":`<div class="top"><button data-a="view" data-v="0" class="${U.view===0?"on":""}">Overzicht</button><button data-a="view" data-v="1" class="${U.view===1?"on":""}">Grafieken</button>${t?`<button data-a="view" data-v="2" class="${U.view===2?"on":""}">VIX</button>`:""}</div>`}`;
+  let h=`${TT?'<div class="stk">':""}<div class="hd"><div class="t">${t?esc(TITLE):o?"Optieportefeuille":v?"Verdeling":"Target"}</div><span class="ib" data-a="refresh" aria-label="Koersen verversen">↻</span><span class="ib" data-a="cfg" aria-label="Instellingen">⚙</span></div>${TT?tb+"</div>":""}<div class="body${nar}${vx}">${o?"":optBanner()}${v?(av.se||av.inp?`<div class="top">${av.se?`<button data-a="vm" data-v="s" class="${U.vm==="s"?"on":""}">Sector</button>`:""}<button data-a="vm" data-v="w" class="${U.vm==="w"?"on":""}">% Port</button>${av.inp?`<button data-a="vm" data-v="i" class="${U.vm==="i"?"on":""}">Input</button>`:""}</div>`:""):o?"":`<div class="top"><button data-a="view" data-v="0" class="${U.view===0?"on":""}">Overzicht</button><button data-a="view" data-v="1" class="${U.view===1?"on":""}">Grafieken</button>${t?`<button data-a="view" data-v="2" class="${U.view===2?"on":""}">VIX</button>`:""}</div>`}`;
   h+=v?verdH():o?optH():t?(U.view===0?portOverH():U.view===2?vixH():portGrafH()):(U.view===0?tgtOverH():tgtGrafH());
   return h+`</div>${TT?"":tb}`+(U.tlz?tlzH():"");
 }
