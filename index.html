@@ -2,6 +2,8 @@
 <html lang="nl"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#0b5ed7">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src https:; frame-src https://login.microsoftonline.com https://login.live.com; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
 <!-- © 2026 Wouter Janssens. Alle rechten voorbehouden. Deze code mag niet worden gekopieerd, aangepast, gebruikt of verspreid zonder schriftelijke toestemming van de auteur. Contact: wj.apps.store@gmail.com -->
 <link rel="manifest" href="manifest.json">
 <title>Wouter's aandelenscreener</title>
@@ -212,7 +214,8 @@ html[data-th="c"] .sth{background:#f6f7f9}
 .m1 .tbl:not(.wide) .r{grid-template-columns:minmax(0,1fr) 58px 88px 76px 72px}.m1 .tbl.nv:not(.wide) .r{grid-template-columns:minmax(0,1fr) 58px 88px 76px}
 </style></head><body>
 <div id="ph"></div>
-<script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@2.39.0/lib/msal-browser.min.js"></script>
+<script src="msal-browser.min.js"></script>
+<script>window.MSAL_LOCAL=!!window.msal;window.msal||document.write('<script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@2.39.0/lib/msal-browser.min.js"><\/script>')</script>
 <script>
 /*PURE-START*/
 const parseDate=t=>{
@@ -431,12 +434,20 @@ async function yq(sym,range){
   const cr=m.currentTradingPeriod&&m.currentTradingPeriod.regular,reg=cr&&cr.start&&cr.end?[cr.start,cr.end]:null;
   return{c:m.regularMarketPrice,prev,tr,reg,cur:m.currency,name:m.shortName||m.longName||sym,closes:bars.map(b=>b[1])};
 }
-const WSC=["Files.ReadWrite","User.Read"],HFILE="aandelen-screener-waardeverloop.json",todayS=()=>new Date().toLocaleDateString("sv-SE");
+const WSC=["Files.Read","Files.ReadWrite.AppFolder","User.Read"],HFILE="aandelen-screener-waardeverloop.json",todayS=()=>new Date().toLocaleDateString("sv-SE");
 function recordHist(){
   const its=items().filter(i=>{if(!i.p.opt)return true;const o=optInfo(i.k);return !(o&&daysLeft(o)<0)});
   if(!its.length||its.some(i=>i.v==null))return;
+  if(S.real&&(!S.file||S.file.id!==S.real.id||S.file.sheet!==S.real.sheet))return;
   const day=todayS();S.hts=S.hts||{};if(S.hstart&&day<S.hstart)return;
   S.hist[day]=Math.round(sum(its,i=>i.v));S.hts[day]=Date.now();save();
+}
+function hClean(rem){
+  const out={v:1,start:"",days:{}};if(!rem||typeof rem!=="object")return out;
+  const ds=/^\d{4}-\d{2}-\d{2}$/;if(typeof rem.start==="string"&&ds.test(rem.start))out.start=rem.start;
+  const d=rem.days&&typeof rem.days==="object"?rem.days:{};
+  Object.keys(d).slice(0,2000).forEach(k=>{const a=d[k];if(!ds.test(k)||!Array.isArray(a))return;const v=a[0],t=a[1];if((v===null||(typeof v==="number"&&isFinite(v)&&Math.abs(v)<1e12))&&typeof t==="number"&&isFinite(t))out.days[k]=[v,t]});
+  return out;
 }
 const hCanon=o=>{const d={};Object.keys((o&&o.days)||{}).sort().forEach(k=>{d[k]=o.days[k]});return{v:1,start:(o&&o.start)||"",days:d}};
 function hMerge(rem){
@@ -463,9 +474,9 @@ async function histSync(force,interactive){
   if(!force&&Date.now()-hLast<3e5)return;
   hBusy=true;
   try{
-    const H={Authorization:"Bearer "+await htok(interactive)},url="https://graph.microsoft.com/v1.0/me/drive/root:/"+HFILE+":/content";
+    const H={Authorization:"Bearer "+await htok(interactive)},url="https://graph.microsoft.com/v1.0/me/drive/special/approot:/"+HFILE+":/content";
     let rem=null;const r=await fetch(url,{headers:H});
-    if(r.status!==404){if(!r.ok)throw new Error("OneDrive "+r.status);rem=await r.json()}
+    if(r.status!==404){if(!r.ok)throw new Error("OneDrive "+r.status);rem=hClean(await r.json())}
     const out=hMerge(rem);
     if(!rem||JSON.stringify(hCanon(rem))!==JSON.stringify(out)){
       const w=await fetch(url,{method:"PUT",headers:Object.assign({"Content-Type":"application/json"},H),body:JSON.stringify(out)});
@@ -492,7 +503,8 @@ async function preq(sym,base){
   let last=null;ts.forEach((t,i)=>{if(c[i]!=null&&(!pr||(t>=pr.start&&t<pr.end)))last=[t,c[i]]});
   if(last)return{p:last[1],pct:(last[1]/base-1)*100,t:last[0]};
   const m=res.meta||{};
-  if(typeof m.fulldayPrice==="number"&&m.fulldayPrice>0&&m.fulldayPrice!==m.regularMarketPrice)return{p:m.fulldayPrice,pct:typeof m.fulldayChangePercent==="number"?m.fulldayChangePercent:(m.fulldayPrice/base-1)*100,t:null};
+  const fc=m.fulldayChangePercent;
+  if(typeof m.fulldayPrice==="number"&&m.fulldayPrice>0&&typeof fc==="number"&&isFinite(fc)&&fc>-100&&fc<1000&&fc!==-999999)return{p:m.fulldayPrice,pct:fc,t:null};
   return null;
 }
 async function refresh(){
@@ -644,7 +656,7 @@ function items(){
     return it;
   });
 }
-const VER="2.10.1 · 27 nov 2026";
+const VER="2.10.3 · 27 nov 2026";
 const MON=["jan","feb","mrt","apr","mei","jun","jul","aug","sep","okt","nov","dec"];
 const BDM={jan:1,feb:2,mrt:3,maa:3,mar:3,apr:4,mei:5,jun:6,jul:7,aug:8,sep:9,okt:10,nov:11,dec:12},bdPar={};
 const bdClean=t=>{const x=String(t==null?"":t).trim().replace(/^https?:\/\/(www\.)?beursduivel\.be/i,""),m=/\/?(Optie-Koers\/\d{3,12}\/[A-Za-z0-9\-]{1,80}\.aspx)/i.exec(x);return m?"/"+m[1]:""};
@@ -1257,11 +1269,17 @@ function settingsH(){
   `<div class="sec">Weergave</div><div class="stg"><div>Uiterlijk<br><span class="lbl">Kies de stijl van de app</span></div><select data-a="th">${[["","Origineel"],["a","A · Donker glas"],["b","B · Zacht licht"],["c","C · Strak fintech"]].map(o=>`<option value="${o[0]}"${(S.theme||"")===o[0]?" selected":""}>${o[1]}</option>`).join("")}</select></div><div class="stg"><label style="display:flex;align-items:center;gap:8px;cursor:pointer;"><input type="checkbox" data-a="sv"${S.showVal?" checked":""}> Toon waarde</label></div>`+
   `<div class="stg"><div>Automatisch verversen<br><span class="lbl">Koersen opnieuw ophalen zolang de app open staat</span></div><select data-a="rate">${[[0,"Uit"],[30,"30 seconden"],[60,"1 minuut"],[120,"2 minuten"],[300,"5 minuten"],[900,"15 minuten"]].map(o=>`<option value="${o[0]}"${(S.rate==null?60:S.rate)==o[0]?" selected":""}>${o[1]}</option>`).join("")}</select></div>`+
   `<div class="sec">Waardeverloop</div><div class="stg"><div>Delen tussen apparaten<br><span class="lbl">${!account?"Log eerst in bij Excel in OneDrive":!S.hon?"Uit":U.hMsg?esc(U.hMsg):S.hsync?"Gesynchroniseerd om "+new Date(S.hsync).toLocaleTimeString("nl-BE",{hour:"2-digit",minute:"2-digit"}):"Nog niet gesynchroniseerd"}</span></div><button class="sm" data-a="hon"${account?"":" disabled"}>${S.hon?"Nu synchroniseren":"Activeren"}</button></div>`+
+  `<div class="stg"><div>Dit is mijn echte portefeuille<br><span class="lbl">${!S.real?"Niet ingesteld: elke portefeuille die je opent, wordt bewaard":(S.file&&S.file.id===S.real.id&&S.file.sheet===S.real.sheet)?"Ingesteld: "+esc(S.real.name||"")+" · "+esc(S.real.sheet):"Je gebruikt nu een andere portefeuille: er wordt geen dagtotaal bewaard (echte: "+esc(S.real.name||"")+" · "+esc(S.real.sheet)+")"}</span></div>${S.file&&S.file.sheet?(S.real&&S.file.id===S.real.id&&S.file.sheet===S.real.sheet?'<button class="sm ghost" data-a="hrx">Opheffen</button>':'<button class="sm" data-a="hre">Deze instellen</button>'):""}</div>`+
   `<div class="stg"><div>Grafiek opnieuw starten<br><span class="lbl">Begint opnieuw bij vandaag, op al je apparaten${S.hstart?" · gestart op "+esc(S.hstart):""}</span></div><button class="sm ghost" data-a="hrs">Starten</button></div>`+
   `<div class="stg"><div>Opgeslagen dagen<br><span class="lbl">${Object.keys(S.hist).length} dagen</span></div><button class="sm ghost" data-a="hls">${U.hl?"Verberg":"Bekijk"}</button></div>`+
   (U.hl?`<div style="margin:0 2px 8px;font-size:13px;">`+Object.keys(S.hist).sort().reverse().map(k=>`<div style="display:flex;align-items:center;gap:10px;padding:3px 0;border-bottom:1px solid var(--b)"><span style="flex:1">${esc(k)}</span><span>${eur(S.hist[k])}</span><span class="ib" data-a="hdl" data-v="${esc(k)}" style="cursor:pointer" aria-label="Verwijder deze dag">✕</span></div>`).join("")+`<button class="sm ghost" data-a="hcv" style="margin-top:8px">Downloaden (csv)</button></div>`:"")+
   `<div class="sec">Beveiliging</div><div class="stg"><div>Code (9 cijfers)<br><span class="lbl">${lk?"Ingesteld":"Uit"}</span></div><button class="sm" data-a="cs">${lk?"Wijzigen":"Instellen"}</button></div>`+
   (lk?`<div class="stg"><div>Ontgrendelen met<br><span class="lbl">${esc(U.secMsg||(bioOK?"Vingerafdruk of code":"Vingerafdruk niet beschikbaar op dit toestel"))}</span></div><select data-a="meth"><option value="code"${S.bio?"":" selected"}>Code</option><option value="bio"${S.bio?" selected":""}${bioOK?"":" disabled"}>Vingerafdruk</option></select></div><div class="stg"><div>Vergrendel na</div><select data-a="la"><option value="0"${lk.after==0?" selected":""}>Direct</option><option value="60"${lk.after==60?" selected":""}>1 minuut</option><option value="300"${lk.after==300?" selected":""}>5 minuten</option><option value="900"${lk.after==900?" selected":""}>15 minuten</option></select></div><div class="stg"><div>Code uitzetten</div><button class="sm ghost" data-a="cx">Uitzetten</button></div>`:"")+
+  `<div class="sec">Rechten en toegang</div><div class="m" style="font-size:12px;line-height:1.5;margin:0 2px 8px;">`+
+  `<b>Microsoft (OneDrive):</b> de app kan je OneDrive lezen (nodig om je Excel te kiezen en te lezen) en schrijft alleen in zijn eigen appmap (<i>Apps</i>) het bestand met je dagtotalen. De app kan niets verwijderen, delen of in je Excel schrijven.<br>`+
+  `<b>Inloggegevens:</b> ze staan in de opslag van deze browser op dit toestel. De code van 9 cijfers beschermt het scherm van de app, niet die opslag. Vergrendel dus je toestel.<br>`+
+  `<b>Externe diensten:</b> je eigen koersen-doorgever (Cloudflare Worker, krijgt alleen aandeelsymbolen), Microsoft Graph, en de inlogbibliotheek van Microsoft ${window.MSAL_LOCAL?"(lokaal bestand, niet extern)":"(geladen via jsDelivr)"}. Koersen komen via de Worker van Yahoo en Beursduivel.<br>`+
+  `<a href="https://account.live.com/consent/Manage" target="_blank" rel="noopener">Toegang van de app intrekken bij Microsoft</a></div>`+
   `<div class="sec">Gegevens</div><div class="stg"><div>Alle bewaarde gegevens wissen<br><span class="lbl">Instellingen, code en waardeverloop verdwijnen</span></div><button class="sm ghost" data-a="wipe">Wissen</button></div><div class="sec">Over</div><div class="stg"><div>Versie<br><span class="lbl">Noteer dit nummer bij vragen of problemen</span></div><div style="font-variant-numeric:tabular-nums" data-a="vtap">${VER}</div></div><div class="m" style="font-size:11px;margin:8px 2px 0">© 2026 Wouter Janssens · alle rechten voorbehouden. Niet kopiëren, aanpassen of verspreiden zonder toestemming. Contact: <a href="mailto:wj.apps.store@gmail.com">wj.apps.store@gmail.com</a></div></div>`;
 }
 function pickerH(){
@@ -1382,6 +1400,8 @@ root.addEventListener("click",e=>{
   else if(a==="refresh"){refresh();return}
   else if(a==="hon"){S.hon=true;save();U.hMsg="";render();histSync(true,true);return}
   else if(a==="hrs"){if(confirm("De grafiek opnieuw starten bij vandaag? De oude dagen worden op al je apparaten gewist. Dit kan niet ongedaan worden gemaakt.")){histReset();U.cfgMsg="Grafiek opnieuw gestart";render()}return}
+  else if(a==="hre"){if(S.file&&S.file.sheet){S.real={id:S.file.id,name:S.file.name,sheet:S.file.sheet};save();render()}return}
+  else if(a==="hrx"){S.real=null;save();render();return}
   else if(a==="hls"){U.hl=!U.hl;render();return}
   else if(a==="hdl"){const k=v;S.hts=S.hts||{};delete S.hist[k];S.hts[k]=Date.now();save();render();histSync(true);return}
   else if(a==="hcv"){histCsv();return}
