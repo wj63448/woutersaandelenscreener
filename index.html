@@ -319,7 +319,7 @@ function targetCharts(P){
 }
 /*PURE-END*/
 
-const TITLE="Wouter's aandelenscreener";
+const TF=()=>innerWidth>=900?"Wouter's aandelen- en optiesscreener":"Wouter's screener";
 const CLIENT_ID="2b2a7bff-3f04-4eee-9e5f-57138ea6d683";
 const SCOPES=["Files.Read","User.Read"];
 const $=id=>document.getElementById(id);
@@ -586,7 +586,7 @@ function items(){
     return it;
   });
 }
-const VER="2.9.6 · 27 nov 2026";
+const VER="2.9.7 · 27 nov 2026";
 const MON=["jan","feb","mrt","apr","mei","jun","jul","aug","sep","okt","nov","dec"];
 const BDM={jan:1,feb:2,mrt:3,maa:3,mar:3,apr:4,mei:5,jun:6,jul:7,aug:8,sep:9,okt:10,nov:11,dec:12},bdPar={};
 const bdClean=t=>{const x=String(t==null?"":t).trim().replace(/^https?:\/\/(www\.)?beursduivel\.be/i,""),m=/\/?(Optie-Koers\/\d{3,12}\/[A-Za-z0-9\-]{1,80}\.aspx)/i.exec(x);return m?"/"+m[1]:""};
@@ -693,6 +693,7 @@ function tableH(gs,ta,oi,tn,part){
         h+=`<div class="r${cv?" s-"+cv.k:""}${i.tr===false?" off":""}" data-a="optjump" data-v="${g.os}" data-c="${g.oc}" style="cursor:pointer"><div class="n" style="white-space:normal">${esc(i.nm)}${covTag(cv)}${i.sub?`<br><small class="dn">${esc(i.sub)}</small>`:""}</div>${i.v!=null?cells(pp,i.d,i.g||0,i.v,i.g!=null,i.gp,null):(WD()?"<div></div>":"")+"<div></div><div></div><div></div><div class='wv'></div>"}</div>`;
       });
     });
+    if(part==="o"&&W3)return h+`</div><div style="height:26px"></div><div class="tbl ${S.showVal?"":"nv"} wide">`+tot("Totaal netto (aandelen + opties)",tn,"2px solid var(--b2)").replace("margin-top:6px;","")+"</div>";
     h+=tot("Totaal netto",tn,"2px solid var(--b2)");
   }
   return h+"</div>";
@@ -1069,7 +1070,7 @@ function appH(){
   const t=U.tab===0,v=U.tab===2,o=U.tab===3;
   const TT=LM()>=1,nar=LM()===2&&!(U.tab===0&&U.view===0)?" nar":"",vx=U.tab===0&&U.view===2?" vix":"";
   const tb=`<div class="tabs${TT?" tt":""}"><div data-a="tab" data-v="0" class="${t?"on":""}"><b>📈</b>Aandelen</div>${av.o?`<div data-a="tab" data-v="3" class="${o?"on":""}"><b>📜</b>Opties</div>`:""}${av.v?`<div data-a="tab" data-v="2" class="${v?"on":""}"><b>🥧</b>Verdeling</div>`:""}${av.t?`<div data-a="tab" data-v="1" class="${U.tab===1?"on":""}"><b>🎯</b>Target</div>`:""}${TT?`<span class="tbr"><button data-a="sync" class="sm">⇄ Lijst bijwerken uit Excel</button><small>${esc(U.syMsg)}</small><label><input type="checkbox" data-a="sv"${S.showVal?" checked":""}> Toon waarde</label></span>`:""}</div>`;
-  let h=`${TT?'<div class="stk">':""}<div class="hd"><div class="t">${t?esc(TITLE):o?"Optieportefeuille":v?"Verdeling":"Target"}</div><span class="ib" data-a="refresh" aria-label="Koersen verversen">↻</span><span class="ib" data-a="cfg" aria-label="Instellingen">⚙</span></div>${TT?tb+"</div>":""}<div class="body${nar}${vx}">${o?"":optBanner()}${v?(av.se||av.inp?`<div class="top">${av.se?`<button data-a="vm" data-v="s" class="${U.vm==="s"?"on":""}">Sector</button>`:""}<button data-a="vm" data-v="w" class="${U.vm==="w"?"on":""}">% Port</button>${av.inp?`<button data-a="vm" data-v="i" class="${U.vm==="i"?"on":""}">Input</button>`:""}</div>`:""):o?"":`<div class="top"><button data-a="view" data-v="0" class="${U.view===0?"on":""}">Overzicht</button><button data-a="view" data-v="1" class="${U.view===1?"on":""}">Grafieken</button>${t?`<button data-a="view" data-v="2" class="${U.view===2?"on":""}">VIX</button>`:""}</div>`}`;
+  let h=`${TT?'<div class="stk">':""}<div class="hd"><div class="t">${t?esc(TF()):o?"Optieportefeuille":v?"Verdeling":"Target"}</div><span class="ib" data-a="refresh" aria-label="Koersen verversen">↻</span><span class="ib" data-a="cfg" aria-label="Instellingen">⚙</span></div>${TT?tb+"</div>":""}<div class="body${nar}${vx}">${o?"":optBanner()}${v?(av.se||av.inp?`<div class="top">${av.se?`<button data-a="vm" data-v="s" class="${U.vm==="s"?"on":""}">Sector</button>`:""}<button data-a="vm" data-v="w" class="${U.vm==="w"?"on":""}">% Port</button>${av.inp?`<button data-a="vm" data-v="i" class="${U.vm==="i"?"on":""}">Input</button>`:""}</div>`:""):o?"":`<div class="top"><button data-a="view" data-v="0" class="${U.view===0?"on":""}">Overzicht</button><button data-a="view" data-v="1" class="${U.view===1?"on":""}">Grafieken</button>${t?`<button data-a="view" data-v="2" class="${U.view===2?"on":""}">VIX</button>`:""}</div>`}`;
   h+=v?verdH():o?optH():t?(U.view===0?portOverH():U.view===2?vixH():portGrafH()):(U.view===0?tgtOverH():tgtGrafH());
   return h+`</div>${TT?"":tb}`+(U.tlz?tlzH():"");
 }
@@ -1172,7 +1173,7 @@ function lockH(title,setup){
   const bioBtn=!setup&&S.bio?'<div style="margin:10px 0 0;"><button class="sm" data-a="bio">🖐 Ontgrendel met vingerafdruk</button></div>':"";
   let d="";for(let i=0;i<9;i++)d+=`<div class="dot${i<U.code.length?" on":""}"></div>`;
   let p="";["1","2","3","4","5","6","7","8","9","","0","del"].forEach(k=>{p+=k===""?"<div></div>":`<button data-a="${k==="del"?"del":"key"}" data-v="${k}">${k==="del"?"⌫":k}</button>`});
-  return `<div class="hd"><div class="t">${esc(TITLE)}</div></div><div class="body" style="text-align:center;padding-top:28px;"><div style="font-size:30px;">🔒</div><div style="font-size:16px;margin-top:6px;">${esc(title)}</div>${bioBtn}<div class="dots">${d}</div><div class="lbl" style="min-height:18px;${U.msg?"color:var(--dn)":""}">${esc(U.msg||"9 cijfers")}</div><div class="pad">${p}</div>${setup?'<button class="ghost sm" data-a="cancel">Annuleren</button>':""}</div>`;
+  return `<div class="hd"><div class="t">${esc(TF())}</div></div><div class="body" style="text-align:center;padding-top:28px;"><div style="font-size:30px;">🔒</div><div style="font-size:16px;margin-top:6px;">${esc(title)}</div>${bioBtn}<div class="dots">${d}</div><div class="lbl" style="min-height:18px;${U.msg?"color:var(--dn)":""}">${esc(U.msg||"9 cijfers")}</div><div class="pad">${p}</div>${setup?'<button class="ghost sm" data-a="cancel">Annuleren</button>':""}</div>`;
 }
 function settingsH(){
   const f=S.file,lk=S.lock;
