@@ -187,7 +187,8 @@ html[data-th="c"] .sth{background:#f6f7f9}
 .tqc{background:var(--bg2);border-radius:10px;padding:8px}.tqh{font-size:12px;font-weight:600}.tqh small{display:block;font-weight:400;color:var(--mut)}
 .tqk{position:relative;border-radius:8px;padding:6px 8px;margin-top:6px;border:1px solid}.tqk.s{background:rgba(127,119,221,.2);border-color:#7F77DD}.tqk.b{background:rgba(29,158,117,.2);border-color:#1D9E75}
 .tqk b{display:block;font-size:12px}.tqk span{font-size:11px;color:var(--mut)}
-.tqd{position:absolute;right:6px;top:6px;font-style:normal;font-size:10.5px;font-weight:700;border-radius:9px;padding:1px 6px;color:#fff}.tqd.tqo{background:var(--or);color:#111}.tqd.tqr{background:var(--dn)}
+.tqd{position:absolute;right:6px;top:6px;font-style:normal;font-size:10.5px;font-weight:700;border-radius:9px;padding:1px 6px;color:#fff}.tqd.tqo{background:#ea580c;color:#fff}.tqd.tqy{background:#ca8a04;color:#111}.tqd.tqr{background:var(--dn)}
+.tqs{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;margin-top:8px}.tqp{width:8px;height:8px;border-radius:50%;display:inline-block}
 .stk{position:sticky;top:0;z-index:5}.stk .hd{position:static}
 .tabs.tt{position:static;border-top:0;border-bottom:1px solid var(--b2);justify-content:flex-start;align-items:center;gap:2px;padding:0 24px}
 .tabs.tt div{flex:none;padding:9px 18px;font-size:14px;border-bottom:3px solid transparent}
@@ -585,7 +586,7 @@ function items(){
     return it;
   });
 }
-const VER="2.9.3 · 27 nov 2026";
+const VER="2.9.4 · 27 nov 2026";
 const MON=["jan","feb","mrt","apr","mei","jun","jul","aug","sep","okt","nov","dec"];
 const BDM={jan:1,feb:2,mrt:3,maa:3,mar:3,apr:4,mei:5,jun:6,jul:7,aug:8,sep:9,okt:10,nov:11,dec:12},bdPar={};
 const bdClean=t=>{const x=String(t==null?"":t).trim().replace(/^https?:\/\/(www\.)?beursduivel\.be/i,""),m=/\/?(Optie-Koers\/\d{3,12}\/[A-Za-z0-9\-]{1,80}\.aspx)/i.exec(x);return m?"/"+m[1]:""};
@@ -914,7 +915,7 @@ function tlLanes(c){
   const all=optItems().filter(i=>cpOf(i)===c);let skip=0,maxD=30;
   const lanes=[["Verkocht",all.filter(i=>i.p.qty<0)],["Gekocht",all.filter(i=>i.p.qty>0)]].filter(l=>l[1].length).map(([lab,l])=>{
     const m={};
-    l.forEach(i=>{const o=optInfo(i.k);if(!o){skip++;return}const k=optEx(o);(m[k]=m[k]||{o,d:Math.max(daysLeft(o),0),its:[]}).its.push({o,q:Math.abs(i.p.qty)})});
+    l.forEach(i=>{const o=optInfo(i.k);if(!o){skip++;return}const k=optEx(o);(m[k]=m[k]||{o,d:Math.max(daysLeft(o),0),its:[]}).its.push({o,q:Math.abs(i.p.qty),cs:cs(i.cur)})});
     const cl=Object.keys(m).map(Number).sort((a,b)=>a-b).map(k=>m[k]);
     cl.forEach(g=>{if(g.d>maxD)maxD=g.d});
     return{lab,cl};
@@ -955,19 +956,19 @@ function tlBars(W,c){
   const yr=new Date().getFullYear(),f=v=>Math.round(v*10)/10,RH=36,rows=[];
   lanes.forEach((ln,li)=>{const sold=ln.lab==="Verkocht";ln.cl.forEach(g=>g.its.forEach(t=>rows.push({sold,li,g,t})))});
   rows.sort((a,b)=>a.li-b.li||a.g.d-b.g.d);
-  const nmOf=r=>r.t.o.root+" "+nm(r.t.o.strike,r.t.o.strike%1?2:0);
+  const nmOf=r=>r.t.o.root+" "+(r.t.cs||"")+nm(r.t.o.strike,r.t.o.strike%1?2:0);
   const LW=Math.max(86,Math.max(...rows.map(r=>nmOf(r).length))*7+8),x0=LW+14,x1=W-16,D=maxD,X=d=>x0+(x1-x0)*d/D,top=30;
   let y=top,o="",gr="",prev=-1;
   rows.forEach(r=>{
     if(prev>=0&&r.li!==prev)y+=12;prev=r.li;
-    const cyr=y+RH/2,d=r.g.d,exp=daysLeft(r.g.o)<0,xe=Math.max(X(d),x0+8),col=r.sold?"#7F77DD":"#1D9E75",urg=exp?"":d<30?"r":d<60?"o":"";
+    const cyr=y+RH/2,d=r.g.d,exp=daysLeft(r.g.o)<0,xe=Math.max(X(d),x0+8),col=r.sold?"#7F77DD":"#1D9E75",urg=exp?"":d<7?"r":d<30?"o":d<60?"y":"";
     const dt=exp?"verlopen":r.g.o.d+" "+MON[r.g.o.mo-1]+(r.g.o.y!==yr?" "+String(r.g.o.y).slice(2):""),lab=dt+(urg||exp?"":" · "+d+" d"),tw=lab.length*6.2,chip=urg?d+" d":"",cw=chip?chip.length*6.4+12:0;
     o+=`<text x="0" y="${f(cyr-3)}" class="tln">${esc(nmOf(r))}</text><text x="0" y="${f(cyr+11)}" class="tls">${r.sold?"verkocht":"gekocht"} · ×${r.t.q}</text>`;
     o+=`<rect x="${x0}" y="${f(cyr-10)}" width="${f(xe-x0)}" height="20" rx="10" fill="${col}" fill-opacity=".28" stroke="${col}"/>`;
     let tx,an,cx;
     if(xe+8+tw+(cw?cw+6:0)+6<=W){tx=xe+8;an="start";cx=tx+tw+6}else{cx=xe-10-cw;tx=cw?cx-6:xe-10;an="end"}
     o+=`<text x="${f(tx)}" y="${f(cyr+4)}" text-anchor="${an}" class="tls" style="fill:var(--tx)">${esc(lab)}</text>`;
-    if(chip)o+=`<rect x="${f(cx)}" y="${f(cyr-8)}" width="${f(cw)}" height="16" rx="8" fill="${urg==="r"?"var(--dn)":"var(--or)"}"/><text x="${f(cx+cw/2)}" y="${f(cyr+4)}" text-anchor="middle" style="font-size:10.5px;font-weight:700;fill:${urg==="r"?"#fff":"#111"}">${chip}</text>`;
+    if(chip)o+=`<rect x="${f(cx)}" y="${f(cyr-8)}" width="${f(cw)}" height="16" rx="8" fill="${urg==="r"?"var(--dn)":urg==="o"?"#ea580c":"#ca8a04"}"/><text x="${f(cx+cw/2)}" y="${f(cyr+4)}" text-anchor="middle" style="font-size:10.5px;font-weight:700;fill:${urg==="y"?"#111":"#fff"}">${chip}</text>`;
     y+=RH;
   });
   const H=y+8,now=new Date(),kk=D<120?1:D<300?2:3;let mm=now.getMonth()+1;if(kk>1)while(mm%kk)mm++;
@@ -983,7 +984,9 @@ function tlQuart(c){
   lanes.forEach(ln=>{const sold=ln.lab==="Verkocht";ln.cl.forEach(g=>g.its.forEach(t=>{const o=g.o,k=o.y*4+Math.floor((o.mo-1)/3);(m[k]=m[k]||[]).push({sold,g,t})}))});
   return `<div class="tqg">`+Object.keys(m).map(Number).sort((a,b)=>a-b).map(k=>{
     const l=m[k].sort((a,b)=>a.g.d-b.g.d),n=sum(l,x=>x.t.q);
-    return `<div class="tqc"><div class="tqh">${Q[k%4]} ${String(Math.floor(k/4)).slice(2)}<small>${n} ${n===1?"contract":"contracten"}</small></div>${l.map(x=>{const d=x.g.d,u=d<30?"tqr":d<60?"tqo":"",o=x.g.o;return `<div class="tqk ${x.sold?"s":"b"}"><b>${esc(o.root+" "+nm(o.strike,o.strike%1?2:0))}</b><span>${o.d} ${MON[o.mo-1]} · ×${x.t.q}</span>${u?`<i class="tqd ${u}">${d} d</i>`:""}</div>`}).join("")}</div>`}).join("")+`</div>`;
+    const card=x=>{const d=x.g.d,u=d<7?"tqr":d<30?"tqo":d<60?"tqy":"",o=x.g.o;return `<div class="tqk ${x.sold?"s":"b"}"><b>${esc(o.root+" "+(x.t.cs||"")+nm(o.strike,o.strike%1?2:0))}</b><span>${o.d} ${MON[o.mo-1]} · ×${x.t.q}</span>${u?`<i class="tqd ${u}">${d} d</i>`:""}</div>`};
+    const part=(sold,lab,col)=>{const z=l.filter(x=>x.sold===sold);return z.length?`<div class="tqs"><span class="tqp" style="background:${col}"></span>${lab} · ${sum(z,x=>x.t.q)}</div>${z.map(card).join("")}`:""};
+    return `<div class="tqc"><div class="tqh">${Q[k%4]} ${String(Math.floor(k/4)).slice(2)}<small>${n} ${n===1?"contract":"contracten"}</small></div>${part(true,"Verkocht","#7F77DD")}${part(false,"Gekocht","#1D9E75")}</div>`}).join("")+`</div>`;
 }
 function tlzH(){
   const vw=innerWidth,vh=innerHeight,land=vw>vh,Lw=Math.max(vw,vh),tv=S.tlv==="q"?"q":"b",body=tv==="q"?tlQuart(U.oc):tlBars(Math.round(Lw-24),U.oc);
