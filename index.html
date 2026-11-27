@@ -586,7 +586,7 @@ function items(){
     return it;
   });
 }
-const VER="2.9.5 · 27 nov 2026";
+const VER="2.9.6 · 27 nov 2026";
 const MON=["jan","feb","mrt","apr","mei","jun","jul","aug","sep","okt","nov","dec"];
 const BDM={jan:1,feb:2,mrt:3,maa:3,mar:3,apr:4,mei:5,jun:6,jul:7,aug:8,sep:9,okt:10,nov:11,dec:12},bdPar={};
 const bdClean=t=>{const x=String(t==null?"":t).trim().replace(/^https?:\/\/(www\.)?beursduivel\.be/i,""),m=/\/?(Optie-Koers\/\d{3,12}\/[A-Za-z0-9\-]{1,80}\.aspx)/i.exec(x);return m?"/"+m[1]:""};
@@ -958,10 +958,10 @@ function tlBars(W,c,grp){
   rows.sort(grp?(a,b)=>String(a.t.o.root).localeCompare(String(b.t.o.root))||a.g.d-b.g.d:(a,b)=>a.li-b.li||a.g.d-b.g.d);
   const tot={};if(grp)rows.forEach(r=>{tot[r.t.o.root]=(tot[r.t.o.root]||0)+r.t.q});
   const nmOf=r=>(grp?"":r.t.o.root+" ")+(r.t.cs||"")+nm(r.t.o.strike,r.t.o.strike%1?2:0),lx=grp?10:0;
-  const LW=Math.max(86,Math.max(...rows.map(r=>nmOf(r).length))*7+8+lx),x0=LW+14,x1=W-16,D=maxD,X=d=>x0+(x1-x0)*d/D,top=30;
+  const cmp=W<600,cl=n=>cmp?n+" contr.":n+(n===1?" contract":" contracten"),hw=grp?Math.max(...Object.keys(tot).map(k=>8+String(k).length*12+14+cl(tot[k]).length*6)):0,LW=Math.max(86,hw+8,Math.max(...rows.map(r=>nmOf(r).length))*7+8+lx),x0=LW+14,x1=W-16,D=maxD,X=d=>x0+(x1-x0)*d/D,top=30;
   let y=top,o="",gr="",prev=-1;
   rows.forEach(r=>{
-    if(grp){if(r.t.o.root!==prev){const n=tot[r.t.o.root];o+=`<rect x="0" y="${y}" width="${W}" height="20" rx="6" fill="var(--bg2)"/><text x="8" y="${y+14}" class="tln">${esc(r.t.o.root)}</text><text x="${8+String(r.t.o.root).length*8+10}" y="${y+14}" class="tls">${n} ${n===1?"contract":"contracten"}</text>`;y+=26}prev=r.t.o.root}else{if(prev>=0&&r.li!==prev)y+=12;prev=r.li}
+    if(grp){if(r.t.o.root!==prev){const n=tot[r.t.o.root];if(prev!==-1)y+=8;o+=`<text x="2" y="${y+16}" class="tln" style="font-size:15px;font-weight:700">${esc(r.t.o.root)}</text><text x="${2+String(r.t.o.root).length*12+14}" y="${y+16}" class="tls">${cl(n)}</text>`;y+=28}prev=r.t.o.root}else{if(prev>=0&&r.li!==prev)y+=12;prev=r.li}
     const cyr=y+RH/2,d=r.g.d,exp=daysLeft(r.g.o)<0,xe=Math.max(X(d),x0+8),col=r.sold?"#7F77DD":"#1D9E75",urg=exp?"":d<7?"r":d<30?"o":d<60?"y":"";
     const dt=exp?"verlopen":r.g.o.d+" "+MON[r.g.o.mo-1]+(r.g.o.y!==yr?" "+String(r.g.o.y).slice(2):""),lab=dt+(urg||exp?"":" · "+d+" d"),tw=lab.length*6.2,chip=urg?d+" d":"",cw=chip?chip.length*6.4+12:0;
     o+=`<text x="${lx}" y="${f(cyr-3)}" class="tln">${esc(nmOf(r))}</text><text x="${lx}" y="${f(cyr+11)}" class="tls">${r.sold?"verkocht":"gekocht"} · ×${r.t.q}</text>`;
